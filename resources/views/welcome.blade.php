@@ -54,7 +54,6 @@
                 <div class="navbar-brand">
                     <a href="https://asynchronousdigital.com">
                         <h1 class="company_name">
-                            <img src="{!! asset('assets/img/acronyms-logo.png') !!}" alt="Acronyms Digital" style="width: 24px;margin-top: -4px;">
                             Asynchronous Digital
                         </h1>
                     </a>
@@ -101,8 +100,8 @@
                 <!-- home content -->
                 <div class="col-md-10 col-md-offset-1">
                     <div class="home-content">
-                        <h1 class="white-text">We Are Software Agency</h1>
-                            <p class="white-text">A team of some awesome developers! We do care, what we build cause we love what we do!</p>
+                        <h1 class="white-text">We Are a team of awesome developers!</h1>
+                            <p class="white-text">We do care what we build because we love what we do! Our passion drives us to create exceptional digital solutions that make a difference.</p>
                         <button class="white-btn">Get Started!</button>
                         <button class="main-btn">Learn more</button>
                     </div>
@@ -665,7 +664,7 @@
         <div class="row">
             <!-- Section header -->
             <div class="section-header text-center">
-                <h2 class="title">Our Team</h2>
+                <h2 class="title">The Team</h2>
             </div>
             <!-- /Section header -->
 
@@ -673,7 +672,7 @@
             <div class="col-sm-4">
                 <div class="team">
                     <div class="team-img">
-                        <img class="img-responsive" src="{{ asset('assets/img/babu.jpeg') }}" alt="">
+                        <img class="img-responsive" src="https://picsum.photos/id/8/200/200" alt="">
                         <div class="overlay">
                             <div class="team-social">
                                 <a href="https://www.facebook.com/babubph" target="_blank"><i class="fa fa-facebook"></i></a>
@@ -684,7 +683,7 @@
                     </div>
                     <div class="team-content">
                         <h3>Noor Mohammad Babu</h3>
-                        <span>Sr. Software Engineer</span>
+                        <span>Web & App Developer</span>
                     </div>
                 </div>
             </div>
@@ -694,7 +693,7 @@
             <div class="col-sm-4">
                 <div class="team">
                     <div class="team-img">
-                        <img class="img-responsive" src="{{ asset('assets/img/hasnat.jpg') }}" alt="">
+                        <img class="img-responsive" src="https://picsum.photos/id/1/200/200" alt="">
                         <div class="overlay">
                             <div class="team-social">
                                 <a href="https://www.facebook.com/opqclick" target="_blank"><i class="fa fa-facebook"></i></a>
@@ -705,7 +704,7 @@
                     </div>
                     <div class="team-content">
                         <h3>Opu Hasnat</h3>
-                        <span>Sr. Software Engineer</span>
+                        <span>Web Developer & DevOps Engineer</span>
                     </div>
                 </div>
             </div>
@@ -715,7 +714,7 @@
             <div class="col-sm-4">
                 <div class="team">
                     <div class="team-img">
-                        <img class="img-responsive" src="{{ asset('assets/img/oalid.jpg') }}" alt="">
+                        <img class="img-responsive" src="https://picsum.photos/id/6/200/200" alt="">
                         <div class="overlay">
                             <div class="team-social">
                                 <a href="https://www.facebook.com/tonmoy.mmj" target="_blank"><i class="fa fa-facebook"></i></a>
@@ -726,7 +725,7 @@
                     </div>
                     <div class="team-content">
                         <h3>Abu Bin Oalid</h3>
-                        <span>Software Engineer</span>
+                        <span>Senior Web Developer</span>
                     </div>
                 </div>
             </div>
@@ -736,7 +735,7 @@
             <div class="col-sm-4">
                 <div class="team">
                     <div class="team-img">
-                        <img class="img-responsive" src="{{ asset('assets/img/tareq.jpg') }}" alt="">
+                        <img class="img-responsive" src="https://placehold.co/200x200" alt="">
                         <div class="overlay">
                             <div class="team-social">
                                 <a href="https://www.facebook.com/Tareq.spark" target="_blank"><i class="fa fa-facebook"></i></a>
@@ -757,7 +756,7 @@
             <div class="col-sm-4">
                 <div class="team">
                     <div class="team-img">
-                        <img class="img-responsive" src="{{ asset('assets/img/awlad.jpeg') }}" alt="">
+                        <img class="img-responsive" src="https://placehold.co/200x200" alt="">
                         <div class="overlay">
                             <div class="team-social">
                                 <a href="https://www.facebook.com/hossain.m.awlad" target="_blank"><i class="fa fa-facebook"></i></a>
@@ -774,7 +773,26 @@
             </div>
             <!-- /team -->
 
-
+            <!-- team -->
+            <div class="col-sm-4">
+                <div class="team">
+                    <div class="team-img">
+                        <img class="img-responsive" src="https://placehold.co/200x200" alt="">
+                        <div class="overlay">
+                            <div class="team-social">
+                                <a href="https://www.facebook.com/hossain.m.awlad" target="_blank"><i class="fa fa-facebook"></i></a>
+                                <a href="#"><i class="fa fa-google-plus"></i></a>
+                                <a href="#"><i class="fa fa-twitter"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-content">
+                        <h3>Auninda Saha Dip</h3>
+                        <span>Sr. Software Engineer</span>
+                    </div>
+                </div>
+            </div>
+            <!-- /team -->
         </div>
         <!-- /Row -->
 
@@ -950,11 +968,11 @@
 
                 <!-- footer logo -->
                 <div class="footer-logo">
-                    <a href="https://asynchronousdigital.com"><img src="{!! asset('assets/img/acronyms-logo.png') !!}" alt="logo"></a>
+                    <a href="https://asynchronousdigital.com"><h1 class="white-text">Asynchronous Digital</h1></a>
                 </div>
                 <!-- /footer logo -->
 
-                <!-- footer follow -->
+                <!-- footer follow 
                 <ul class="footer-follow">
                     <li><a href="#"><i class="fa fa-facebook"></i></a></li>
                     <li><a href="#"><i class="fa fa-twitter"></i></a></li>
@@ -963,7 +981,7 @@
                     <li><a href="#"><i class="fa fa-linkedin"></i></a></li>
                     <li><a href="#"><i class="fa fa-youtube"></i></a></li>
                 </ul>
-                <!-- /footer follow -->
+                /footer follow -->
 
                 <!-- footer copyright -->
                 <div class="footer-copyright">
