@@ -13,8 +13,10 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            background-color: #0d1117; /* Dark background as a fallback */
         }
-        /* Custom animation for the creative loader */
+        /* Page Loader Animation */
         .dot-pulse {
             animation: dot-pulse 1.5s infinite ease-in-out;
         }
@@ -34,7 +36,7 @@
                 opacity: 1;
             }
         }
-        /* Refined animation for the heading */
+        /* Main Heading Animation */
         .text-fade-in {
             opacity: 0;
             animation: fadeIn 1.5s ease-in-out forwards;
@@ -46,16 +48,53 @@
             0% { opacity: 0; transform: translateY(20px); }
             100% { opacity: 1; transform: translateY(0); }
         }
-        /* Professional expertise cards */
+        /* Expertise Card Styling */
         .expertise-card {
-            background-color: #2b303b;
+            background-color: rgba(43, 48, 59, 0.7); /* Semi-transparent background */
+            backdrop-filter: blur(8px); /* Apply blur effect */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        /* Style for the animated icons section */
+        .animated-icons-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        /* Node Styling */
+        .node {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(144, 202, 249, 0.3) 0%, transparent 70%);
+            animation: pulse-node 4s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+        .node svg {
+            width: 40px;
+            height: 40px;
+        }
+        .node:nth-child(1) { animation-delay: 0s; }
+        .node:nth-child(2) { animation-delay: 1s; }
+        .node:nth-child(3) { animation-delay: 2s; }
+        .node:nth-child(4) { animation-delay: 3s; }
+        .node:nth-child(5) { animation-delay: 4s; }
+        .node:nth-child(6) { animation-delay: 5s; }
+        @keyframes pulse-node {
+            0%, 100% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
         }
     </style>
 </head>
 <body class="bg-slate-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
 
-    <!-- Creative Page Loader -->
+    <!-- Page Loader -->
     <div id="loader" class="fixed inset-0 bg-slate-900 z-50 flex flex-col items-center justify-center transition-opacity duration-500 ease-in-out">
         <div class="flex space-x-2">
             <div class="w-4 h-4 rounded-full bg-slate-400 dot-pulse dot-pulse-1"></div>
@@ -65,17 +104,72 @@
     </div>
 
     <!-- Main content container, centered and responsive -->
-    <main class="w-full max-w-4xl mx-auto text-center">
-        <!-- Main heading with bold font and large size. The new animation class has been added here. -->
-        <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 text-white text-fade-in">
-            Asynchronous Digital
-        </h1>
-        <!-- Subheading with a softer color -->
-        <p class="text-lg sm:text-xl md:text-2xl font-light text-slate-400 leading-relaxed max-w-2xl mx-auto mb-8 text-fade-in text-fade-in-delay">
-            We are a few people working for the clients based on our expertise.
-        </p>
+    <main class="relative z-10 w-full max-w-4xl mx-auto text-center p-4">
+        <!-- Header Section -->
+        <header class="mb-12">
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 text-white text-fade-in">
+                Asynchronous Digital
+            </h1>
+            <p class="text-lg sm:text-xl font-light text-slate-400 leading-relaxed max-w-2xl mx-auto text-fade-in text-fade-in-delay">
+                Asynchronous Digital is a dedicated cloud team specializing in modern software development. Our focus is on delivering high-quality solutions by leveraging our collective expertise in key technological areas. We work with clients to bring their digital visions to life with precision and efficiency.
+            </p>
+        </header>
 
-        <!-- Expertise section now uses a grid for better organization -->
+        <!-- Animated Icons Section -->
+        <section class="animated-icons-container">
+            <!-- Node for Android Development -->
+            <div class="node text-purple-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-android">
+                    <path d="M17.8 19.4c.1-.2.2-.4.2-.6 0-.2-.1-.4-.2-.6L14 14l-4 4-3.8-3.8c-.1-.1-.2-.2-.2-.4-.1-.2-.1-.4-.1-.6 0-.2.1-.4.2-.6l2-2.1c.1-.1.2-.2.4-.2.2 0 .4.1.6.2l1.9 1.9 1.9-1.9c.1-.1.2-.2.4-.2.2 0 .4.1.6.2l2 2.1c.1.1.2.2.2.4 0 .2-.1.4-.2.6l-3.8 3.8c-.1.1-.2.2-.4.2-.2 0-.4-.1-.6-.2zM12 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+                    <path d="M12 2a5 5 0 0 0-5 5v3h10V7a5 5 0 0 0-5-5z"/>
+                </svg>
+            </div>
+            <!-- Node for Flutter Development -->
+            <div class="node text-blue-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flutter">
+                    <path d="M12.5 14L10 16.5 12 18l2-2 2-2.5L14.5 11z"/>
+                    <path d="M12 6L14.5 8.5 12 11 9.5 8.5 12 6z"/>
+                    <path d="M12 18L14.5 20.5 12 23 9.5 20.5 12 18z"/>
+                    <path d="M7 11.5L9.5 14 7 16.5 4.5 14 7 11.5z"/>
+                    <path d="M17 11.5L19.5 14 17 16.5 14.5 14 17 11.5z"/>
+                </svg>
+            </div>
+            <!-- Node for Web Applications -->
+            <div class="node text-green-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code">
+                    <polyline points="16 18 22 12 16 6"></polyline>
+                    <polyline points="8 6 2 12 8 18"></polyline>
+                </svg>
+            </div>
+            <!-- Node for Website Creation -->
+            <div class="node text-yellow-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" x2="22" y1="12" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+            </div>
+            <!-- Node for DevOps -->
+            <div class="node text-red-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-server">
+                    <rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect>
+                    <rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect>
+                    <line x1="6" x2="6" y1="6" y2="6"></line>
+                    <line x1="6" x2="6" y1="18" y2="18"></line>
+                </svg>
+            </div>
+            <!-- Node for Design Support -->
+            <div class="node text-cyan-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pen-tool">
+                    <path d="m12 19 7-7-5-5-7 7-5 5 5 5 5-5 5z"></path>
+                    <path d="m18 13-3-3"></path>
+                    <path d="M22 22 13 13"></path>
+                </svg>
+            </div>
+        </section>
+
+
+        <!-- Expertise Section -->
         <section class="mt-12 text-left">
             <h2 class="text-2xl sm:text-3xl font-semibold mb-6 text-white text-center text-fade-in text-fade-in-delay">Our Core Expertise</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -120,28 +214,23 @@
         </div>
     </main>
 
-    <!-- Optional: Add a subtle footer -->
+    <!-- Footer -->
     <footer class="absolute bottom-4 text-center w-full">
         <p class="text-sm text-slate-500">© 2024 Asynchronous Digital. All rights reserved.</p>
     </footer>
 
     <script>
-        // Wait for the entire page to load first
+        // JavaScript for the page loader
         window.addEventListener('load', () => {
             const loader = document.getElementById('loader');
-
-            // Use a setTimeout to ensure the loader is displayed for a minimum of 1 second.
-            // This provides a better user experience on very fast connections.
             setTimeout(() => {
                 if (loader) {
-                    // Start the fade-out animation by changing the opacity
                     loader.style.opacity = '0';
-                    // Remove the loader from the DOM after the fade-out transition
                     setTimeout(() => {
                         loader.remove();
-                    }, 500); // The duration matches the CSS transition time
+                    }, 500);
                 }
-            }, 1000); // Minimum display time of 1000 milliseconds (1 second)
+            }, 1000);
         });
     </script>
 
