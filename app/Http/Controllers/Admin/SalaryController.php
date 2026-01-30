@@ -13,10 +13,17 @@ class SalaryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $salaries = Salary::with(['user', 'project'])->get();
-        return view('admin.salaries.index', compact('salaries'));
+        $filterMonth = $request->input('month', now()->format('Y-m'));
+        
+        $salaries = Salary::with(['user', 'project'])
+            ->whereYear('month', '=', substr($filterMonth, 0, 4))
+            ->whereMonth('month', '=', substr($filterMonth, 5, 2))
+            ->orderBy('month', 'desc')
+            ->get();
+            
+        return view('admin.salaries.index', compact('salaries', 'filterMonth'));
     }
 
     /**

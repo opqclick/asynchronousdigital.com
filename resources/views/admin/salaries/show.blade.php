@@ -12,6 +12,13 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Salary Information</h3>
+                    @if($salary->status === 'paid')
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#shareModal">
+                                <i class="fas fa-share-alt"></i> Share with Employee
+                            </button>
+                        </div>
+                    @endif
                 </div>
                 <div class="card-body">
                     <div class="row mb-4">
@@ -31,6 +38,20 @@
                             @endif
                         </div>
                     </div>
+
+                    @if($salary->status === 'paid' && !$salary->is_received)
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            <strong>Awaiting Confirmation:</strong> Employee has not yet confirmed receipt of this salary.
+                        </div>
+                    @endif
+
+                    @if($salary->is_received)
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> 
+                            <strong>Receipt Confirmed:</strong> Employee confirmed receiving this salary on {{ $salary->received_at->format('F d, Y \a\t h:i A') }}
+                        </div>
+                    @endif
 
                     <hr>
 
@@ -182,6 +203,90 @@
                     </div>
                 </div>
             @endif
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="shareModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-success">
+                    <h5 class="modal-title" id="shareModalLabel">Share Salary Slip</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Share salary slip for <strong>{{ $salary->user->name }}</strong> - <strong>{{ $salary->month->format('F Y') }}</strong></p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fab fa-whatsapp fa-4x text-success mb-3"></i>
+                                    <h5>Share via WhatsApp</h5>
+                                    @php
+                                        $whatsappText = "Salary Slip - " . $salary->month->format('F Y') . "\n\n";
+                                        $whatsappText .= "Employee: " . $salary->user->name . "\n";
+                                        $whatsappText .= "Month: " . $salary->month->format('F Y') . "\n";
+                                        $whatsappText .= "Base Amount: $" . number_format($salary->base_amount, 2) . "\n";
+                                        if($salary->bonus > 0) {
+                                            $whatsappText .= "Bonus: +$" . number_format($salary->bonus, 2) . "\n";
+                                        }
+                                        if($salary->deduction > 0) {
+                                            $whatsappText .= "Deductions: -$" . number_format($salary->deduction, 2) . "\n";
+                                        }
+                                        $whatsappText .= "Total Amount: $" . number_format($salary->total_amount, 2) . "\n";
+                                        $whatsappText .= "Status: Paid\n";
+                                        if($salary->payment_date) {
+                                            $whatsappText .= "Payment Date: " . $salary->payment_date->format('M d, Y');
+                                        }
+                                        $phone = preg_replace('/[^0-9]/', '', $salary->user->phone ?? '');
+                                        $whatsappUrl = "https://wa.me/" . $phone . "?text=" . urlencode($whatsappText);
+                                    @endphp
+                                    <a href="{{ $whatsappUrl }}" target="_blank" class="btn btn-success">
+                                        <i class="fab fa-whatsapp"></i> Send via WhatsApp
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-envelope fa-4x text-primary mb-3"></i>
+                                    <h5>Share via Email</h5>
+                                    @php
+                                        $emailSubject = "Salary Slip - " . $salary->month->format('F Y');
+                                        $emailBody = "Dear " . $salary->user->name . ",\n\n";
+                                        $emailBody .= "Please find below your salary details for " . $salary->month->format('F Y') . ":\n\n";
+                                        $emailBody .= "Base Amount: $" . number_format($salary->base_amount, 2) . "\n";
+                                        if($salary->bonus > 0) {
+                                            $emailBody .= "Bonus: +$" . number_format($salary->bonus, 2) . "\n";
+                                        }
+                                        if($salary->deduction > 0) {
+                                            $emailBody .= "Deductions: -$" . number_format($salary->deduction, 2) . "\n";
+                                        }
+                                        $emailBody .= "Total Amount: $" . number_format($salary->total_amount, 2) . "\n";
+                                        $emailBody .= "Status: Paid\n";
+                                        if($salary->payment_date) {
+                                            $emailBody .= "Payment Date: " . $salary->payment_date->format('M d, Y') . "\n";
+                                        }
+                                        $emailBody .= "\nBest regards,\nAsynchronous Digital";
+                                        $mailtoUrl = "mailto:" . $salary->user->email . "?subject=" . urlencode($emailSubject) . "&body=" . urlencode($emailBody);
+                                    @endphp
+                                    <a href="{{ $mailtoUrl }}" class="btn btn-primary">
+                                        <i class="fas fa-envelope"></i> Send via Email
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 @stop

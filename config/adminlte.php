@@ -392,12 +392,33 @@ return [
             'route' => 'admin.contact-messages.index',
         ],
         
+        ['header' => 'Tools', 'can' => 'admin'],
+        [
+            'text' => 'User Activities',
+            'icon' => 'fas fa-fw fa-history',
+            'can' => 'admin',
+            'route' => 'admin.user-activities.index',
+        ],
+        [
+            'text' => 'Telescope',
+            'icon' => 'fas fa-fw fa-satellite-dish',
+            'can' => 'admin',
+            'url' => '/telescope',
+            'target' => '_blank',
+        ],
+        
         // Team Member Menu
         [
             'text' => 'My Dashboard',
             'icon' => 'fas fa-fw fa-tachometer-alt',
             'can' => 'team_member',
             'route' => 'team-member.dashboard',
+        ],
+        [
+            'text' => 'My Salaries',
+            'icon' => 'fas fa-fw fa-wallet',
+            'can' => 'team_member',
+            'route' => 'team-member.salaries.index',
         ],
         
         // Client Menu

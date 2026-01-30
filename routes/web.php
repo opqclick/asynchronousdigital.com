@@ -12,7 +12,9 @@ use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UserActivityController;
 use App\Http\Controllers\TeamMember\DashboardController as TeamMemberDashboardController;
+use App\Http\Controllers\TeamMember\SalaryController as TeamMemberSalaryController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
@@ -58,6 +60,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('salaries', SalaryController::class);
     Route::resource('users', UserController::class);
     
+    // User activity logs
+    Route::get('/user-activities', [UserActivityController::class, 'index'])->name('user-activities.index');
+    Route::get('/user-activities/{activity}', [UserActivityController::class, 'show'])->name('user-activities.show');
+    
     // Public website management
     Route::resource('services', AdminServiceController::class);
     Route::resource('testimonials', TestimonialController::class);
@@ -67,6 +73,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // Team Member routes
 Route::middleware(['auth', 'role:team_member'])->prefix('team')->name('team-member.')->group(function () {
     Route::get('/dashboard', [TeamMemberDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/salaries', [TeamMemberSalaryController::class, 'index'])->name('salaries.index');
+    Route::get('/salaries/{salary}', [TeamMemberSalaryController::class, 'show'])->name('salaries.show');
+    Route::get('/salaries/{salary}/share', [TeamMemberSalaryController::class, 'share'])->name('salaries.share');
+    Route::post('/salaries/{salary}/confirm-received', [TeamMemberSalaryController::class, 'confirmReceived'])->name('salaries.confirm-received');
 });
 
 // Client routes

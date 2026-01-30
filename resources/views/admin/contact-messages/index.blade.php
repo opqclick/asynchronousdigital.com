@@ -3,12 +3,24 @@
 @section('title', 'Contact Messages')
 
 @section('content_header')
-    <h1>
-        Contact Messages Inbox
-        @if($unreadCount > 0)
-            <span class="badge badge-danger">{{ $unreadCount }} unread</span>
-        @endif
-    </h1>
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>
+                    Contact Messages Inbox
+                    @if($unreadCount > 0)
+                        <span class="badge badge-danger">{{ $unreadCount }} unread</span>
+                    @endif
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Contact Messages</li>
+                </ol>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('content')
