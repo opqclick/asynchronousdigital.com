@@ -3,9 +3,9 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <!-- Company Info -->
             <div class="col-span-1 md:col-span-2">
-                <h3 class="text-2xl font-bold mb-3">
-                    <span class="text-purple-500">Async</span><span class="text-white">Digital</span>
-                </h3>
+                <div class="mb-3">
+                    <x-logo />
+                </div>
                 <p class="text-slate-400 mb-4">
                     A dedicated cloud team specializing in modern software development.
                 </p>

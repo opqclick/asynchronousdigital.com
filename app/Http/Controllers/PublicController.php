@@ -37,7 +37,8 @@ class PublicController extends Controller
         // Get unique technologies from all projects
         $technologies = Project::pluck('tech_stack')
             ->flatMap(function ($tech) {
-                return explode(',', $tech);
+                // tech_stack is already an array, not a string
+                return is_array($tech) ? $tech : [];
             })
             ->map(fn($t) => trim($t))
             ->filter()
@@ -97,7 +98,8 @@ class PublicController extends Controller
         // Get unique technologies from all projects
         $technologies = Project::pluck('tech_stack')
             ->flatMap(function ($tech) {
-                return explode(',', $tech);
+                // tech_stack is already an array, not a string
+                return is_array($tech) ? $tech : [];
             })
             ->map(fn($t) => trim($t))
             ->filter()

@@ -3,9 +3,7 @@
         <div class="flex justify-between items-center h-16">
             <!-- Logo -->
             <div class="flex-shrink-0">
-                <a href="{{ route('home') }}" class="text-2xl font-bold text-white">
-                    <span class="text-purple-500">Async</span>Digital
-                </a>
+                <x-logo />
             </div>
 
             <!-- Desktop Navigation -->
