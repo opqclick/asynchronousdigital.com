@@ -38,7 +38,7 @@
     <nav class="fixed top-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <a href="#home" class="text-2xl font-bold"><span class="text-purple-500">Async</span>Digital</a>
+                <x-logo />
                 <div class="hidden md:flex space-x-8">
                     <a href="#home" class="nav-link text-slate-300 hover:text-white px-3 py-2">Home</a>
                     <a href="#about" class="nav-link text-slate-300 hover:text-white px-3 py-2">About</a>
@@ -256,7 +256,7 @@
     <footer class="bg-slate-800/50 border-t border-slate-700">
         <div class="max-w-7xl mx-auto px-4 py-8">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-                <div class="col-span-1 md:col-span-2"><h3 class="text-2xl font-bold mb-3"><span class="text-purple-500">Async</span><span>Digital</span></h3><p class="text-slate-400 mb-4">A dedicated cloud team specializing in modern software development.</p></div>
+                <div class="col-span-1 md:col-span-2"><div class="mb-3"><x-logo /></div><p class="text-slate-400 mb-4">A dedicated cloud team specializing in modern software development.</p></div>
                 <div><h4 class="font-semibold mb-3">Quick Links</h4><ul class="space-y-2"><li><a href="#home" class="text-slate-400 hover:text-purple-500">Home</a></li><li><a href="#about" class="text-slate-400 hover:text-purple-500">About</a></li><li><a href="#services" class="text-slate-400 hover:text-purple-500">Services</a></li><li><a href="#portfolio" class="text-slate-400 hover:text-purple-500">Portfolio</a></li></ul></div>
                 <div><h4 class="font-semibold mb-3">Contact</h4><ul class="space-y-2 text-slate-400"><li><a href="#contact" class="hover:text-purple-500">Get In Touch</a></li><li><a href="mailto:opqclick@gmail.com" class="hover:text-purple-500">opqclick@gmail.com</a></li>@auth<li><a href="{{ route('dashboard') }}" class="hover:text-purple-500">Dashboard</a></li>@endauth</ul></div>
             </div>

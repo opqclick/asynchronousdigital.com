@@ -63,9 +63,10 @@ return [
     |
     */
 
-    'logo' => '<b>Asynchronous</b> Digital',
+    'logo' => '',
     'logo_img' => 'logo.png',
     'logo_img_class' => 'brand-image elevation-3',
+    'logo_img_style' => 'height: 40px; width: auto;',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
     'logo_img_alt' => 'Asynchronous Digital',
