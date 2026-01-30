@@ -48,6 +48,14 @@ class Task extends Model
     }
 
     /**
+     * Get comments for this task
+     */
+    public function comments()
+    {
+        return $this->hasMany(TaskComment::class)->whereNull('parent_id')->with('user', 'replies')->latest();
+    }
+
+    /**
      * Get teams assigned to this task
      */
     public function teams(): BelongsToMany

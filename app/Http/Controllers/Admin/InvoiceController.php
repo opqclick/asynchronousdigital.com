@@ -47,6 +47,13 @@ class InvoiceController extends Controller
         ]);
 
         $validated['paid_amount'] = $validated['paid_amount'] ?? 0;
+        $validated['issue_date'] = $validated['invoice_date'];
+        unset($validated['invoice_date']);
+        
+        // Set default values for subtotal, tax, discount
+        $validated['subtotal'] = $validated['total_amount'];
+        $validated['tax'] = 0;
+        $validated['discount'] = 0;
 
         Invoice::create($validated);
 
@@ -91,6 +98,13 @@ class InvoiceController extends Controller
         ]);
 
         $validated['paid_amount'] = $validated['paid_amount'] ?? 0;
+        $validated['issue_date'] = $validated['invoice_date'];
+        unset($validated['invoice_date']);
+        
+        // Set default values for subtotal, tax, discount
+        $validated['subtotal'] = $validated['total_amount'];
+        $validated['tax'] = 0;
+        $validated['discount'] = 0;
 
         $invoice->update($validated);
 

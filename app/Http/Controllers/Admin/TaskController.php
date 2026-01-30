@@ -172,4 +172,56 @@ class TaskController extends Controller
         return redirect()->route('admin.tasks.index')
             ->with('success', 'Task deleted successfully.');
     }
+
+    /**
+     * Update task status via AJAX
+     */
+    public function updateStatus(Request $request, Task $task)
+    {
+        $request->validate([
+            'status' => 'required|in:to_do,in_progress,review,done'
+        ]);
+
+        $task->update(['status' => $request->status]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task status updated successfully'
+        ]);
+    }
+
+    /**
+     * Get task details via AJAX
+     */
+    public function details(Task $task)
+    {
+        $task->load(['project', 'users', 'comments']);
+        
+        return view('admin.tasks.details-partial', compact('task'));
+    }
+
+    /**
+     * Store a comment for a task
+     */
+    public function storeComment(Request $request, Task $task)
+    {
+        $request->validate([
+            'comment' => 'required|string|max:1000',
+            'parent_id' => 'nullable|exists:task_comments,id'
+        ]);
+
+        $comment = $task->comments()->create([
+            'user_id' => auth()->id(),
+            'parent_id' => $request->parent_id,
+            'comment' => $request->comment,
+        ]);
+
+        $comment->load('user', 'replies');
+
+        return response()->json([
+            'success' => true,
+            'comment' => $comment,
+            'html' => view('admin.tasks.comment-item', compact('comment'))->render()
+        ]);
+    }
 }

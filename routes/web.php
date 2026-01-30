@@ -54,6 +54,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('clients', ClientController::class);
     Route::resource('projects', ProjectController::class);
     Route::resource('tasks', TaskController::class);
+    
+    // Task AJAX routes
+    Route::post('/tasks/{task}/update-status', [TaskController::class, 'updateStatus'])->name('tasks.update-status');
+    Route::get('/tasks/{task}/details', [TaskController::class, 'details'])->name('tasks.details');
+    Route::post('/tasks/{task}/comments', [TaskController::class, 'storeComment'])->name('tasks.comments.store');
+    
     Route::resource('teams', TeamController::class);
     Route::resource('invoices', InvoiceController::class);
     Route::resource('payments', PaymentController::class);
