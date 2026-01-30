@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    'default' => env('FILESYSTEM_DISK', 'do_spaces'),
 
     /*
     |--------------------------------------------------------------------------
@@ -41,7 +41,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
@@ -56,6 +56,24 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'do_spaces' => [
+            'driver' => 's3',
+            'key' => env('DO_SPACES_KEY'),
+            'secret' => env('DO_SPACES_SECRET'),
+            'region' => env('DO_SPACES_REGION', 'sgp1'),
+            'bucket' => env('DO_SPACES_BUCKET'),
+            'url' => env('DO_SPACES_URL'),
+            'endpoint' => env('DO_SPACES_ENDPOINT'),
+            'use_path_style_endpoint' => false,
+            'root' => env('DO_SPACES_ROOT', 'AsynchronousDigitalCRM'),
+            'visibility' => env('DO_SPACES_VISIBILITY', 'public'),
+            'options' => [
+                'CacheControl' => 'max-age=31536000, public',
+            ],
             'throw' => false,
             'report' => false,
         ],

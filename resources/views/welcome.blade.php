@@ -1,1027 +1,275 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-
-    <title>Asynchronous Digital</title>
-
-    <!-- Google font -->
-    <link href="{{ asset('https://fonts.googleapis.com/css?family=Montserrat:400,700%7CVarela+Round') }}" rel="stylesheet">
-
-    <!-- Bootstrap -->
-    <link type="text/css" rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}" />
-
-    <!-- Owl Carousel -->
-    <link type="text/css" rel="stylesheet" href="{{ asset('assets/css/owl.carousel.css') }}" />
-    <link type="text/css" rel="stylesheet" href="{{ asset('assets/css/owl.theme.default.css') }}" />
-
-    <!-- Magnific Popup -->
-    <link type="text/css" rel="stylesheet" href="{{ asset('assets/css/magnific-popup.css') }}" />
-
-    <!-- Font Awesome Icon -->
-    <link rel="stylesheet" href="{{ asset('assets/css/font-awesome.min.css') }}">
-
-    <!-- Custom stlylesheet -->
-    <link type="text/css" rel="stylesheet" href="{{ asset('assets/css/style.css') }}" />
-
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-    <script src="{{ asset('assets/https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js') }}"></script>
-    <script src="{{ asset('assets/https://oss.maxcdn.com/respond/1.4.2/respond.min.js') }}"></script>
-    <![endif]-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asynchronous Digital - Modern Software Development & Cloud Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        html { scroll-behavior: smooth; }
+        .nav-link { position: relative; transition: color 0.3s ease; }
+        .nav-link:after { content: ''; position: absolute; width: 0; height: 2px; bottom: -4px; left: 0; background-color: #a855f7; transition: width 0.3s ease; }
+        .nav-link:hover:after, .nav-link.active:after { width: 100%; }
+        .mobile-menu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out; }
+        .mobile-menu.active { max-height: 500px; }
+        .dot-pulse { animation: dot-pulse 1.5s infinite ease-in-out; }
+        .dot-pulse-1 { animation-delay: 0s; }
+        .dot-pulse-2 { animation-delay: 0.2s; }
+        @keyframes dot-pulse { 0%, 100% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } }
+    </style>
 </head>
+<body class="bg-slate-900 text-white">
 
-<body>
-<!-- Header -->
-<header id="home">
-    <!-- Background Image -->
-    <div class="bg-img" style="background-image: url({{ asset('assets/img/cover_2.jpg') }});">
-        <div class="overlay"></div>
+    <!-- Page Loader -->
+    <div id="loader" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center transition-opacity duration-500">
+        <div class="flex space-x-2">
+            <div class="w-4 h-4 rounded-full bg-purple-500 dot-pulse dot-pulse-1"></div>
+            <div class="w-4 h-4 rounded-full bg-purple-500 dot-pulse dot-pulse-2"></div>
+            <div class="w-4 h-4 rounded-full bg-purple-500 dot-pulse"></div>
+        </div>
     </div>
-    <!-- /Background Image -->
 
-    <!-- Nav -->
-    <nav id="nav" class="navbar nav-transparent">
-        <div class="container">
-
-            <div class="navbar-header">
-                <!-- Logo -->
-                <div class="navbar-brand">
-                    <a href="https://asynchronousdigital.com">
-                        <h1 class="company_name">
-                            Asynchronous Digital
-                        </h1>
-                    </a>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <x-logo />
+                <div class="hidden md:flex space-x-8">
+                    <a href="#home" class="nav-link text-slate-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#about" class="nav-link text-slate-300 hover:text-white px-3 py-2">About</a>
+                    <a href="#services" class="nav-link text-slate-300 hover:text-white px-3 py-2">Services</a>
+                    <a href="#portfolio" class="nav-link text-slate-300 hover:text-white px-3 py-2">Portfolio</a>
+                    <a href="#contact" class="nav-link text-slate-300 hover:text-white px-3 py-2">Contact</a>
+                    @auth<a href="{{ route('dashboard') }}" class="nav-link text-purple-400 px-3 py-2">Dashboard</a>@else<a href="{{ route('login') }}" class="nav-link text-purple-400 px-3 py-2">Login</a>@endauth
                 </div>
-                <!-- /Logo -->
-
-                <!-- Collapse nav button -->
-                <div class="nav-collapse">
-                    <span></span>
-                </div>
-                <!-- /Collapse nav button -->
+                <button id="mobile-menu-button" class="md:hidden text-slate-300"><i class="fas fa-bars text-xl"></i></button>
             </div>
-
-            <!--  Main navigation  -->
-            <ul class="main-nav nav navbar-nav navbar-right">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#portfolio">Portfolio</a></li>
-                <li><a href="#service">Services</a></li>
-                {{--
-                <li><a href="#pricing">Prices</a></li>
-                --}}
-                <li><a href="#team">Team</a></li>
-                {{--
-                <li class="has-dropdown"><a href="#blog">Blog</a>
-                    <ul class="dropdown">
-                        <li><a href="blog-single.html">blog post</a></li>
-                    </ul>
-                </li>
-                --}}
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-            <!-- /Main navigation -->
-
+            <div id="mobile-menu" class="mobile-menu md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1">
+                    <a href="#home" class="block text-slate-300 hover:bg-slate-800 px-3 py-2 rounded">Home</a>
+                    <a href="#about" class="block text-slate-300 hover:bg-slate-800 px-3 py-2 rounded">About</a>
+                    <a href="#services" class="block text-slate-300 hover:bg-slate-800 px-3 py-2 rounded">Services</a>
+                    <a href="#portfolio" class="block text-slate-300 hover:bg-slate-800 px-3 py-2 rounded">Portfolio</a>
+                    <a href="#contact" class="block text-slate-300 hover:bg-slate-800 px-3 py-2 rounded">Contact</a>
+                    @auth<a href="{{ route('dashboard') }}" class="block text-purple-400 hover:bg-slate-800 px-3 py-2 rounded">Dashboard</a>@else<a href="{{ route('login') }}" class="block text-purple-400 hover:bg-slate-800 px-3 py-2 rounded">Login</a>@endauth
+                </div>
+            </div>
         </div>
     </nav>
-    <!-- /Nav -->
 
-    <!-- home wrapper -->
-    <div class="home-wrapper">
-        <div class="container">
-            <div class="row">
-
-                <!-- home content -->
-                <div class="col-md-10 col-md-offset-1">
-                    <div class="home-content">
-                        <h1 class="white-text">We Are a team of awesome developers!</h1>
-                            <p class="white-text">We do care what we build because we love what we do! Our passion drives us to create exceptional digital solutions that make a difference.</p>
-                        <button class="white-btn">Get Started!</button>
-                        <button class="main-btn">Learn more</button>
-                    </div>
-                </div>
-                <!-- /home content -->
-
+    <!-- Hero -->
+    <section id="home" class="pt-24 pb-20 px-4 min-h-screen flex items-center">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-5xl sm:text-6xl md:text-7xl font-bold mb-6"><span class="text-white">Asynchronous</span> <span class="text-purple-500">Digital</span></h1>
+            <p class="text-xl sm:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto">A dedicated cloud team specializing in modern software development. We bring your digital visions to life with precision and efficiency.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+                <a href="#contact" class="px-8 py-4 bg-purple-600 text-white rounded-full font-semibold hover:bg-purple-700 transition transform hover:scale-105">Get Started <i class="fas fa-arrow-right ml-2"></i></a>
+                <a href="#portfolio" class="px-8 py-4 bg-slate-800 text-white rounded-full font-semibold hover:bg-slate-700 transition">View Our Work</a>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 max-w-5xl mx-auto">
+                <div class="flex flex-col items-center p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition"><i class="fab fa-android text-4xl text-purple-500 mb-2"></i><span class="text-sm text-slate-300">Android</span></div>
+                <div class="flex flex-col items-center p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition"><i class="fas fa-mobile-alt text-4xl text-blue-500 mb-2"></i><span class="text-sm text-slate-300">Flutter</span></div>
+                <div class="flex flex-col items-center p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition"><i class="fas fa-code text-4xl text-green-500 mb-2"></i><span class="text-sm text-slate-300">Web Apps</span></div>
+                <div class="flex flex-col items-center p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition"><i class="fas fa-globe text-4xl text-yellow-500 mb-2"></i><span class="text-sm text-slate-300">Websites</span></div>
+                <div class="flex flex-col items-center p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition"><i class="fas fa-server text-4xl text-red-500 mb-2"></i><span class="text-sm text-slate-300">DevOps</span></div>
+                <div class="flex flex-col items-center p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition"><i class="fas fa-pen-nib text-4xl text-cyan-500 mb-2"></i><span class="text-sm text-slate-300">Design</span></div>
             </div>
         </div>
-    </div>
-    <!-- /home wrapper -->
+    </section>
 
-</header>
-<!-- /Header -->
-
-<!-- About -->
-<div id="about" class="section md-padding">
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-
-            <!-- Section header -->
-            <div class="section-header text-center">
-                <h2 class="title">Welcome to Website</h2>
+    <!-- About -->
+    <section id="about" class="py-20 px-4 bg-slate-800/30">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">About <span class="text-purple-500">Us</span></h2>
+                <p class="text-xl text-slate-300 max-w-3xl mx-auto">We are a dedicated cloud team committed to delivering exceptional digital solutions that drive innovation and growth.</p>
             </div>
-            <!-- /Section header -->
-
-            <!-- about -->
-            <div class="col-md-4">
-                <div class="about">
-                    <i class="fa fa-cogs"></i>
-                    <h3>Fully Customizible</h3>
-                    <p>Maecenas tempus tellus eget condimentum rhoncus sem quam semper libero sit amet.</p>
-                    <a href="#">Read more</a>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+                <div class="text-center"><div class="text-5xl font-bold text-purple-500 mb-2">{{ $stats['projects_completed'] }}+</div><div class="text-slate-400">Projects Completed</div></div>
+                <div class="text-center"><div class="text-5xl font-bold text-purple-500 mb-2">{{ $stats['active_clients'] }}+</div><div class="text-slate-400">Active Clients</div></div>
+                <div class="text-center"><div class="text-5xl font-bold text-purple-500 mb-2">{{ $stats['team_members'] }}+</div><div class="text-slate-400">Team Members</div></div>
+                <div class="text-center"><div class="text-5xl font-bold text-purple-500 mb-2">{{ $stats['years_experience'] }}+</div><div class="text-slate-400">Years Experience</div></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <div class="bg-slate-800/50 p-8 rounded-xl border border-slate-700 text-center"><i class="fas fa-lightbulb text-5xl text-purple-500 mb-4"></i><h3 class="text-2xl font-bold mb-3">Innovation</h3><p class="text-slate-400">We constantly explore new technologies to deliver cutting-edge solutions.</p></div>
+                <div class="bg-slate-800/50 p-8 rounded-xl border border-slate-700 text-center"><i class="fas fa-award text-5xl text-purple-500 mb-4"></i><h3 class="text-2xl font-bold mb-3">Excellence</h3><p class="text-slate-400">Quality is non-negotiable. We strive for excellence in every line of code.</p></div>
+                <div class="bg-slate-800/50 p-8 rounded-xl border border-slate-700 text-center"><i class="fas fa-handshake text-5xl text-purple-500 mb-4"></i><h3 class="text-2xl font-bold mb-3">Partnership</h3><p class="text-slate-400">Your success is our success. We work as an extension of your team.</p></div>
+            </div>
+            @if($teamMembers->count() > 0)
+            <div class="text-center mb-12"><h3 class="text-3xl font-bold">Meet Our Team</h3></div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                @foreach($teamMembers as $member)
+                <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6 text-center hover:border-purple-500 transition">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4"><span class="text-2xl font-bold">{{ substr($member->name, 0, 1) }}</span></div>
+                    <h4 class="text-lg font-bold mb-1">{{ $member->name }}</h4>
+                    <p class="text-purple-400 text-sm">{{ ucfirst($member->role->name ?? 'Team Member') }}</p>
                 </div>
+                @endforeach
             </div>
-            <!-- /about -->
-
-            <!-- about -->
-            <div class="col-md-4">
-                <div class="about">
-                    <i class="fa fa-magic"></i>
-                    <h3>Awesome Features</h3>
-                    <p>Maecenas tempus tellus eget condimentum rhoncus sem quam semper libero sit amet.</p>
-                    <a href="#">Read more</a>
-                </div>
-            </div>
-            <!-- /about -->
-
-            <!-- about -->
-            <div class="col-md-4">
-                <div class="about">
-                    <i class="fa fa-mobile"></i>
-                    <h3>Fully Responsive</h3>
-                    <p>Maecenas tempus tellus eget condimentum rhoncus sem quam semper libero sit amet.</p>
-                    <a href="#">Read more</a>
-                </div>
-            </div>
-            <!-- /about -->
-
+            @endif
         </div>
-        <!-- /Row -->
+    </section>
 
-    </div>
-    <!-- /Container -->
-
-</div>
-<!-- /About -->
-
-
-<!-- Portfolio -->
-<div id="portfolio" class="section md-padding bg-grey">
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-
-            <!-- Section header -->
-            <div class="section-header text-center">
-                <h2 class="title">Featured Works</h2>
+    <!-- Services -->
+    <section id="services" class="py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Our <span class="text-purple-500">Services</span></h2>
+                <p class="text-xl text-slate-300 max-w-3xl mx-auto">Comprehensive software development services tailored to your business needs.</p>
             </div>
-            <!-- /Section header -->
-
-            <!-- Work -->
-            <div class="col-md-4 col-xs-6 work">
-                <img class="img-responsive" src="{{ asset('assets/img/theposmanager_cover.png') }}" alt="">
-                <div class="overlay"></div>
-                <div class="work-content">
-                    <span>Laravel</span>
-                    <h3>"The POS manager" is a multi store POS based on SAAS business model</h3>
-                    <div class="work-link">
-                        <a href="http://theposmanager.asynchronousdigital.com" target="_blank"><i class="fa fa-external-link"></i></a>
-                        <a class="lightbox" href="{{ asset('assets/img/theposmanager.png') }}"><i class="fa fa-search"></i></a>
-                    </div>
-                </div>
-            </div>
-            <!-- /Work -->
-
-            <!-- Work -->
-            <div class="col-md-4 col-xs-6 work">
-                <img class="img-responsive" src="{{ asset('assets/img/isharaexpress_cover.png') }}" alt="">
-                <div class="overlay"></div>
-                <div class="work-content">
-                    <span>Wordpress</span>
-                    <h3>"IsharaExpress" is a parcel delivery management company</h3>
-                    <div class="work-link">
-                        <a href="http://isharaexpress.com/" target="_blank"><i class="fa fa-external-link"></i></a>
-                        <a class="lightbox" href="{{ asset('assets/img/isharaexpress_inner.png') }}"><i class="fa fa-search"></i></a>
-                    </div>
-                </div>
-            </div>
-            <!-- /Work -->
-
-            <!-- Work -->
-            <div class="col-md-4 col-xs-6 work">
-                <img class="img-responsive" src="{{ asset('assets/img/timetouchnews_cover.png') }}" alt="">
-                <div class="overlay"></div>
-                <div class="work-content">
-                    <span>Codeigniter</span>
-                    <h3>"Timetouchnews" is a online news portal.</h3>
-                    <div class="work-link">
-                        <a href="http://timetouchnews.com" target="_blank"><i class="fa fa-external-link"></i></a>
-                        <a class="lightbox" href="{{ asset('assets/img/timetouchnews_inner.png') }}"><i class="fa fa-search"></i></a>
-                    </div>
-                </div>
-            </div>
-            <!-- /Work -->
-
-            <!-- Work -->
-            <div class="col-md-4 col-xs-6 work">
-                <img class="img-responsive" src="{{ asset('assets/img/kibriafilms_cover.png') }}" alt="">
-                <div class="overlay"></div>
-                <div class="work-content">
-                    <span>Laravel</span>
-                    <h3>"KibriaFilms" is a production media in our film industry</h3>
-                    <div class="work-link">
-                        <a href="https://kibriafilms.com/" target="_blank"><i class="fa fa-external-link"></i></a>
-                        <a class="lightbox" href="{{ asset('assets/img/kibriafilms_inner.png') }}"><i class="fa fa-search"></i></a>
-                    </div>
-                </div>
-            </div>
-            <!-- /Work -->
-
-            <!-- Work -->
-            <div class="col-md-4 col-xs-6 work">
-                <img class="img-responsive" src="{{ asset('assets/img/asynchronousdigital.png') }}" alt="">
-                <div class="overlay"></div>
-                <div class="work-content">
-                    <span>Laravel</span>
-                    <h3>"AsynchronousDigital" this the website you are visiting right now</h3>
-                    <div class="work-link">
-                        <a href="http://asynchronousdigital.com" target="_blank"><i class="fa fa-external-link"></i></a>
-                        <a class="lightbox" href="{{ asset('assets/img/asynchronousdigital.png') }}"><i class="fa fa-search"></i></a>
-                    </div>
-                </div>
-            </div>
-            <!-- /Work -->
-
-            <!-- Work -->
-            <div class="col-md-4 col-xs-6 work">
-                <img class="img-responsive" src="{{ asset('assets/img/dms_cover.png') }}" alt="">
-                <div class="overlay"></div>
-                <div class="work-content">
-                    <span>Laravel</span>
-                    <h3>"DMS" is a online delivery management system</h3>
-                    <div class="work-link">
-                        <a href="#"><i class="fa fa-external-link"></i></a>
-                        <a class="lightbox" href="{{ asset('assets/img/dms_inner.png') }}"><i class="fa fa-search"></i></a>
-                    </div>
-                </div>
-            </div>
-            <!-- /Work -->
-
-        </div>
-        <!-- /Row -->
-
-    </div>
-    <!-- /Container -->
-
-</div>
-<!-- /Portfolio -->
-
-<!-- Service -->
-<div id="service" class="section md-padding">
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-
-            <!-- Section header -->
-            <div class="section-header text-center">
-                <h2 class="title">What we offer</h2>
-            </div>
-            <!-- /Section header -->
-
-            <!-- service -->
-            <div class="col-md-4 col-sm-6">
-                <div class="service">
-                    <i class="fa fa-diamond"></i>
-                    <h3>App Development</h3>
-                    <p>Maecenas tempus tellus eget condimentum rhoncus sem quam semper libero.</p>
-                </div>
-            </div>
-            <!-- /service -->
-
-            <!-- service -->
-            <div class="col-md-4 col-sm-6">
-                <div class="service">
-                    <i class="fa fa-rocket"></i>
-                    <h3>Graphic Design</h3>
-                    <p>Maecenas tempus tellus eget condimentum rhoncus sem quam semper libero.</p>
-                </div>
-            </div>
-            <!-- /service -->
-
-            <!-- service -->
-            <div class="col-md-4 col-sm-6">
-                <div class="service">
-                    <i class="fa fa-cogs"></i>
-                    <h3>Creative Idea</h3>
-                    <p>Maecenas tempus tellus eget condimentum rhoncus sem quam semper libero.</p>
-                </div>
-            </div>
-            <!-- /service -->
-
-            <!-- service -->
-            <div class="col-md-4 col-sm-6">
-                <div class="service">
-                    <i class="fa fa-diamond"></i>
-                    <h3>Marketing</h3>
-                    <p>Maecenas tempus tellus eget condimentum rhoncus sem quam semper libero.</p>
-                </div>
-            </div>
-            <!-- /service -->
-
-            <!-- service -->
-            <div class="col-md-4 col-sm-6">
-                <div class="service">
-                    <i class="fa fa-pencil"></i>
-                    <h3>Awesome Support</h3>
-                    <p>Maecenas tempus tellus eget condimentum rhoncus sem quam semper libero.</p>
-                </div>
-            </div>
-            <!-- /service -->
-
-            <!-- service -->
-            <div class="col-md-4 col-sm-6">
-                <div class="service">
-                    <i class="fa fa-flask"></i>
-                    <h3>Brand Design</h3>
-                    <p>Maecenas tempus tellus eget condimentum rhoncus sem quam semper libero.</p>
-                </div>
-            </div>
-            <!-- /service -->
-
-        </div>
-        <!-- /Row -->
-
-    </div>
-    <!-- /Container -->
-
-</div>
-<!-- /Service -->
-
-
-<!-- Why Choose Us -->
-<div id="features" class="section md-padding bg-grey">
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-
-            <!-- why choose us content -->
-            <div class="col-md-6">
-                <div class="section-header">
-                    <h2 class="title">Why Choose Us</h2>
-                </div>
-                <p>Molestie at elementum eu facilisis sed odio. Scelerisque in dictum non consectetur a erat. Aliquam id diam maecenas ultricies mi eget mauris. Ultrices sagittis orci a scelerisque purus.</p>
-                <div class="feature">
-                    <i class="fa fa-check"></i>
-                    <p>Quis varius quam quisque id diam vel quam elementum.</p>
-                </div>
-                <div class="feature">
-                    <i class="fa fa-check"></i>
-                    <p>Mauris augue neque gravida in fermentum.</p>
-                </div>
-                <div class="feature">
-                    <i class="fa fa-check"></i>
-                    <p>Orci phasellus egestas tellus rutrum.</p>
-                </div>
-                <div class="feature">
-                    <i class="fa fa-check"></i>
-                    <p>Nec feugiat nisl pretium fusce id velit ut tortor pretium.</p>
-                </div>
-            </div>
-            <!-- /why choose us content -->
-
-            <!-- About slider -->
-            <div class="col-md-6">
-                <div id="about-slider" class="owl-carousel owl-theme">
-                    <img class="img-responsive" src="{{ asset('assets/img/about1.jpg') }}" alt="">
-                    <img class="img-responsive" src="{{ asset('assets/img/about2.jpg') }}" alt="">
-                    <img class="img-responsive" src="{{ asset('assets/img/about1.jpg') }}" alt="">
-                    <img class="img-responsive" src="{{ asset('assets/img/about2.jpg') }}" alt="">
-                </div>
-            </div>
-            <!-- /About slider -->
-
-        </div>
-        <!-- /Row -->
-
-    </div>
-    <!-- /Container -->
-
-</div>
-<!-- /Why Choose Us -->
-
-
-<!-- Numbers -->
-<div id="numbers" class="section sm-padding">
-
-    <!-- Background Image -->
-    <div class="bg-img" style="background-image: url({{ asset('assets/img/bd2.jpg') }});">
-        <div class="overlay"></div>
-    </div>
-    <!-- /Background Image -->
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-
-            <!-- number -->
-            <div class="col-sm-3 col-xs-6">
-                <div class="number">
-                    <i class="fa fa-users"></i>
-                    <h3 class="white-text"><span class="counter">451</span></h3>
-                    <span class="white-text">Happy clients</span>
-                </div>
-            </div>
-            <!-- /number -->
-
-            <!-- number -->
-            <div class="col-sm-3 col-xs-6">
-                <div class="number">
-                    <i class="fa fa-trophy"></i>
-                    <h3 class="white-text"><span class="counter">12</span></h3>
-                    <span class="white-text">Awards won</span>
-                </div>
-            </div>
-            <!-- /number -->
-
-            <!-- number -->
-            <div class="col-sm-3 col-xs-6">
-                <div class="number">
-                    <i class="fa fa-coffee"></i>
-                    <h3 class="white-text"><span class="counter">154</span>K</h3>
-                    <span class="white-text">Cups of Coffee</span>
-                </div>
-            </div>
-            <!-- /number -->
-
-            <!-- number -->
-            <div class="col-sm-3 col-xs-6">
-                <div class="number">
-                    <i class="fa fa-file"></i>
-                    <h3 class="white-text"><span class="counter">45</span></h3>
-                    <span class="white-text">Projects completed</span>
-                </div>
-            </div>
-            <!-- /number -->
-
-        </div>
-        <!-- /Row -->
-
-    </div>
-    <!-- /Container -->
-
-</div>
-<!-- /Numbers -->
-
-<!-- Pricing -->
-{{--
-<div id="pricing" class="section md-padding">
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-
-            <!-- Section header -->
-            <div class="section-header text-center">
-                <h2 class="title">Pricing Table</h2>
-            </div>
-            <!-- /Section header -->
-
-            <!-- pricing -->
-            <div class="col-sm-4">
-                <div class="pricing">
-                    <div class="price-head">
-                        <span class="price-title">Basic plan</span>
-                        <div class="price">
-                            <h3>$9<span class="duration">/ month</span></h3>
-                        </div>
-                    </div>
-                    <ul class="price-content">
-                        <li>
-                            <p>1GB Disk Space</p>
-                        </li>
-                        <li>
-                            <p>100 Email Account</p>
-                        </li>
-                        <li>
-                            <p>24/24 Support</p>
-                        </li>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                @forelse($services as $service)
+                <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-8 hover:border-purple-500 transition transform hover:scale-105">
+                    @if($service->icon)<div class="text-5xl mb-6 text-purple-500">{!! $service->icon !!}</div>@endif
+                    <h3 class="text-2xl font-bold mb-3">{{ $service->title }}</h3>
+                    <p class="text-slate-400 mb-6">{{ $service->short_description }}</p>
+                    @if($service->features && count($service->features) > 0)
+                    <ul class="space-y-2 mb-6">
+                        @foreach(array_slice($service->features, 0, 4) as $feature)
+                        <li class="flex items-start text-slate-300 text-sm"><i class="fas fa-check-circle text-purple-500 mt-1 mr-2"></i><span>{{ $feature }}</span></li>
+                        @endforeach
                     </ul>
-                    <div class="price-btn">
-                        <button class="outline-btn">Purchase now</button>
-                    </div>
+                    @endif
+                    @if($service->price_display)
+                    <div class="mt-6 pt-6 border-t border-slate-700"><p class="text-lg font-semibold text-purple-400">{{ $service->price_display }}</p></div>
+                    @endif
                 </div>
+                @empty
+                <div class="col-span-full text-center py-12"><p class="text-slate-400">No services available at the moment.</p></div>
+                @endforelse
             </div>
-            <!-- /pricing -->
-
-            <!-- pricing -->
-            <div class="col-sm-4">
-                <div class="pricing">
-                    <div class="price-head">
-                        <span class="price-title">Silver plan</span>
-                        <div class="price">
-                            <h3>$19<span class="duration">/ month</span></h3>
-                        </div>
-                    </div>
-                    <ul class="price-content">
-                        <li>
-                            <p>1GB Disk Space</p>
-                        </li>
-                        <li>
-                            <p>100 Email Account</p>
-                        </li>
-                        <li>
-                            <p>24/24 Support</p>
-                        </li>
-                    </ul>
-                    <div class="price-btn">
-                        <button class="outline-btn">Purchase now</button>
-                    </div>
-                </div>
-            </div>
-            <!-- /pricing -->
-
-            <!-- pricing -->
-            <div class="col-sm-4">
-                <div class="pricing">
-                    <div class="price-head">
-                        <span class="price-title">Gold plan</span>
-                        <div class="price">
-                            <h3>$39<span class="duration">/ month</span></h3>
-                        </div>
-                    </div>
-                    <ul class="price-content">
-                        <li>
-                            <p>1GB Disk Space</p>
-                        </li>
-                        <li>
-                            <p>100 Email Account</p>
-                        </li>
-                        <li>
-                            <p>24/24 Support</p>
-                        </li>
-                    </ul>
-                    <div class="price-btn">
-                        <button class="outline-btn">Purchase now</button>
-                    </div>
-                </div>
-            </div>
-            <!-- /pricing -->
-
         </div>
-        <!-- Row -->
+    </section>
 
-    </div>
-    <!-- /Container -->
-
-</div>
---}}
-<!-- /Pricing -->
-
-
-<!-- Testimonial -->
-<div id="testimonial" class="section md-padding">
-
-    <!-- Background Image -->
-    <div class="bg-img" style="background-image: url({{ asset('assets/img/bd1.jpg') }});">
-        <div class="overlay"></div>
-    </div>
-    <!-- /Background Image -->
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-
-            <!-- Testimonial slider -->
-            <div class="col-md-10 col-md-offset-1">
-                <div id="testimonial-slider" class="owl-carousel owl-theme">
-
-                    <!-- testimonial -->
-                    <div class="testimonial">
-                        <div class="testimonial-meta">
-                            <img src="{{ asset('assets/img/perso1.jpg') }}" alt="">
-                            <h3 class="white-text">John Doe</h3>
-                            <span>Web Designer</span>
-                        </div>
-                        <p class="white-text">Molestie at elementum eu facilisis sed odio. Scelerisque in dictum non consectetur a erat. Aliquam id diam maecenas ultricies mi eget mauris.</p>
-                    </div>
-                    <!-- /testimonial -->
-
-                    <!-- testimonial -->
-                    <div class="testimonial">
-                        <div class="testimonial-meta">
-                            <img src="{{ asset('assets/img/perso2.jpg') }}" alt="">
-                            <h3 class="white-text">John Doe</h3>
-                            <span>Web Designer</span>
-                        </div>
-                        <p class="white-text">Molestie at elementum eu facilisis sed odio. Scelerisque in dictum non consectetur a erat. Aliquam id diam maecenas ultricies mi eget mauris.</p>
-                    </div>
-                    <!-- /testimonial -->
-
-                </div>
+    <!-- Portfolio -->
+    <section id="portfolio" class="py-20 px-4 bg-slate-800/30">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Our <span class="text-purple-500">Portfolio</span></h2>
+                <p class="text-xl text-slate-300 max-w-3xl mx-auto">Explore our completed projects and see how we've helped businesses achieve their digital goals.</p>
             </div>
-            <!-- /Testimonial slider -->
-
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                @forelse($projects as $project)
+                <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6 hover:border-purple-500 transition transform hover:scale-105">
+                    <div class="flex items-start justify-between mb-4">
+                        <h3 class="text-xl font-bold flex-1">{{ $project->name }}</h3>
+                        <span class="ml-2 px-3 py-1 text-xs rounded-full bg-green-600/20 text-green-400">{{ ucfirst($project->status) }}</span>
+                    </div>
+                    @if($project->client)<div class="flex items-center mb-4 text-sm text-slate-400"><i class="fas fa-building mr-2"></i>{{ $project->client->company_name }}</div>@endif
+                    <p class="text-slate-400 text-sm mb-4">{{ Str::limit($project->description, 100) ?: 'No description available.' }}</p>
+                    @if($project->tech_stack)
+                    <div class="flex flex-wrap gap-2">
+                        @foreach(array_slice(explode(',', $project->tech_stack), 0, 3) as $tech)
+                        <span class="px-2 py-1 bg-slate-700 text-slate-300 text-xs rounded">{{ trim($tech) }}</span>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+                @empty
+                <div class="col-span-full text-center py-12"><i class="fas fa-folder-open text-6xl text-slate-700 mb-4"></i><p class="text-slate-400">Our portfolio projects will be displayed here soon.</p></div>
+                @endforelse
+            </div>
         </div>
-        <!-- /Row -->
+    </section>
 
-    </div>
-    <!-- /Container -->
-
-</div>
-<!-- /Testimonial -->
-
-<!-- Team -->
-<div id="team" class="section md-padding">
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-            <!-- Section header -->
-            <div class="section-header text-center">
-                <h2 class="title">The Team</h2>
-            </div>
-            <!-- /Section header -->
-
-            <!-- team -->
-            <div class="col-sm-4">
-                <div class="team">
-                    <div class="team-img">
-                        <img class="img-responsive" src="https://picsum.photos/id/8/200/200" alt="">
-                        <div class="overlay">
-                            <div class="team-social">
-                                <a href="https://www.facebook.com/babubph" target="_blank"><i class="fa fa-facebook"></i></a>
-                                <a href="#"><i class="fa fa-google-plus"></i></a>
-                                <a href="#"><i class="fa fa-twitter"></i></a>
-                            </div>
-                        </div>
+    <!-- Testimonials -->
+    @if($featuredTestimonials->count() > 0)
+    <section class="py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16"><h2 class="text-4xl md:text-5xl font-bold mb-6">What Our <span class="text-purple-500">Clients Say</span></h2></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                @foreach($featuredTestimonials as $testimonial)
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center mr-3"><span class="font-bold">{{ substr($testimonial->client_name, 0, 1) }}</span></div>
+                        <div><h4 class="font-semibold">{{ $testimonial->client_name }}</h4>@if($testimonial->client_company)<p class="text-sm text-slate-400">{{ $testimonial->client_company }}</p>@endif</div>
                     </div>
-                    <div class="team-content">
-                        <h3>Noor Mohammad Babu</h3>
-                        <span>Web & App Developer</span>
-                    </div>
+                    <div class="flex mb-3">@for($i = 1; $i <= 5; $i++)<i class="fas fa-star {{ $i <= $testimonial->rating ? 'text-yellow-400' : 'text-slate-600' }}"></i>@endfor</div>
+                    <p class="text-slate-300 text-sm">{{ $testimonial->content }}</p>
                 </div>
+                @endforeach
             </div>
-            <!-- /team -->
-
-            <!-- team -->
-            <div class="col-sm-4">
-                <div class="team">
-                    <div class="team-img">
-                        <img class="img-responsive" src="https://picsum.photos/id/1/200/200" alt="">
-                        <div class="overlay">
-                            <div class="team-social">
-                                <a href="https://www.facebook.com/opqclick" target="_blank"><i class="fa fa-facebook"></i></a>
-                                <a href="#"><i class="fa fa-google-plus"></i></a>
-                                <a href="#"><i class="fa fa-twitter"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="team-content">
-                        <h3>Opu Hasnat</h3>
-                        <span>Web Developer & DevOps Engineer</span>
-                    </div>
-                </div>
-            </div>
-            <!-- /team -->
-
-            <!-- team -->
-            <div class="col-sm-4">
-                <div class="team">
-                    <div class="team-img">
-                        <img class="img-responsive" src="https://picsum.photos/id/6/200/200" alt="">
-                        <div class="overlay">
-                            <div class="team-social">
-                                <a href="https://www.facebook.com/tonmoy.mmj" target="_blank"><i class="fa fa-facebook"></i></a>
-                                <a href="#"><i class="fa fa-google-plus"></i></a>
-                                <a href="#"><i class="fa fa-twitter"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="team-content">
-                        <h3>Abu Bin Oalid</h3>
-                        <span>Senior Web Developer</span>
-                    </div>
-                </div>
-            </div>
-            <!-- /team -->
-
-            <!-- team -->
-            <div class="col-sm-4">
-                <div class="team">
-                    <div class="team-img">
-                        <img class="img-responsive" src="https://placehold.co/200x200" alt="">
-                        <div class="overlay">
-                            <div class="team-social">
-                                <a href="https://www.facebook.com/Tareq.spark" target="_blank"><i class="fa fa-facebook"></i></a>
-                                <a href="#"><i class="fa fa-google-plus"></i></a>
-                                <a href="#"><i class="fa fa-twitter"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="team-content">
-                        <h3>Tarequl Islam Mukul</h3>
-                        <span>Business Analyst</span>
-                    </div>
-                </div>
-            </div>
-            <!-- /team -->
-
-            <!-- team -->
-            <div class="col-sm-4">
-                <div class="team">
-                    <div class="team-img">
-                        <img class="img-responsive" src="https://placehold.co/200x200" alt="">
-                        <div class="overlay">
-                            <div class="team-social">
-                                <a href="https://www.facebook.com/hossain.m.awlad" target="_blank"><i class="fa fa-facebook"></i></a>
-                                <a href="#"><i class="fa fa-google-plus"></i></a>
-                                <a href="#"><i class="fa fa-twitter"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="team-content">
-                        <h3>Hossain Md Awlad</h3>
-                        <span>Sr. Software Engineer</span>
-                    </div>
-                </div>
-            </div>
-            <!-- /team -->
-
-            <!-- team -->
-            <div class="col-sm-4">
-                <div class="team">
-                    <div class="team-img">
-                        <img class="img-responsive" src="https://placehold.co/200x200" alt="">
-                        <div class="overlay">
-                            <div class="team-social">
-                                <a href="https://www.facebook.com/hossain.m.awlad" target="_blank"><i class="fa fa-facebook"></i></a>
-                                <a href="#"><i class="fa fa-google-plus"></i></a>
-                                <a href="#"><i class="fa fa-twitter"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="team-content">
-                        <h3>Auninda Saha Dip</h3>
-                        <span>Sr. Software Engineer</span>
-                    </div>
-                </div>
-            </div>
-            <!-- /team -->
         </div>
-        <!-- /Row -->
+    </section>
+    @endif
 
-    </div>
-    <!-- /Container -->
-
-</div>
-<!-- /Team -->
-
-<!-- Blog -->
-{{--
-<div id="blog" class="section md-padding bg-grey">
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-
-            <!-- Section header -->
-            <div class="section-header text-center">
-                <h2 class="title">Recents news</h2>
+    <!-- Contact -->
+    <section id="contact" class="py-20 px-4 bg-slate-800/30">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Get In <span class="text-purple-500">Touch</span></h2>
+                <p class="text-xl text-slate-300 max-w-3xl mx-auto">Have a project in mind? Let's discuss how we can help bring your ideas to life.</p>
             </div>
-            <!-- /Section header -->
-
-            <!-- blog -->
-            <div class="col-md-4">
-                <div class="blog">
-                    <div class="blog-img">
-                        <img class="img-responsive" src="{{ asset('assets/img/blog1.jpg') }}" alt="">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2">
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-8">
+                        @if(session('success'))<div class="mb-6 p-4 bg-green-600/20 border border-green-600 rounded-lg text-green-400"><i class="fas fa-check-circle mr-2"></i>{{ session('success') }}</div>@endif
+                        @if(session('error'))<div class="mb-6 p-4 bg-red-600/20 border border-red-600 rounded-lg text-red-400"><i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}</div>@endif
+                        <form action="{{ route('contact.store') }}" method="POST">
+                            @csrf
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div><label class="block text-sm font-medium text-slate-300 mb-2">Name *</label><input type="text" name="name" value="{{ old('name') }}" required class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">@error('name')<p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror</div>
+                                <div><label class="block text-sm font-medium text-slate-300 mb-2">Email *</label><input type="email" name="email" value="{{ old('email') }}" required class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">@error('email')<p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror</div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div><label class="block text-sm font-medium text-slate-300 mb-2">Phone</label><input type="tel" name="phone" value="{{ old('phone') }}" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"></div>
+                                <div><label class="block text-sm font-medium text-slate-300 mb-2">Company</label><input type="text" name="company" value="{{ old('company') }}" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"></div>
+                            </div>
+                            <div class="mb-6"><label class="block text-sm font-medium text-slate-300 mb-2">Subject *</label><input type="text" name="subject" value="{{ old('subject') }}" required class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">@error('subject')<p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror</div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div><label class="block text-sm font-medium text-slate-300 mb-2">Service Interest</label><select name="service_interest" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"><option value="">Select a service...</option>@foreach($services as $service)<option value="{{ $service->title }}">{{ $service->title }}</option>@endforeach</select></div>
+                                <div><label class="block text-sm font-medium text-slate-300 mb-2">Budget Range</label><select name="budget_range" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500"><option value="">Select budget...</option><option value="Under $5,000">Under $5,000</option><option value="$5,000 - $10,000">$5,000 - $10,000</option><option value="$10,000 - $25,000">$10,000 - $25,000</option><option value="$25,000 - $50,000">$25,000 - $50,000</option><option value="$50,000+">$50,000+</option></select></div>
+                            </div>
+                            <div class="mb-6"><label class="block text-sm font-medium text-slate-300 mb-2">Message *</label><textarea name="message" rows="5" required class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">{{ old('message') }}</textarea>@error('message')<p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror</div>
+                            <button type="submit" class="w-full px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition"><i class="fas fa-paper-plane mr-2"></i>Send Message</button>
+                        </form>
                     </div>
-                    <div class="blog-content">
-                        <ul class="blog-meta">
-                            <li><i class="fa fa-user"></i>John doe</li>
-                            <li><i class="fa fa-clock-o"></i>18 Oct</li>
-                            <li><i class="fa fa-comments"></i>57</li>
-                        </ul>
-                        <h3>Molestie at elementum eu facilisis sed odio</h3>
-                        <p>Nec feugiat nisl pretium fusce id velit ut tortor pretium. Nisl purus in mollis nunc sed. Nunc non blandit massa enim nec.</p>
-                        <a href="blog-single.html">Read more</a>
+                </div>
+                <div class="space-y-6">
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <h3 class="text-xl font-bold mb-6">Contact Information</h3>
+                        <div class="space-y-6">
+                            <div class="flex items-start"><div class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4"><i class="fas fa-envelope text-purple-500 text-xl"></i></div><div><h4 class="font-semibold mb-1">Email</h4><a href="mailto:opqclick@gmail.com" class="text-slate-400 hover:text-purple-500">opqclick@gmail.com</a></div></div>
+                            <div class="flex items-start"><div class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4"><i class="fas fa-clock text-purple-500 text-xl"></i></div><div><h4 class="font-semibold mb-1">Working Hours</h4><p class="text-slate-400">24/7 Support Available</p></div></div>
+                            <div class="flex items-start"><div class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4"><i class="fas fa-map-marker-alt text-purple-500 text-xl"></i></div><div><h4 class="font-semibold mb-1">Location</h4><p class="text-slate-400">Remote / Cloud-based</p></div></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
+                        <h3 class="text-xl font-bold mb-4">Follow Us</h3>
+                        <div class="flex space-x-4">
+                            <a href="#" class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center hover:bg-purple-600 transition"><i class="fab fa-twitter text-xl"></i></a>
+                            <a href="#" class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center hover:bg-purple-600 transition"><i class="fab fa-linkedin text-xl"></i></a>
+                            <a href="#" class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center hover:bg-purple-600 transition"><i class="fab fa-github text-xl"></i></a>
+                        </div>
                     </div>
                 </div>
             </div>
-            <!-- /blog -->
-
-            <!-- blog -->
-            <div class="col-md-4">
-                <div class="blog">
-                    <div class="blog-img">
-                        <img class="img-responsive" src="{{ asset('assets/img/blog2.jpg') }}" alt="">
-                    </div>
-                    <div class="blog-content">
-                        <ul class="blog-meta">
-                            <li><i class="fa fa-user"></i>John doe</li>
-                            <li><i class="fa fa-clock-o"></i>18 Oct</li>
-                            <li><i class="fa fa-comments"></i>57</li>
-                        </ul>
-                        <h3>Molestie at elementum eu facilisis sed odio</h3>
-                        <p>Nec feugiat nisl pretium fusce id velit ut tortor pretium. Nisl purus in mollis nunc sed. Nunc non blandit massa enim nec.</p>
-                        <a href="blog-single.html">Read more</a>
-                    </div>
-                </div>
-            </div>
-            <!-- /blog -->
-
-            <!-- blog -->
-            <div class="col-md-4">
-                <div class="blog">
-                    <div class="blog-img">
-                        <img class="img-responsive"  src="{{ asset('assets/img/blog3.jpg') }}" alt="">
-                    </div>
-                    <div class="blog-content">
-                        <ul class="blog-meta">
-                            <li><i class="fa fa-user"></i>John doe</li>
-                            <li><i class="fa fa-clock-o"></i>18 Oct</li>
-                            <li><i class="fa fa-comments"></i>57</li>
-                        </ul>
-                        <h3>Molestie at elementum eu facilisis sed odio</h3>
-                        <p>Nec feugiat nisl pretium fusce id velit ut tortor pretium. Nisl purus in mollis nunc sed. Nunc non blandit massa enim nec.</p>
-                        <a href="blog-single.html">Read more</a>
-                    </div>
-                </div>
-            </div>
-            <!-- /blog -->
-
         </div>
-        <!-- /Row -->
+    </section>
 
-    </div>
-    <!-- /Container -->
-
-</div>
---}}
-<!-- /Blog -->
-
-<!-- Contact -->
-<div id="contact" class="section md-padding">
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-
-            <!-- Section-header -->
-            <div class="section-header text-center">
-                <h2 class="title">Get in touch</h2>
+    <!-- Footer -->
+    <footer class="bg-slate-800/50 border-t border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div class="col-span-1 md:col-span-2"><div class="mb-3"><x-logo /></div><p class="text-slate-400 mb-4">A dedicated cloud team specializing in modern software development.</p></div>
+                <div><h4 class="font-semibold mb-3">Quick Links</h4><ul class="space-y-2"><li><a href="#home" class="text-slate-400 hover:text-purple-500">Home</a></li><li><a href="#about" class="text-slate-400 hover:text-purple-500">About</a></li><li><a href="#services" class="text-slate-400 hover:text-purple-500">Services</a></li><li><a href="#portfolio" class="text-slate-400 hover:text-purple-500">Portfolio</a></li></ul></div>
+                <div><h4 class="font-semibold mb-3">Contact</h4><ul class="space-y-2 text-slate-400"><li><a href="#contact" class="hover:text-purple-500">Get In Touch</a></li><li><a href="mailto:opqclick@gmail.com" class="hover:text-purple-500">opqclick@gmail.com</a></li>@auth<li><a href="{{ route('dashboard') }}" class="hover:text-purple-500">Dashboard</a></li>@endauth</ul></div>
             </div>
-            <!-- /Section-header -->
-
-            <!-- contact -->
-            <div class="col-sm-4">
-                <div class="contact">
-                    <i class="fa fa-phone"></i>
-                    <h3>Phone</h3>
-                    <p>512-421-3940</p>
-                </div>
-            </div>
-            <!-- /contact -->
-
-            <!-- contact -->
-            <div class="col-sm-4">
-                <div class="contact">
-                    <i class="fa fa-envelope"></i>
-                    <h3>Email</h3>
-                    <p>email@support.com</p>
-                </div>
-            </div>
-            <!-- /contact -->
-
-            <!-- contact -->
-            <div class="col-sm-4">
-                <div class="contact">
-                    <i class="fa fa-map-marker"></i>
-                    <h3>Address</h3>
-                    <p>1739 Bubby Drive</p>
-                </div>
-            </div>
-            <!-- /contact -->
-
-            <!-- contact form -->
-            <div class="col-md-8 col-md-offset-2">
-                <form class="contact-form">
-                    <input type="text" class="input" placeholder="Name">
-                    <input type="email" class="input" placeholder="Email">
-                    <input type="text" class="input" placeholder="Subject">
-                    <textarea class="input" placeholder="Message"></textarea>
-                    <button class="main-btn">Send message</button>
-                </form>
-            </div>
-            <!-- /contact form -->
-
+            <div class="border-t border-slate-700 pt-6 text-center"><p class="text-sm text-slate-400">© {{ date('Y') }} Asynchronous Digital. All rights reserved.</p></div>
         </div>
-        <!-- /Row -->
+    </footer>
 
-    </div>
-    <!-- /Container -->
-
-</div>
-<!-- /Contact -->
-
-
-<!-- Footer -->
-<footer id="footer" class="sm-padding bg-dark">
-
-    <!-- Container -->
-    <div class="container">
-
-        <!-- Row -->
-        <div class="row">
-
-            <div class="col-md-12">
-
-                <!-- footer logo -->
-                <div class="footer-logo">
-                    <a href="https://asynchronousdigital.com"><h1 class="white-text">Asynchronous Digital</h1></a>
-                </div>
-                <!-- /footer logo -->
-
-                <!-- footer follow 
-                <ul class="footer-follow">
-                    <li><a href="#"><i class="fa fa-facebook"></i></a></li>
-                    <li><a href="#"><i class="fa fa-twitter"></i></a></li>
-                    <li><a href="#"><i class="fa fa-google-plus"></i></a></li>
-                    <li><a href="#"><i class="fa fa-instagram"></i></a></li>
-                    <li><a href="#"><i class="fa fa-linkedin"></i></a></li>
-                    <li><a href="#"><i class="fa fa-youtube"></i></a></li>
-                </ul>
-                /footer follow -->
-
-                <!-- footer copyright -->
-                <div class="footer-copyright">
-                    <p>Copyright © 2019. All Rights Reserved by <a href="https://asynchronousdigital.com" target="_blank">Asynchronous Digital</a></p>
-                </div>
-                <!-- /footer copyright -->
-
-            </div>
-
-        </div>
-        <!-- /Row -->
-
-    </div>
-    <!-- /Container -->
-
-</footer>
-<!-- /Footer -->
-
-<!-- Back to top -->
-<div id="back-to-top"></div>
-<!-- /Back to top -->
-
-<!-- Preloader -->
-<div id="preloader">
-    <div class="preloader">
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
-</div>
-<!-- /Preloader -->
-
-<!-- jQuery Plugins -->
-<script type="text/javascript" src="{{ asset('assets/js/jquery.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/owl.carousel.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/jquery.magnific-popup.js') }}"></script>
-<script type="text/javascript" src="{{ asset('assets/js/main.js') }}"></script>
-
+    <script>
+        window.addEventListener('load', () => { const l = document.getElementById('loader'); setTimeout(() => { l.style.opacity = '0'; setTimeout(() => l.remove(), 500); }, 1000); });
+        document.getElementById('mobile-menu-button')?.addEventListener('click', () => document.getElementById('mobile-menu')?.classList.toggle('active'));
+        document.querySelectorAll('#mobile-menu a').forEach(l => l.addEventListener('click', () => document.getElementById('mobile-menu')?.classList.remove('active')));
+        const sections = document.querySelectorAll('section[id]'), navLinks = document.querySelectorAll('.nav-link');
+        window.addEventListener('scroll', () => { let current = ''; sections.forEach(s => { if (scrollY >= s.offsetTop - 200) current = s.id; }); navLinks.forEach(l => { l.classList.remove('active'); if (l.getAttribute('href') === `#${current}`) l.classList.add('active'); }); });
+    </script>
 </body>
-
 </html>
