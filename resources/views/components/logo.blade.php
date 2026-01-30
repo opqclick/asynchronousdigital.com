@@ -11,7 +11,7 @@
 }
 
 .logo-image {
-    height: 40px;
+    height: 70px;
     width: auto;
     transition: all 0.3s ease;
 }
@@ -22,7 +22,7 @@
 
 @media (max-width: 640px) {
     .logo-image {
-        height: 36px;
+        height: 56px;
     }
 }
 </style>

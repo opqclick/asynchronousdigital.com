@@ -63,13 +63,13 @@ return [
     |
     */
 
-    'logo' => '',
-    'logo_img' => 'logo.png',
-    'logo_img_class' => 'brand-image elevation-3',
-    'logo_img_style' => 'height: 40px; width: auto;',
+    'logo' => '<img src="/logo.png" alt="Asynchronous Digital" style="max-height: 45px; width: auto; object-fit: contain;">',
+    'logo_img' => null,
+    'logo_img_class' => null,
+    'logo_img_style' => null,
     'logo_img_xl' => null,
-    'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'Asynchronous Digital',
+    'logo_img_xl_class' => null,
+    'logo_img_alt' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -444,6 +444,16 @@ return [
     */
 
     'plugins' => [
+        'CustomCSS' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'css/admin-custom.css',
+                ],
+            ],
+        ],
         'Datatables' => [
             'active' => false,
             'files' => [

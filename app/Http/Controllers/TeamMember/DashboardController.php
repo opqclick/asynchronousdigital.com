@@ -33,7 +33,7 @@ class DashboardController extends Controller
                 ->count(),
             'completed_this_month' => $user->tasks()
                 ->where('status', 'done')
-                ->whereMonth('updated_at', now()->month)
+                ->whereMonth('tasks.updated_at', now()->month)
                 ->count(),
             'total_assigned' => $user->tasks()->count(),
         ];
