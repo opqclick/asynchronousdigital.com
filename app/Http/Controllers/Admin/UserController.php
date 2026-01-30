@@ -63,14 +63,14 @@ class UserController extends Controller
         // Handle profile picture upload
         $profilePicturePath = null;
         if ($request->hasFile('profile_picture')) {
-            $profilePicturePath = $request->file('profile_picture')->store('profile_pictures', 'do_spaces');
+            $profilePicturePath = $request->file('profile_picture')->storePublicly('profile_pictures', 'do_spaces');
         }
 
         // Handle documents upload
         $documentPaths = [];
         if ($request->hasFile('documents')) {
             foreach ($request->file('documents') as $document) {
-                $documentPaths[] = $document->store('user_documents', 'do_spaces');
+                $documentPaths[] = $document->storePublicly('user_documents', 'do_spaces');
             }
         }
 
@@ -160,14 +160,14 @@ class UserController extends Controller
             if ($user->profile_picture && Storage::disk('do_spaces')->exists($user->profile_picture)) {
                 Storage::disk('do_spaces')->delete($user->profile_picture);
             }
-            $validated['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'do_spaces');
+            $validated['profile_picture'] = $request->file('profile_picture')->storePublicly('profile_pictures', 'do_spaces');
         }
 
         // Handle documents upload
         if ($request->hasFile('documents')) {
             $existingDocuments = $user->documents ?? [];
             foreach ($request->file('documents') as $document) {
-                $existingDocuments[] = $document->store('user_documents', 'do_spaces');
+                $existingDocuments[] = $document->storePublicly('user_documents', 'do_spaces');
             }
             $validated['documents'] = $existingDocuments;
         }

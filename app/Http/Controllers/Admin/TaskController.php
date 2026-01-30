@@ -59,7 +59,7 @@ class TaskController extends Controller
         $attachmentPaths = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('tasks', 'do_spaces');
+                $path = $file->storePublicly('tasks', 'do_spaces');
                 $attachmentPaths[] = [
                     'name' => $file->getClientOriginalName(),
                     'path' => $path,
@@ -133,7 +133,7 @@ class TaskController extends Controller
         if ($request->hasFile('attachments')) {
             $existingAttachments = $task->attachments ?? [];
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('tasks', 'do_spaces');
+                $path = $file->storePublicly('tasks', 'do_spaces');
                 $existingAttachments[] = [
                     'name' => $file->getClientOriginalName(),
                     'path' => $path,

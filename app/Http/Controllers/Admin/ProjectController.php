@@ -55,7 +55,7 @@ class ProjectController extends Controller
         $attachmentPaths = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('projects', 'do_spaces');
+                $path = $file->storePublicly('projects', 'do_spaces');
                 $attachmentPaths[] = [
                     'name' => $file->getClientOriginalName(),
                     'path' => $path,
@@ -130,7 +130,7 @@ class ProjectController extends Controller
         if ($request->hasFile('attachments')) {
             $existingAttachments = $project->attachments ?? [];
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('projects', 'do_spaces');
+                $path = $file->storePublicly('projects', 'do_spaces');
                 $existingAttachments[] = [
                     'name' => $file->getClientOriginalName(),
                     'path' => $path,

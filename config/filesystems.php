@@ -70,6 +70,10 @@ return [
             'endpoint' => env('DO_SPACES_ENDPOINT'),
             'use_path_style_endpoint' => false,
             'root' => env('DO_SPACES_ROOT', 'AsynchronousDigitalCRM'),
+            'visibility' => env('DO_SPACES_VISIBILITY', 'public'),
+            'options' => [
+                'CacheControl' => 'max-age=31536000, public',
+            ],
             'throw' => false,
             'report' => false,
         ],
