@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Role;
 use App\Models\User;
+use App\Mail\UserInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
@@ -46,7 +48,11 @@ class ClientController extends Controller
             'website' => 'nullable|url|max:255',
             'notes' => 'nullable|string',
             'status' => 'required|in:active,inactive',
+            'send_invitation_email' => 'boolean',
         ]);
+
+        // Store the plain password for the invitation email
+        $plainPassword = $validated['password'];
 
         // Get client role
         $clientRole = Role::where('name', 'client')->first();
@@ -72,8 +78,22 @@ class ClientController extends Controller
             'is_active' => $validated['status'] === 'active',
         ]);
 
+        // Send invitation email if checkbox is checked
+        if ($request->has('send_invitation_email')) {
+            try {
+                Mail::to($user->email)->send(new UserInvitation($user, $plainPassword));
+            } catch (\Exception $e) {
+                // Log the error but don't fail the client creation
+                \Log::error('Failed to send invitation email: ' . $e->getMessage());
+            }
+        }
+
+        $successMessage = $request->has('send_invitation_email') 
+            ? 'Client created successfully and invitation email sent.' 
+            : 'Client created successfully.';
+
         return redirect()->route('admin.clients.index')
-            ->with('success', 'Client created successfully.');
+            ->with('success', $successMessage);
     }
 
     /**
