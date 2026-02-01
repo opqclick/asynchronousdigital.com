@@ -69,7 +69,7 @@
             <x-input-label for="profile_picture" :value="__('Profile Picture')" />
             @if($user->profile_picture)
                 <div class="mt-2 mb-2">
-                    <img src="{{ Storage::disk('do_spaces')->url($user->profile_picture) }}" alt="Profile Picture" class="h-20 w-20 rounded-full object-cover">
+                    <img src="{{ \Storage::disk('do_spaces')->url($user->profile_picture) }}" alt="Profile Picture" class="h-20 w-20 rounded-full object-cover">
                 </div>
             @endif
             <input id="profile_picture" name="profile_picture" type="file" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
