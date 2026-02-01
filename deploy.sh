@@ -35,13 +35,17 @@ composer install --optimize-autoloader --no-dev --no-interaction --no-scripts
 echo "🔍 Running package discovery..."
 php artisan package:discover --ansi
 
-# Install/Update NPM dependencies
-echo "📦 Installing NPM dependencies..."
-npm install --production
-
-# Build assets
-echo "🏗️ Building production assets..."
-npm run build
+# Install/Update NPM dependencies and build assets
+if command -v npm &> /dev/null; then
+    echo "📦 Installing NPM dependencies..."
+    npm install --production
+    
+    echo "🏗️ Building production assets..."
+    npm run build
+else
+    echo "⚠️ NPM not found - skipping asset build"
+    echo "ℹ️  Assets should be built locally and committed to git"
+fi
 
 # Run migrations
 echo "🗄️ Running database migrations..."
