@@ -31,8 +31,11 @@ class UserInvitation extends Mailable implements ShouldQueue
      */
     public function envelope(): Envelope
     {
+        $environment = strtoupper(config('app.env'));
+        $prefix = $environment === 'PRODUCTION' ? '' : "[$environment] ";
+        
         return new Envelope(
-            subject: 'Welcome to Asynchronous Digital - Your Account Has Been Created',
+            subject: $prefix . 'Welcome to Asynchronous Digital - Your Account Has Been Created',
         );
     }
 
