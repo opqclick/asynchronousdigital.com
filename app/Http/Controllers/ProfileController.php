@@ -53,10 +53,15 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's account.
+     * Delete the user's account (Admin only, soft delete).
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Only admins can delete accounts
+        if (!$request->user()->isAdmin()) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
@@ -65,6 +70,7 @@ class ProfileController extends Controller
 
         Auth::logout();
 
+        // Use soft delete instead of hard delete
         $user->delete();
 
         $request->session()->invalidate();

@@ -1,10 +1,10 @@
 <section>
     <p class="text-muted">
-        {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.') }}
+        {{ __('As an administrator, you can delete your account. Once deleted, the account will be soft-deleted and can be restored later if needed. All resources and data will be preserved but the account will be inaccessible.') }}
     </p>
 
     <button type="button" class="btn btn-danger mt-3" data-toggle="modal" data-target="#confirmUserDeletionModal">
-        <i class="fas fa-trash"></i> {{ __('Delete Account') }}
+        <i class="fas fa-trash"></i> {{ __('Delete My Account') }}
     </button>
 
     <!-- Delete Account Modal -->
@@ -26,7 +26,7 @@
                     
                     <div class="modal-body">
                         <p class="text-muted">
-                            {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
+                            {{ __('This will soft-delete your account. The account can be restored by another administrator if needed. Please enter your password to confirm.') }}
                         </p>
 
                         <div class="form-group mt-3">
