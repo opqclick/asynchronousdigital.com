@@ -1,17 +1,26 @@
 # Asynchronous Digital CRM
 
-A comprehensive Customer Relationship Management system built with Laravel 12, featuring project management, team collaboration, and client communication tools.
+A comprehensive Customer Relationship Management system built with Laravel 12, featuring project management, team collaboration, client communication, and automated user invitation system.
 
 ## Features
 
 ### 🎯 Core Modules
 
 - **User Management** - Role-based access control (Admin, Team Member, Client)
+- **User Invitation System** - Automated email invitations with login credentials
 - **Project Management** - Complete project lifecycle management with milestones
 - **Task Management** - Kanban-style task board with assignments and tracking
 - **Contact Messages** - Centralized inbox for client inquiries
 - **Services & Portfolio** - Showcase company services and completed projects
 - **Testimonials** - Client feedback and reviews management
+
+### 📧 Email Features
+
+- **SMTP Integration** - Gmail SMTP for production emails
+- **User Invitations** - Automatic welcome emails with credentials
+- **Environment Indicators** - Email subjects show [LOCAL], [DEV], [STAGING] prefix for non-production
+- **Queue Support** - Background email processing via database queue
+- **Resend Invitations** - One-click resend from user/client lists
 
 ### 👥 User Roles & Permissions
 
@@ -101,20 +110,108 @@ DO_SPACES_URL=https://your_bucket_name.sgp1.digitaloceanspaces.com
 DO_SPACES_VISIBILITY=public
 ```
 
-6. **Run migrations and seeders**
+6. **Configure mail settings** (in `.env`)
+```env
+# For development (log emails to storage/logs)
+MAIL_MAILER=log
+
+# For production (send via SMTP)
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-gmail-app-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="your-email@gmail.com"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+> **Note:** For Gmail, you need to generate an [App Password](https://myaccount.google.com/apppasswords)
+
+7. **Run migrations and seeders**
 ```bash
 php artisan migrate
 php artisan db:seed
 ```
 
-7. **Build assets**
+8. **Build assets**
 ```bash
 npm run build
 ```
 
-8. **Start the development server**
+9. **Start the development server**
 ```bash
 php artisan serve
+```
+
+## Production Deployment
+
+### Manual Steps Required on Production
+
+1. **Set environment to production** (`.env`)
+```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://your-domain.com
+LOG_LEVEL=error
+SESSION_ENCRYPT=true
+TELESCOPE_ENABLED=false
+```
+
+2. **Configure queue worker** (for email processing)
+```bash
+# Run queue worker (use supervisor or systemd for persistent process)
+php artisan queue:work --daemon --tries=3
+
+# Or for production with supervisor:
+# Install supervisor and create config:
+sudo apt-get install supervisor
+
+# Add to /etc/supervisor/conf.d/laravel-worker.conf:
+[program:laravel-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /path/to/your/app/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+autostart=true
+autorestart=true
+stopasup=unexpected
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/path/to/your/app/storage/logs/worker.log
+stopwaitsecs=3600
+
+# Start supervisor:
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start laravel-worker:*
+```
+
+3. **Set up scheduled tasks** (crontab)
+```bash
+crontab -e
+
+# Add this line:
+* * * * * cd /path/to/your/app && php artisan schedule:run >> /dev/null 2>&1
+```
+
+4. **Clear and cache configs**
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+5. **Set proper permissions**
+```bash
+sudo chown -R www-data:www-data /path/to/your/app
+sudo chmod -R 775 /path/to/your/app/storage
+sudo chmod -R 775 /path/to/your/app/bootstrap/cache
+```
+
+6. **Run migrations** (if not already done)
+```bash
+php artisan migrate --force
+php artisan db:seed --class=RoleSeeder
+php artisan db:seed --class=AdminUserSeeder
 ```
 
 ## Default Credentials
@@ -125,13 +222,7 @@ After seeding, you can login with:
 - Email: admin@asynchronousdigital.com
 - Password: password
 
-**Team Member Account**
-- Email: john@asynchronousdigital.com
-- Password: password
-
-**Client Account**
-- Email: client@example.com
-- Password: password
+> ⚠️ **Important:** Change the default admin password immediately after first login!
 
 ## Git Workflow
 
@@ -209,12 +300,28 @@ AsynchronousDigitalCRM/
 
 ## Custom Features
 
+- **User Invitation System** - Automated email invitations when creating users/clients
+- **Resend Invitations** - One-click invitation resend with new temporary password
+- **Environment-aware Emails** - Email subjects show environment (LOCAL/DEV/STAGING)
 - **Kanban Task Board** - Drag-and-drop task management (To Do, In Progress, Review, Done)
 - **Role-based Dashboards** - Customized views for each user role
 - **File Management** - Secure file uploads with Digital Ocean Spaces integration
 - **Activity Tracking** - Comprehensive audit trail for projects and tasks
 - **Responsive Design** - Mobile-friendly interface across all modules
 - **Custom Logo Implementation** - Branded frontend and backend interfaces
+
+## Email Configuration
+
+### Development
+Set `QUEUE_CONNECTION=sync` in `.env` for immediate email sending (emails logged to `storage/logs/laravel.log`)
+
+### Production
+1. Set `QUEUE_CONNECTION=database` in `.env`
+2. Configure SMTP credentials (Gmail app password recommended)
+3. Run queue worker: `php artisan queue:work --daemon`
+4. Set up supervisor to keep queue worker running (see Production Deployment section)
+
+For detailed email system documentation, see [USER_INVITATION_SYSTEM.md](USER_INVITATION_SYSTEM.md)
 
 ## Development
 
