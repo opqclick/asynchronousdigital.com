@@ -244,4 +244,29 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
     }
+
+    /**
+     * Send invitation email to user.
+     */
+    public function sendInvitation(User $user)
+    {
+        // Generate a temporary password or use a reset token
+        $temporaryPassword = Str::random(12);
+        
+        // Update user's password
+        $user->update([
+            'password' => Hash::make($temporaryPassword),
+        ]);
+
+        // Send invitation email
+        try {
+            Mail::to($user->email)->send(new UserInvitation($user, $temporaryPassword));
+            return redirect()->route('admin.users.index')
+                ->with('success', 'Invitation email sent successfully to ' . $user->email);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send invitation email: ' . $e->getMessage());
+            return redirect()->route('admin.users.index')
+                ->with('error', 'Failed to send invitation email. Please try again.');
+        }
+    }
 }

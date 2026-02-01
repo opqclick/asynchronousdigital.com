@@ -10,6 +10,7 @@ use App\Mail\UserInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
@@ -173,5 +174,30 @@ class ClientController extends Controller
 
         return redirect()->route('admin.clients.index')
             ->with('success', 'Client deleted successfully.');
+    }
+
+    /**
+     * Send invitation email to client.
+     */
+    public function sendInvitation(Client $client)
+    {
+        // Generate a temporary password
+        $temporaryPassword = Str::random(12);
+        
+        // Update user's password
+        $client->user->update([
+            'password' => Hash::make($temporaryPassword),
+        ]);
+
+        // Send invitation email
+        try {
+            Mail::to($client->user->email)->send(new UserInvitation($client->user, $temporaryPassword));
+            return redirect()->route('admin.clients.index')
+                ->with('success', 'Invitation email sent successfully to ' . $client->user->email);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send invitation email: ' . $e->getMessage());
+            return redirect()->route('admin.clients.index')
+                ->with('error', 'Failed to send invitation email. Please try again.');
+        }
     }
 }

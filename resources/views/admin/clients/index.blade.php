@@ -19,6 +19,24 @@
 @stop
 
 @section('content')
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">All Clients</h3>
@@ -68,6 +86,14 @@
                                     <a href="{{ route('admin.clients.edit', $client) }}" class="btn btn-warning btn-sm" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    <form action="{{ route('admin.clients.send-invitation', $client) }}" method="POST" 
+                                          style="display:inline;" 
+                                          onsubmit="return confirm('Send invitation email to {{ $client->user->email }}?');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-success btn-sm" title="Send Invitation">
+                                            <i class="fas fa-envelope"></i>
+                                        </button>
+                                    </form>
                                     <form action="{{ route('admin.clients.destroy', $client) }}" method="POST" style="display: inline;">
                                         @csrf
                                         @method('DELETE')
