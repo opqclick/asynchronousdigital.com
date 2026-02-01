@@ -59,6 +59,7 @@ class UserController extends Controller
             'payment_model' => ['nullable', 'in:hourly,fixed,monthly'],
             'monthly_salary' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
+            'send_invitation_email' => ['boolean'],
             'teams' => ['nullable', 'array'],
             'teams.*' => ['exists:teams,id'],
         ]);
@@ -107,16 +108,22 @@ class UserController extends Controller
                 'joined_at' => now(),
             ]);
         }
-
-        // Send invitation email with login credentials
-        try {
-            Mail::to($user->email)->send(new UserInvitation($user, $plainPassword));
-        } catch (\Exception $e) {
-            // Log the error but don't fail the user creation
-            \Log::error('Failed to send invitation email: ' . $e->getMessage());
+if checkbox is checked
+        if ($request->has('send_invitation_email')) {
+            try {
+                Mail::to($user->email)->send(new UserInvitation($user, $plainPassword));
+            } catch (\Exception $e) {
+                // Log the error but don't fail the user creation
+                \Log::error('Failed to send invitation email: ' . $e->getMessage());
+            }
         }
 
+        $successMessage = $request->has('send_invitation_email') 
+            ? 'User created successfully and invitation email sent.' 
+            : 'User created successfully.';
+
         return redirect()->route('admin.users.index')
+            ->with('success', $successMessage
             ->with('success', 'User created successfully and invitation email sent.');
     }
 
