@@ -25,6 +25,15 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:500'],
+            'date_of_birth' => ['nullable', 'date', 'before:today'],
+            'profile_picture' => ['nullable', 'image', 'max:2048'], // 2MB max
+            'bank_name' => ['nullable', 'string', 'max:255'],
+            'bank_account_number' => ['nullable', 'string', 'max:255'],
+            'bank_account_holder' => ['nullable', 'string', 'max:255'],
+            'bank_routing_number' => ['nullable', 'string', 'max:255'],
+            'bank_swift_code' => ['nullable', 'string', 'max:255'],
         ];
     }
 }
