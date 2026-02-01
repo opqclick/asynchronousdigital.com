@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Team;
+use App\Mail\UserInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 
 class UserController extends Controller
@@ -60,6 +63,9 @@ class UserController extends Controller
             'teams.*' => ['exists:teams,id'],
         ]);
 
+        // Store the plain password for the invitation email
+        $plainPassword = $validated['password'];
+
         // Handle profile picture upload
         $profilePicturePath = null;
         if ($request->hasFile('profile_picture')) {
@@ -102,8 +108,16 @@ class UserController extends Controller
             ]);
         }
 
+        // Send invitation email with login credentials
+        try {
+            Mail::to($user->email)->send(new UserInvitation($user, $plainPassword));
+        } catch (\Exception $e) {
+            // Log the error but don't fail the user creation
+            \Log::error('Failed to send invitation email: ' . $e->getMessage());
+        }
+
         return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully.');
+            ->with('success', 'User created successfully and invitation email sent.');
     }
 
     /**
