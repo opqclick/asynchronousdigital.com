@@ -58,6 +58,11 @@ php artisan event:cache
 # Clear old caches
 php artisan cache:clear
 
+# Set proper permissions
+echo "🔐 Setting permissions..."
+chmod -R 755 storage bootstrap/cache
+chown -R $USER:$USER storage bootstrap/cache
+
 # Restart queue workers (if supervisor is configured)
 if command -v supervisorctl &> /dev/null; then
     echo "🔄 Restarting queue workers..."
@@ -69,3 +74,9 @@ echo "📧 Remember: Queue worker must be running for emails to send!"
 
 # Log deployment
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Deployment completed" >> storage/logs/deployment.log
+
+# Show recent logs if there are errors
+if [ -f storage/logs/laravel.log ]; then
+    echo "📋 Recent logs (last 10 lines):"
+    tail -n 10 storage/logs/laravel.log 2>/dev/null || true
+fi
