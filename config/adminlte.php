@@ -139,7 +139,7 @@ return [
     'usermenu_header_class' => 'bg-primary',
     'usermenu_image' => false,
     'usermenu_desc' => false,
-    'usermenu_profile_url' => false,
+    'usermenu_profile_url' => 'profile.edit',
 
     /*
     |--------------------------------------------------------------------------
@@ -305,6 +305,10 @@ return [
             'type' => 'fullscreen-widget',
             'topnav_right' => true,
         ],
+        [
+            'type' => 'navbar-user-menu',
+            'topnav_right' => true,
+        ],
 
         // Sidebar items:
         [
@@ -427,6 +431,14 @@ return [
             'icon' => 'fas fa-fw fa-folder',
             'can' => 'client',
             'route' => 'client.dashboard',
+        ],
+
+        // Profile for all users
+        ['header' => 'Account'],
+        [
+            'text' => 'Profile',
+            'icon' => 'fas fa-fw fa-user-circle',
+            'route' => 'profile.edit',
         ],
     ],
 

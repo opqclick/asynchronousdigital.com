@@ -137,4 +137,12 @@ class User extends Authenticatable
     {
         return $this->role->name === 'client';
     }
+
+    /**
+     * Get the profile URL for AdminLTE
+     */
+    public function adminlte_profile_url(): string
+    {
+        return route('profile.edit');
+    }
 }
