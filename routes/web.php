@@ -66,6 +66,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('salaries', SalaryController::class);
     Route::resource('users', UserController::class);
     
+    // Send invitation emails
+    Route::post('/users/{user}/send-invitation', [UserController::class, 'sendInvitation'])->name('users.send-invitation');
+    Route::post('/clients/{client}/send-invitation', [ClientController::class, 'sendInvitation'])->name('clients.send-invitation');
+    
     // User activity logs
     Route::get('/user-activities', [UserActivityController::class, 'index'])->name('user-activities.index');
     Route::get('/user-activities/{activity}', [UserActivityController::class, 'show'])->name('user-activities.show');

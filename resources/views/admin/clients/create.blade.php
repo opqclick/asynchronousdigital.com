@@ -147,6 +147,17 @@
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
                 </div>
+
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="send_invitation_email" 
+                               name="send_invitation_email" value="1" {{ old('send_invitation_email', false) ? 'checked' : '' }}>
+                        <label class="custom-control-label" for="send_invitation_email">
+                            <i class="fas fa-envelope"></i> Send Invitation Email
+                        </label>
+                        <small class="form-text text-muted">Send login credentials to the client's email address</small>
+                    </div>
+                </div>
             </div>
 
             <div class="card-footer">

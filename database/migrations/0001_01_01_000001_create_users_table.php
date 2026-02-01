@@ -20,7 +20,16 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone')->nullable();
             $table->text('address')->nullable();
-            $table->enum('payment_model', ['hourly', 'monthly', 'project_based', 'task_based', 'contractual'])->nullable();
+            $table->date('date_of_birth')->nullable();
+            $table->date('joining_date')->nullable();
+            $table->string('profile_picture')->nullable();
+            $table->json('documents')->nullable();
+            $table->string('bank_name')->nullable();
+            $table->string('bank_account_number')->nullable();
+            $table->string('bank_account_holder')->nullable();
+            $table->string('bank_routing_number')->nullable();
+            $table->string('bank_swift_code')->nullable();
+            $table->enum('payment_model', ['hourly', 'fixed', 'monthly'])->nullable();
             $table->decimal('monthly_salary', 10, 2)->nullable();
             $table->boolean('is_active')->default(true);
             $table->rememberToken();

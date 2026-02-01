@@ -59,6 +59,7 @@ class UserController extends Controller
             'payment_model' => ['nullable', 'in:hourly,fixed,monthly'],
             'monthly_salary' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
+            'send_invitation_email' => ['boolean'],
             'teams' => ['nullable', 'array'],
             'teams.*' => ['exists:teams,id'],
         ]);
@@ -108,16 +109,22 @@ class UserController extends Controller
             ]);
         }
 
-        // Send invitation email with login credentials
-        try {
-            Mail::to($user->email)->send(new UserInvitation($user, $plainPassword));
-        } catch (\Exception $e) {
-            // Log the error but don't fail the user creation
-            \Log::error('Failed to send invitation email: ' . $e->getMessage());
+        // Send invitation email if checkbox is checked
+        if ($request->has('send_invitation_email')) {
+            try {
+                Mail::to($user->email)->send(new UserInvitation($user, $plainPassword));
+            } catch (\Exception $e) {
+                // Log the error but don't fail the user creation
+                \Log::error('Failed to send invitation email: ' . $e->getMessage());
+            }
         }
 
+        $successMessage = $request->has('send_invitation_email') 
+            ? 'User created successfully and invitation email sent.' 
+            : 'User created successfully.';
+
         return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully and invitation email sent.');
+            ->with('success', $successMessage);
     }
 
     /**
@@ -236,5 +243,30 @@ class UserController extends Controller
         $user->delete();
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    /**
+     * Send invitation email to user.
+     */
+    public function sendInvitation(User $user)
+    {
+        // Generate a temporary password or use a reset token
+        $temporaryPassword = Str::random(12);
+        
+        // Update user's password
+        $user->update([
+            'password' => Hash::make($temporaryPassword),
+        ]);
+
+        // Send invitation email
+        try {
+            Mail::to($user->email)->send(new UserInvitation($user, $temporaryPassword));
+            return redirect()->route('admin.users.index')
+                ->with('success', 'Invitation email sent successfully to ' . $user->email);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send invitation email: ' . $e->getMessage());
+            return redirect()->route('admin.users.index')
+                ->with('error', 'Failed to send invitation email. Please try again.');
+        }
     }
 }
