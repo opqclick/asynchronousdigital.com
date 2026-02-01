@@ -208,8 +208,8 @@
                                 </div>
                                 <div>
                                     <h4 class="font-semibold mb-1">Email</h4>
-                                    <a href="mailto:opqclick@gmail.com" class="text-slate-400 hover:text-purple-500 transition-colors">
-                                        opqclick@gmail.com
+                                    <a href="mailto:asynchronousd@gmail.com" class="text-slate-400 hover:text-purple-500 transition-colors">
+                                        asynchronousd@gmail.com
                                     </a>
                                 </div>
                             </div>
