@@ -38,7 +38,7 @@
                 <h4 class="text-white font-semibold mb-3">Contact</h4>
                 <ul class="space-y-2 text-slate-400">
                     <li><a href="{{ route('contact') }}" class="hover:text-purple-500 transition-colors">Get In Touch</a></li>
-                    <li><a href="mailto:opqclick@gmail.com" class="hover:text-purple-500 transition-colors">opqclick@gmail.com</a></li>
+                    <li><a href="mailto:asynchronousd@gmail.com" class="hover:text-purple-500 transition-colors">asynchronousd@gmail.com</a></li>
                     @auth
                     <li><a href="{{ route('dashboard') }}" class="hover:text-purple-500 transition-colors">Dashboard</a></li>
                     @endauth

@@ -234,7 +234,7 @@
                     <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6">
                         <h3 class="text-xl font-bold mb-6">Contact Information</h3>
                         <div class="space-y-6">
-                            <div class="flex items-start"><div class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4"><i class="fas fa-envelope text-purple-500 text-xl"></i></div><div><h4 class="font-semibold mb-1">Email</h4><a href="mailto:opqclick@gmail.com" class="text-slate-400 hover:text-purple-500">opqclick@gmail.com</a></div></div>
+                            <div class="flex items-start"><div class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4"><i class="fas fa-envelope text-purple-500 text-xl"></i></div><div><h4 class="font-semibold mb-1">Email</h4><a href="mailto:asynchronousd@gmail.com" class="text-slate-400 hover:text-purple-500">asynchronousd@gmail.com</a></div></div>
                             <div class="flex items-start"><div class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4"><i class="fas fa-clock text-purple-500 text-xl"></i></div><div><h4 class="font-semibold mb-1">Working Hours</h4><p class="text-slate-400">24/7 Support Available</p></div></div>
                             <div class="flex items-start"><div class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4"><i class="fas fa-map-marker-alt text-purple-500 text-xl"></i></div><div><h4 class="font-semibold mb-1">Location</h4><p class="text-slate-400">Remote / Cloud-based</p></div></div>
                         </div>
@@ -258,7 +258,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                 <div class="col-span-1 md:col-span-2"><div class="mb-3"><x-logo /></div><p class="text-slate-400 mb-4">A dedicated cloud team specializing in modern software development.</p></div>
                 <div><h4 class="font-semibold mb-3">Quick Links</h4><ul class="space-y-2"><li><a href="#home" class="text-slate-400 hover:text-purple-500">Home</a></li><li><a href="#about" class="text-slate-400 hover:text-purple-500">About</a></li><li><a href="#services" class="text-slate-400 hover:text-purple-500">Services</a></li><li><a href="#portfolio" class="text-slate-400 hover:text-purple-500">Portfolio</a></li></ul></div>
-                <div><h4 class="font-semibold mb-3">Contact</h4><ul class="space-y-2 text-slate-400"><li><a href="#contact" class="hover:text-purple-500">Get In Touch</a></li><li><a href="mailto:opqclick@gmail.com" class="hover:text-purple-500">opqclick@gmail.com</a></li>@auth<li><a href="{{ route('dashboard') }}" class="hover:text-purple-500">Dashboard</a></li>@endauth</ul></div>
+                <div><h4 class="font-semibold mb-3">Contact</h4><ul class="space-y-2 text-slate-400"><li><a href="#contact" class="hover:text-purple-500">Get In Touch</a></li><li><a href="mailto:asynchronousd@gmail.com" class="hover:text-purple-500">asynchronousd@gmail.com</a></li>@auth<li><a href="{{ route('dashboard') }}" class="hover:text-purple-500">Dashboard</a></li>@endauth</ul></div>
             </div>
             <div class="border-t border-slate-700 pt-6 text-center"><p class="text-sm text-slate-400">© {{ date('Y') }} Asynchronous Digital. All rights reserved.</p></div>
         </div>
