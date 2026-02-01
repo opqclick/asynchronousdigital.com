@@ -19,15 +19,17 @@ class UserSeeder extends Seeder
         $teamMemberRole = Role::where('name', 'team_member')->first();
         $clientRole = Role::where('name', 'client')->first();
 
-        // Create Admin User
-        User::create([
-            'role_id' => $adminRole->id,
-            'name' => 'Admin User',
-            'email' => 'admin@asynchronousdigital.com',
-            'password' => Hash::make('password'),
-            'phone' => '+1234567890',
-            'is_active' => true,
-        ]);
+        // Create Admin User (only if doesn't exist)
+        if (!User::where('email', 'admin@asynchronousdigital.com')->exists()) {
+            User::create([
+                'role_id' => $adminRole->id,
+                'name' => 'Admin User',
+                'email' => 'admin@asynchronousdigital.com',
+                'password' => Hash::make('password'),
+                'phone' => '+1234567890',
+                'is_active' => true,
+            ]);
+        }
 
         // Create Sample Team Members
         User::create([
