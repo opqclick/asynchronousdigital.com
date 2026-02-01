@@ -13,9 +13,27 @@ cd /home/u264230334/domains/asynchronousdigital.com/public_html
 echo "📥 Pulling latest code..."
 git pull origin main
 
-# Install/Update Composer dependencies (no dev)
+# Check if .env exists
+if [ ! -f .env ]; then
+    echo "⚠️ .env file not found! Copying from .env.prod..."
+    cp .env.prod .env
+    echo "🔑 Generating application key..."
+    php artisan key:generate --force
+fi
+
+# Verify APP_KEY exists
+if ! grep -q "APP_KEY=base64:" .env; then
+    echo "🔑 APP_KEY not set, generating..."
+    php artisan key:generate --force
+fi
+
+# Install/Update Composer dependencies (no dev) without scripts first
 echo "📦 Installing Composer dependencies..."
-composer install --optimize-autoloader --no-dev --no-interaction
+composer install --optimize-autoloader --no-dev --no-interaction --no-scripts
+
+# Now run package discovery
+echo "🔍 Running package discovery..."
+php artisan package:discover --ansi
 
 # Install/Update NPM dependencies
 echo "📦 Installing NPM dependencies..."
@@ -31,6 +49,7 @@ php artisan migrate --force
 
 # Clear and cache configs
 echo "🧹 Clearing and caching..."
+php artisan config:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
