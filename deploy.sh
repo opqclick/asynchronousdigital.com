@@ -65,7 +65,8 @@ php artisan cache:clear
 # Set proper permissions
 echo "🔐 Setting permissions..."
 chmod -R 755 storage bootstrap/cache
-chown -R $USER:$USER storage bootstrap/cache
+chmod -R 775 storage/logs storage/framework
+# Skip chown on shared hosting (user/group ownership is already correct)
 
 # Restart queue workers (if supervisor is configured)
 if command -v supervisorctl &> /dev/null; then
