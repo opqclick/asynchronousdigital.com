@@ -124,8 +124,7 @@ class UserController extends Controller
             : 'User created successfully.';
 
         return redirect()->route('admin.users.index')
-            ->with('success', $successMessage
-            ->with('success', 'User created successfully and invitation email sent.');
+            ->with('success', $successMessage);
     }
 
     /**
