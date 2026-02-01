@@ -1,31 +1,68 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
+@extends('adminlte::page')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-3xl">
-                    @include('profile.partials.update-profile-information-form')
-                </div>
-            </div>
+@section('title', 'Profile')
 
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-3xl">
-                    @include('profile.partials.update-password-form')
-                </div>
+@section('content_header')
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>My Profile</h1>
             </div>
-
-            @if(auth()->user()->role->name === 'admin')
-            <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                <div class="max-w-3xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Profile</li>
+                </ol>
             </div>
-            @endif
         </div>
     </div>
-</x-app-layout>
+@stop
+
+@section('content')
+    <div class="container-fluid">
+        <!-- Profile Information -->
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">Profile Information</h3>
+            </div>
+            <div class="card-body">
+                @include('profile.partials.update-profile-information-form')
+            </div>
+        </div>
+
+        <!-- Update Password -->
+        <div class="card card-warning card-outline">
+            <div class="card-header">
+                <h3 class="card-title">Update Password</h3>
+            </div>
+            <div class="card-body">
+                @include('profile.partials.update-password-form')
+            </div>
+        </div>
+
+        <!-- Delete Account (Admin Only) -->
+        @if(auth()->user()->role->name === 'admin')
+        <div class="card card-danger card-outline">
+            <div class="card-header">
+                <h3 class="card-title">Delete Account</h3>
+            </div>
+            <div class="card-body">
+                @include('profile.partials.delete-user-form')
+            </div>
+        </div>
+        @endif
+    </div>
+@stop
+
+@section('css')
+    <style>
+        .profile-picture-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #007bff;
+            padding: 3px;
+        }
+    </style>
+@stop
