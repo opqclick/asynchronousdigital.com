@@ -108,7 +108,8 @@ class UserController extends Controller
                 'joined_at' => now(),
             ]);
         }
-if checkbox is checked
+
+        // Send invitation email if checkbox is checked
         if ($request->has('send_invitation_email')) {
             try {
                 Mail::to($user->email)->send(new UserInvitation($user, $plainPassword));
