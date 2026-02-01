@@ -51,6 +51,12 @@ fi
 echo "🗄️ Running database migrations..."
 php artisan migrate --force
 
+# Publish Telescope assets if needed
+if [ ! -d "public/vendor/telescope" ]; then
+    echo "📡 Publishing Telescope assets..."
+    php artisan telescope:publish
+fi
+
 # Clear and cache configs
 echo "🧹 Clearing and caching..."
 php artisan config:clear
