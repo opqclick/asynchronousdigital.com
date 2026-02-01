@@ -3,7 +3,21 @@
 @section('title', 'Edit Task')
 
 @section('content_header')
-    <h1>Edit Task</h1>
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Edit Task</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('admin.tasks.index') }}">Tasks</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('admin.tasks.show', $task) }}">{{ $task->title }}</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                </ol>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('content')

@@ -3,7 +3,21 @@
 @section('title', 'Edit Project')
 
 @section('content_header')
-    <h1>Edit Project</h1>
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Edit Project</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('admin.projects.index') }}">Projects</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('admin.projects.show', $project) }}">{{ $project->name }}</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                </ol>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('content')

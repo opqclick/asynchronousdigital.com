@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone')->nullable();
             $table->text('address')->nullable();
-            $table->enum('payment_model', ['monthly', 'project_based', 'task_based', 'contractual'])->nullable();
+            $table->enum('payment_model', ['hourly', 'monthly', 'project_based', 'task_based', 'contractual'])->nullable();
             $table->decimal('monthly_salary', 10, 2)->nullable();
             $table->boolean('is_active')->default(true);
             $table->rememberToken();

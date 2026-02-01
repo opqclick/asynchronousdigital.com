@@ -3,7 +3,19 @@
 @section('title', 'Invoices')
 
 @section('content_header')
-    <h1>Invoices</h1>
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Invoices</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Invoices</li>
+                </ol>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('content')
@@ -38,7 +50,7 @@
                             <td><strong>{{ $invoice->invoice_number }}</strong></td>
                             <td>{{ $invoice->client->user->name }}</td>
                             <td>{{ $invoice->project->name }}</td>
-                            <td>{{ $invoice->invoice_date->format('M d, Y') }}</td>
+                            <td>{{ $invoice->issue_date->format('M d, Y') }}</td>
                             <td>
                                 @if($invoice->due_date->isPast() && $invoice->status !== 'paid')
                                     <span class="text-danger">{{ $invoice->due_date->format('M d, Y') }}</span>
