@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends Model
@@ -63,5 +64,13 @@ class Task extends Model
         return $this->belongsToMany(Team::class)
             ->withTimestamps()
             ->withPivot('assigned_at');
+    }
+
+    /**
+     * Get status movement history for this task
+     */
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(\App\Models\TaskStatusHistory::class)->with('user')->latest();
     }
 }

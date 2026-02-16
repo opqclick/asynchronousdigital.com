@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TaskStatusHistory;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -146,6 +147,14 @@ class TaskController extends Controller
 
         $task->update($validated);
 
+        if ($task->wasChanged('status')) {
+            $this->logStatusChange(
+                $task,
+                $task->getOriginal('status'),
+                $task->status
+            );
+        }
+
         // Sync users and teams
         if (isset($validated['users'])) {
             $task->users()->sync($validated['users']);
@@ -182,7 +191,10 @@ class TaskController extends Controller
             'status' => 'required|in:to_do,in_progress,review,done'
         ]);
 
+        $oldStatus = $task->status;
         $task->update(['status' => $request->status]);
+
+        $this->logStatusChange($task, $oldStatus, $request->status);
 
         return response()->json([
             'success' => true,
@@ -195,7 +207,7 @@ class TaskController extends Controller
      */
     public function details(Task $task)
     {
-        $task->load(['project', 'users', 'comments']);
+        $task->load(['project', 'users', 'comments', 'statusHistories']);
         
         return view('admin.tasks.details-partial', compact('task'));
     }
@@ -211,7 +223,7 @@ class TaskController extends Controller
         ]);
 
         $comment = $task->comments()->create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'parent_id' => $request->parent_id,
             'comment' => $request->comment,
         ]);
@@ -222,6 +234,20 @@ class TaskController extends Controller
             'success' => true,
             'comment' => $comment,
             'html' => view('admin.tasks.comment-item', compact('comment'))->render()
+        ]);
+    }
+
+    private function logStatusChange(Task $task, string $fromStatus, string $toStatus): void
+    {
+        if ($fromStatus === $toStatus) {
+            return;
+        }
+
+        TaskStatusHistory::create([
+            'task_id' => $task->id,
+            'user_id' => Auth::id(),
+            'from_status' => $fromStatus,
+            'to_status' => $toStatus,
         ]);
     }
 }

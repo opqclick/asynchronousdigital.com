@@ -15,10 +15,12 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserActivityController;
 use App\Http\Controllers\TeamMember\DashboardController as TeamMemberDashboardController;
 use App\Http\Controllers\TeamMember\SalaryController as TeamMemberSalaryController;
+use App\Http\Controllers\TeamMember\TaskController as TeamMemberTaskController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ContactController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // Public routes - Single page website
@@ -27,7 +29,7 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 
 // Redirect after login based on role
 Route::get('/dashboard', function () {
-    $user = auth()->user();
+    $user = Auth::user();
     
     if ($user->isAdmin()) {
         return redirect()->route('admin.dashboard');
@@ -83,6 +85,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // Team Member routes
 Route::middleware(['auth', 'role:team_member'])->prefix('team')->name('team-member.')->group(function () {
     Route::get('/dashboard', [TeamMemberDashboardController::class, 'index'])->name('dashboard');
+    Route::post('/tasks/{task}/update-status', [TeamMemberTaskController::class, 'updateStatus'])->name('tasks.update-status');
+    Route::get('/tasks/{task}/details', [TeamMemberTaskController::class, 'details'])->name('tasks.details');
+    Route::post('/tasks/{task}/comments', [TeamMemberTaskController::class, 'storeComment'])->name('tasks.comments.store');
     Route::get('/salaries', [TeamMemberSalaryController::class, 'index'])->name('salaries.index');
     Route::get('/salaries/{salary}', [TeamMemberSalaryController::class, 'show'])->name('salaries.show');
     Route::get('/salaries/{salary}/share', [TeamMemberSalaryController::class, 'share'])->name('salaries.share');
