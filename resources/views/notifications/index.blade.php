@@ -25,11 +25,50 @@
                     @php
                         $isRead = !is_null($notification->read_at);
                         $payload = $notification->data;
+                        $appBaseUrl = rtrim((string) config('app.url'), '/');
+                        $fallbackTaskUrl = !empty($payload['task_id'])
+                            ? $appBaseUrl.route('admin.tasks.show', $payload['task_id'], false)
+                            : route('notifications.index');
+
+                        $rawTargetUrl = (string) ($payload['target_url'] ?? '');
+                        $targetUrl = $fallbackTaskUrl;
+
+                        if (empty($payload['task_id'])) {
+                            if ($rawTargetUrl !== '') {
+                                if (str_starts_with($rawTargetUrl, '/')) {
+                                    $targetUrl = $appBaseUrl.$rawTargetUrl;
+                                } else {
+                                    $parsedPath = parse_url($rawTargetUrl, PHP_URL_PATH) ?: '';
+                                    $parsedQuery = parse_url($rawTargetUrl, PHP_URL_QUERY);
+                                    $parsedFragment = parse_url($rawTargetUrl, PHP_URL_FRAGMENT);
+
+                                    if ($parsedPath !== '') {
+                                        $targetUrl = $appBaseUrl.$parsedPath;
+
+                                        if (!empty($parsedQuery)) {
+                                            $targetUrl .= '?'.$parsedQuery;
+                                        }
+
+                                        if (!empty($parsedFragment)) {
+                                            $targetUrl .= '#'.$parsedFragment;
+                                        }
+                                    } else {
+                                        $targetUrl = route('notifications.index');
+                                    }
+                                }
+                            } else {
+                                $targetUrl = route('notifications.index');
+                            }
+                        }
                     @endphp
                     <div class="list-group-item {{ $isRead ? '' : 'list-group-item-info' }}">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
-                                <div class="font-weight-bold">{{ $payload['message'] ?? 'Notification received' }}</div>
+                                <div class="font-weight-bold">
+                                    <a href="{{ $targetUrl }}" class="text-reset text-decoration-none">
+                                        {{ $payload['message'] ?? 'Notification received' }}
+                                    </a>
+                                </div>
                                 @if(!empty($payload['project_name']))
                                     <small class="text-muted d-block">Project: {{ $payload['project_name'] }}</small>
                                 @endif
@@ -39,8 +78,11 @@
                                 <form method="POST" action="{{ route('notifications.read', $notification->id) }}">
                                     @csrf
                                     @method('PATCH')
-                                    <button class="btn btn-xs btn-primary" type="submit">Mark read</button>
+                                    <input type="hidden" name="redirect_to" value="{{ $targetUrl }}">
+                                    <button class="btn btn-xs btn-primary" type="submit">Open</button>
                                 </form>
+                            @else
+                                <a href="{{ $targetUrl }}" class="btn btn-xs btn-outline-secondary">Open</a>
                             @endif
                         </div>
                     </div>

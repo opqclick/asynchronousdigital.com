@@ -36,42 +36,7 @@ use Illuminate\Support\Facades\Storage;
                     </div>
                 </div>
                 <div class="card-body">
-                    @if($task->description)
-                        <p>{{ $task->description }}</p>
-                    @else
-                        <p class="text-muted">No description provided.</p>
-                    @endif
-
-                    <hr>
-
-                    <h5>Assigned Users</h5>
-                    @if($task->users->count() > 0)
-                        <div class="row">
-                            @foreach($task->users as $user)
-                                <div class="col-md-6 mb-2">
-                                    <div class="d-flex align-items-center">
-                                        <div class="mr-2">
-                                            <i class="fas fa-user-circle fa-2x text-primary"></i>
-                                        </div>
-                                        <div>
-                                            <strong>{{ $user->name }}</strong><br>
-                                            <small class="text-muted">{{ $user->email }}</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <p class="text-muted">No users assigned to this task.</p>
-                    @endif
-
-                    @if($task->teams->count() > 0)
-                        <hr>
-                        <h5>Assigned Teams</h5>
-                        @foreach($task->teams as $team)
-                            <span class="badge badge-primary">{{ $team->name }}</span>
-                        @endforeach
-                    @endif
+                    @include('admin.tasks.details-partial', ['task' => $task])
                 </div>
             </div>
         </div>
@@ -226,4 +191,140 @@ use Illuminate\Support\Facades\Storage;
             @endif
         </div>
     </div>
+@stop
+
+@section('js')
+    <script>
+        $(document).ready(function () {
+            const taskId = {{ (int) $task->id }};
+
+            const initializeTaskDetailsActions = function () {
+                $(document).off('click', '#submit-comment').on('click', '#submit-comment', function() {
+                    const comment = $('#new-comment-input').val().trim();
+
+                    if (!comment) {
+                        alert('Please write a comment');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '{{ route('admin.tasks.comments.store', $task) }}',
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            comment: comment
+                        },
+                        success: function(response) {
+                            $('#new-comment-input').val('');
+                            $('#no-comments-msg').remove();
+                            $('#comments-list').prepend(response.html);
+                            updateCommentCount();
+                            toastr.success('Comment posted successfully');
+                        },
+                        error: function() {
+                            toastr.error('Failed to post comment');
+                        }
+                    });
+                });
+
+                $(document).off('click', '.reply-btn').on('click', '.reply-btn', function(e) {
+                    e.preventDefault();
+                    const commentId = $(this).data('comment-id');
+                    $('.reply-form').hide();
+                    $('#reply-form-' + commentId).show();
+                    $('#reply-form-' + commentId + ' .reply-input').focus();
+                });
+
+                $(document).off('click', '.cancel-reply').on('click', '.cancel-reply', function() {
+                    $(this).closest('.reply-form').hide();
+                    $(this).closest('.reply-form').find('.reply-input').val('');
+                });
+
+                $(document).off('click', '.submit-reply').on('click', '.submit-reply', function() {
+                    const parentId = $(this).data('parent-id');
+                    const reply = $(this).closest('.reply-form').find('.reply-input').val().trim();
+
+                    if (!reply) {
+                        alert('Please write a reply');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '{{ route('admin.tasks.comments.store', $task) }}',
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            comment: reply,
+                            parent_id: parentId
+                        },
+                        success: function(response) {
+                            const $replyForm = $('#reply-form-' + parentId);
+                            $replyForm.hide();
+                            $replyForm.find('.reply-input').val('');
+
+                            let $repliesContainer = $('[data-comment-id="' + parentId + '"]').find('.replies').first();
+                            if ($repliesContainer.length === 0) {
+                                $repliesContainer = $('<div class="replies mt-3 ps-3" style="padding-left: 20px; border-left: 2px solid #dee2e6;"></div>');
+                                $replyForm.before($repliesContainer);
+                            }
+
+                            $repliesContainer.append(response.html);
+                            updateCommentCount();
+                            toastr.success('Reply posted successfully');
+                        },
+                        error: function() {
+                            toastr.error('Failed to post reply');
+                        }
+                    });
+                });
+
+                $(document).off('change', '#task-status-select').on('change', '#task-status-select', function() {
+                    const newStatus = $(this).val();
+
+                    $.ajax({
+                        url: '{{ route('admin.tasks.update-status', $task) }}',
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            status: newStatus
+                        },
+                        success: function() {
+                            toastr.success('Task status updated');
+                            window.location.reload();
+                        },
+                        error: function() {
+                            toastr.error('Failed to update task status');
+                            window.location.reload();
+                        }
+                    });
+                });
+
+                $('#new-comment-input').off('keypress').on('keypress', function(e) {
+                    if (e.which === 13) {
+                        $('#submit-comment').click();
+                    }
+                });
+
+                $('.reply-input').off('keypress').on('keypress', function(e) {
+                    if (e.which === 13) {
+                        $(this).closest('.reply-form').find('.submit-reply').click();
+                    }
+                });
+            };
+
+            const updateCommentCount = function () {
+                const count = $('#comments-list .comment-item').length;
+                $('.comments-section h5 .badge').text(count);
+            };
+
+            if (typeof toastr === 'undefined') {
+                window.toastr = {
+                    success: function(msg) { alert('Success: ' + msg); },
+                    error: function(msg) { alert('Error: ' + msg); },
+                };
+            }
+
+            initializeTaskDetailsActions(taskId);
+        });
+    </script>
 @stop

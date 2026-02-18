@@ -7,13 +7,15 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
-class TaskAssignedNotification extends Notification
+class TaskStatusChangedNotification extends Notification
 {
     use Queueable;
 
     public function __construct(
         private readonly Task $task,
-        private readonly User $assignedBy,
+        private readonly User $actor,
+        private readonly string $fromStatus,
+        private readonly string $toStatus,
     ) {
     }
 
@@ -28,14 +30,23 @@ class TaskAssignedNotification extends Notification
         $targetUrl = rtrim((string) config('app.url'), '/').$targetPath;
 
         return [
+            'type' => 'task_status_changed',
             'task_id' => $this->task->id,
             'task_title' => $this->task->title,
             'project_id' => $this->task->project_id,
             'project_name' => optional($this->task->project)->name,
-            'assigned_by_id' => $this->assignedBy->id,
-            'assigned_by_name' => $this->assignedBy->name,
+            'actor_id' => $this->actor->id,
+            'actor_name' => $this->actor->name,
+            'from_status' => $this->fromStatus,
+            'to_status' => $this->toStatus,
             'target_url' => $targetUrl,
-            'message' => sprintf('You have been assigned to task "%s" by %s.', $this->task->title, $this->assignedBy->name),
+            'message' => sprintf(
+                'Task "%s" moved from %s to %s by %s.',
+                $this->task->title,
+                str_replace('_', ' ', $this->fromStatus),
+                str_replace('_', ' ', $this->toStatus),
+                $this->actor->name,
+            ),
         ];
     }
 }

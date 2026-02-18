@@ -10,6 +10,7 @@ use App\Listeners\LogUserActivity;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -27,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->configureSecureUrlGeneration();
         $this->applySystemMailSettings();
 
         // Register event listeners
@@ -40,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::before(function ($user, string $ability) {
             if ($ability === 'impersonating') {
+                return null;
+            }
+
+            if (str_ends_with($ability, '_only')) {
                 return null;
             }
 
@@ -91,6 +97,18 @@ class AppServiceProvider extends ServiceProvider
             Gate::define($permission, function ($user) use ($permission) {
                 return $user->hasPermission($permission);
             });
+        }
+    }
+
+    private function configureSecureUrlGeneration(): void
+    {
+        if (app()->runningInConsole()) {
+            return;
+        }
+
+        $forwardedProto = (string) request()->header('X-Forwarded-Proto', '');
+        if (strtolower($forwardedProto) === 'https') {
+            URL::forceScheme('https');
         }
     }
 

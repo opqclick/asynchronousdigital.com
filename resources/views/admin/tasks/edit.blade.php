@@ -192,10 +192,32 @@
     <script src="https://cdn.jsdelivr.net/npm/bs-custom-file-input/dist/bs-custom-file-input.min.js"></script>
     <script>
         $(document).ready(function() {
+            const assignableUserIdsByProject = @json($assignableUserIdsByProject);
+
             $('.select2').select2({
                 theme: 'bootstrap4',
                 placeholder: 'Select...'
             });
+
+            const filterAssignableUsers = function () {
+                const projectId = String($('#project_id').val() || '');
+                const allowedUserIds = new Set((assignableUserIdsByProject[projectId] || []).map(String));
+
+                $('#users option').each(function () {
+                    const optionValue = String($(this).val());
+                    const isAllowed = projectId === '' || allowedUserIds.has(optionValue);
+
+                    $(this).prop('disabled', !isAllowed);
+                    if (!isAllowed && $(this).prop('selected')) {
+                        $(this).prop('selected', false);
+                    }
+                });
+
+                $('#users').trigger('change.select2');
+            };
+
+            $('#project_id').on('change', filterAssignableUsers);
+            filterAssignableUsers();
             
             // Initialize custom file input
             bsCustomFileInput.init();

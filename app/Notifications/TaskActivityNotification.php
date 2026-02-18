@@ -7,13 +7,16 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
-class TaskAssignedNotification extends Notification
+class TaskActivityNotification extends Notification
 {
     use Queueable;
 
     public function __construct(
         private readonly Task $task,
-        private readonly User $assignedBy,
+        private readonly User $actor,
+        private readonly string $activity,
+        private readonly string $message,
+        private readonly array $meta = [],
     ) {
     }
 
@@ -27,15 +30,17 @@ class TaskAssignedNotification extends Notification
         $targetPath = route('admin.tasks.show', $this->task, false);
         $targetUrl = rtrim((string) config('app.url'), '/').$targetPath;
 
-        return [
+        return array_merge([
+            'type' => 'task_activity',
+            'activity' => $this->activity,
             'task_id' => $this->task->id,
             'task_title' => $this->task->title,
             'project_id' => $this->task->project_id,
             'project_name' => optional($this->task->project)->name,
-            'assigned_by_id' => $this->assignedBy->id,
-            'assigned_by_name' => $this->assignedBy->name,
+            'actor_id' => $this->actor->id,
+            'actor_name' => $this->actor->name,
             'target_url' => $targetUrl,
-            'message' => sprintf('You have been assigned to task "%s" by %s.', $this->task->title, $this->assignedBy->name),
-        ];
+            'message' => $this->message,
+        ], $this->meta);
     }
 }

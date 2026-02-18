@@ -23,6 +23,11 @@ class NotificationController extends Controller
         $notification = $request->user()->notifications()->where('id', $notificationId)->firstOrFail();
         $notification->markAsRead();
 
+        $redirectTo = (string) $request->input('redirect_to', '');
+        if ($redirectTo !== '' && $this->isSafeRedirect($redirectTo)) {
+            return redirect()->to($redirectTo);
+        }
+
         return redirect()->route('notifications.index');
     }
 
@@ -31,5 +36,19 @@ class NotificationController extends Controller
         $request->user()->unreadNotifications->markAsRead();
 
         return redirect()->route('notifications.index');
+    }
+
+    private function isSafeRedirect(string $url): bool
+    {
+        if (str_starts_with($url, '/')) {
+            return true;
+        }
+
+        $appUrl = config('app.url');
+        if (!is_string($appUrl) || $appUrl === '') {
+            return false;
+        }
+
+        return str_starts_with($url, rtrim($appUrl, '/'));
     }
 }
