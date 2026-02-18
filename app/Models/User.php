@@ -115,11 +115,27 @@ class User extends Authenticatable
     }
 
     /**
+     * Get projects managed by this user
+     */
+    public function managedProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'project_manager_id');
+    }
+
+    /**
      * Check if user is admin
      */
     public function isAdmin(): bool
     {
-        return $this->role->name === 'admin';
+        return $this->hasRole(Role::ADMIN);
+    }
+
+    /**
+     * Check if user is project manager
+     */
+    public function isProjectManager(): bool
+    {
+        return $this->hasRole(Role::PROJECT_MANAGER);
     }
 
     /**
@@ -127,7 +143,7 @@ class User extends Authenticatable
      */
     public function isTeamMember(): bool
     {
-        return $this->role->name === 'team_member';
+        return $this->hasRole(Role::TEAM_MEMBER);
     }
 
     /**
@@ -135,7 +151,31 @@ class User extends Authenticatable
      */
     public function isClient(): bool
     {
-        return $this->role->name === 'client';
+        return $this->hasRole(Role::CLIENT);
+    }
+
+    /**
+     * Check if user has a specific role.
+     */
+    public function hasRole(string $roleName): bool
+    {
+        return $this->role?->name === $roleName;
+    }
+
+    /**
+     * Check if user has any of the provided roles.
+     */
+    public function hasAnyRole(array $roleNames): bool
+    {
+        return in_array($this->role?->name, $roleNames, true);
+    }
+
+    /**
+     * Check if user has a specific permission.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        return (bool) $this->role?->hasPermission($permission);
     }
 
     /**

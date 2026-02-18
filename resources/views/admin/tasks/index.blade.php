@@ -1,17 +1,19 @@
 @extends('adminlte::page')
 
-@section('title', 'Tasks')
+@php($isProjectManager = auth()->user()->isProjectManager())
+
+@section('title', $isProjectManager ? 'My Tasks' : 'Tasks')
 
 @section('content_header')
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1>Tasks</h1>
+                <h1>{{ $isProjectManager ? 'My Tasks' : 'Tasks' }}</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
                     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Tasks</li>
+                    <li class="breadcrumb-item active">{{ $isProjectManager ? 'My Tasks' : 'Tasks' }}</li>
                 </ol>
             </div>
         </div>
@@ -21,7 +23,7 @@
 @section('content')
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">All Tasks</h3>
+            <h3 class="card-title">{{ $isProjectManager ? 'Tasks for My Assigned Projects' : 'All Tasks' }}</h3>
             <div class="card-tools">
                 <a href="{{ route('admin.tasks.create') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Add New Task

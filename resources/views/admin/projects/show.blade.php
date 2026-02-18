@@ -35,6 +35,9 @@ use Illuminate\Support\Facades\Storage;
                         <dt class="col-sm-4">Client:</dt>
                         <dd class="col-sm-8">{{ $project->client->user->name }}</dd>
 
+                        <dt class="col-sm-4">Project Manager:</dt>
+                        <dd class="col-sm-8">{{ $project->projectManager?->name ?? 'Unassigned' }}</dd>
+
                         <dt class="col-sm-4">Status:</dt>
                         <dd class="col-sm-8">
                             @switch($project->status)
@@ -91,9 +94,11 @@ use Illuminate\Support\Facades\Storage;
                         </p>
                     @endif
 
-                    <a href="{{ route('admin.projects.edit', $project) }}" class="btn btn-primary btn-block">
-                        <i class="fas fa-edit"></i> Edit Project
-                    </a>
+                    @if(!auth()->user()->isProjectManager())
+                        <a href="{{ route('admin.projects.edit', $project) }}" class="btn btn-primary btn-block">
+                            <i class="fas fa-edit"></i> Edit Project
+                        </a>
+                    @endif
                 </div>
             </div>
 

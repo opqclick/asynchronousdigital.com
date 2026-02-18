@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 
@@ -115,7 +117,7 @@ class UserController extends Controller
                 Mail::to($user->email)->send(new UserInvitation($user, $plainPassword));
             } catch (\Exception $e) {
                 // Log the error but don't fail the user creation
-                \Log::error('Failed to send invitation email: ' . $e->getMessage());
+                Log::error('Failed to send invitation email: ' . $e->getMessage());
             }
         }
 
@@ -264,9 +266,68 @@ class UserController extends Controller
             return redirect()->route('admin.users.index')
                 ->with('success', 'Invitation email sent successfully to ' . $user->email);
         } catch (\Exception $e) {
-            \Log::error('Failed to send invitation email: ' . $e->getMessage());
+            Log::error('Failed to send invitation email: ' . $e->getMessage());
             return redirect()->route('admin.users.index')
                 ->with('error', 'Failed to send invitation email. Please try again.');
         }
+    }
+
+    /**
+     * Impersonate a user account.
+     */
+    public function impersonate(Request $request, User $user)
+    {
+        $admin = $request->user();
+
+        if (!$admin->isAdmin()) {
+            abort(403, 'Only admins can impersonate users.');
+        }
+
+        if ($admin->id === $user->id) {
+            return back()->with('error', 'You are already logged in as this user.');
+        }
+
+        if ($user->isAdmin()) {
+            return back()->with('error', 'Impersonating another admin is not allowed.');
+        }
+
+        if ($request->session()->has('impersonator_id')) {
+            return back()->with('error', 'Already impersonating a user. Please return to admin first.');
+        }
+
+        Auth::login($user);
+        $request->session()->put('impersonator_id', $admin->id);
+
+        return redirect()->route('dashboard')
+            ->with('success', 'You are now logged in as ' . $user->name . '.');
+    }
+
+    /**
+     * Stop impersonation and return to original admin account.
+     */
+    public function stopImpersonation(Request $request)
+    {
+        $impersonatorId = $request->session()->pull('impersonator_id');
+
+        if (!$impersonatorId) {
+            return redirect()->route('dashboard')
+                ->with('error', 'No active impersonation session found.');
+        }
+
+        $admin = User::find($impersonatorId);
+
+        if (!$admin || !$admin->isAdmin()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->with('error', 'Original admin account is not available. Please log in again.');
+        }
+
+        Auth::login($admin);
+
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Returned to admin account.');
     }
 }

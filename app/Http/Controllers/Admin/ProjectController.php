@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\Role;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
 {
@@ -16,7 +19,14 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $projects = Project::with(['client.user', 'tasks'])->get();
+        $projectsQuery = Project::with(['client.user', 'projectManager', 'tasks']);
+
+        if (Auth::user()->isProjectManager()) {
+            $projectsQuery->where('project_manager_id', Auth::id());
+        }
+
+        $projects = $projectsQuery->get();
+
         return view('admin.projects.index', compact('projects'));
     }
 
@@ -25,9 +35,21 @@ class ProjectController extends Controller
      */
     public function create()
     {
+        $this->authorizeProjectWrite();
+
         $clients = Client::with('user')->get();
         $teams = Team::all();
-        return view('admin.projects.create', compact('clients', 'teams'));
+        $projectManagers = User::with('role')
+            ->whereHas('role', function ($query) {
+                $query->where('name', Role::PROJECT_MANAGER);
+            })
+            ->get();
+
+        if (Auth::user()->isProjectManager()) {
+            $projectManagers = $projectManagers->where('id', Auth::id());
+        }
+
+        return view('admin.projects.create', compact('clients', 'teams', 'projectManagers'));
     }
 
     /**
@@ -35,9 +57,19 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorizeProjectWrite();
+
+        $projectManagerRoleId = Role::where('name', Role::PROJECT_MANAGER)->value('id');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
+            'project_manager_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(function ($query) use ($projectManagerRoleId) {
+                    $query->where('role_id', $projectManagerRoleId);
+                }),
+            ],
             'description' => 'nullable|string',
             'status' => 'required|in:active,paused,completed,cancelled',
             'billing_model' => 'required|in:task_based,monthly,fixed_price',
@@ -90,7 +122,9 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
-        $project->load(['client.user', 'teams.users', 'tasks', 'invoices']);
+        $this->authorizeProjectAccess($project);
+
+        $project->load(['client.user', 'projectManager', 'teams.users', 'tasks', 'invoices']);
         return view('admin.projects.show', compact('project'));
     }
 
@@ -99,10 +133,23 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
+        $this->authorizeProjectWrite();
+        $this->authorizeProjectAccess($project);
+
         $clients = Client::with('user')->get();
         $teams = Team::all();
         $project->load('teams');
-        return view('admin.projects.edit', compact('project', 'clients', 'teams'));
+        $projectManagers = User::with('role')
+            ->whereHas('role', function ($query) {
+                $query->where('name', Role::PROJECT_MANAGER);
+            })
+            ->get();
+
+        if (Auth::user()->isProjectManager()) {
+            $projectManagers = $projectManagers->where('id', Auth::id());
+        }
+
+        return view('admin.projects.edit', compact('project', 'clients', 'teams', 'projectManagers'));
     }
 
     /**
@@ -110,9 +157,20 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
+        $this->authorizeProjectWrite();
+        $this->authorizeProjectAccess($project);
+
+        $projectManagerRoleId = Role::where('name', Role::PROJECT_MANAGER)->value('id');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
+            'project_manager_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(function ($query) use ($projectManagerRoleId) {
+                    $query->where('role_id', $projectManagerRoleId);
+                }),
+            ],
             'description' => 'nullable|string',
             'status' => 'required|in:active,paused,completed,cancelled',
             'billing_model' => 'required|in:task_based,monthly,fixed_price',
@@ -166,8 +224,25 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
+        $this->authorizeProjectWrite();
+        $this->authorizeProjectAccess($project);
+
         $project->delete();
         return redirect()->route('admin.projects.index')
             ->with('success', 'Project deleted successfully.');
+    }
+
+    private function authorizeProjectAccess(Project $project): void
+    {
+        if (Auth::user()->isProjectManager() && $project->project_manager_id !== Auth::id()) {
+            abort(403, 'You can only manage your assigned projects.');
+        }
+    }
+
+    private function authorizeProjectWrite(): void
+    {
+        if (Auth::user()->isProjectManager()) {
+            abort(403, 'Project managers can only view assigned projects.');
+        }
     }
 }

@@ -43,6 +43,8 @@
 </head>
 <body class="bg-slate-900 text-white">
 
+    @include('partials.page-load-progress')
+
     <!-- Navigation Header -->
     @include('public.partials.nav')
 

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Role;
 use Illuminate\Auth\Events\Login;
 use App\Listeners\LogUserActivity;
 use Illuminate\Support\Facades\Event;
@@ -26,17 +27,43 @@ class AppServiceProvider extends ServiceProvider
         // Register event listeners
         Event::listen(Login::class, LogUserActivity::class);
 
+        Gate::before(function ($user, string $ability) {
+            if ($ability === 'impersonating') {
+                return null;
+            }
+
+            if ($user->isAdmin()) {
+                return true;
+            }
+
+            return null;
+        });
+
         // Define Gates for role-based menu access
         Gate::define('admin', function ($user) {
-            return $user->role->name === 'admin';
+            return $user->isAdmin();
+        });
+
+        Gate::define('project_manager', function ($user) {
+            return $user->isProjectManager();
         });
 
         Gate::define('team_member', function ($user) {
-            return $user->role->name === 'team_member';
+            return $user->isTeamMember();
         });
 
         Gate::define('client', function ($user) {
-            return $user->role->name === 'client';
+            return $user->isClient();
         });
+
+        Gate::define('impersonating', function ($user) {
+            return session()->has('impersonator_id');
+        });
+
+        foreach (Role::allPermissions() as $permission) {
+            Gate::define($permission, function ($user) use ($permission) {
+                return $user->hasPermission($permission);
+            });
+        }
     }
 }

@@ -314,7 +314,7 @@ return [
         [
             'text' => 'Dashboard',
             'icon' => 'fas fa-fw fa-tachometer-alt',
-            'can' => 'admin',
+            'can' => 'dashboard.view',
             'route' => 'admin.dashboard',
         ],
         
@@ -342,7 +342,7 @@ return [
         [
             'text' => 'Teams',
             'icon' => 'fas fa-fw fa-user-friends',
-            'can' => 'admin',
+            'can' => 'teams.manage',
             'route' => 'admin.teams.index',
         ],
         
@@ -395,6 +395,21 @@ return [
             'can' => 'admin',
             'route' => 'admin.contact-messages.index',
         ],
+
+        // Project Manager Menu
+        ['header' => 'Project Manager', 'can' => 'project_manager'],
+        [
+            'text' => 'Assigned Projects',
+            'icon' => 'fas fa-fw fa-project-diagram',
+            'can' => 'project_manager',
+            'route' => 'admin.projects.index',
+        ],
+        [
+            'text' => 'Task Management',
+            'icon' => 'fas fa-fw fa-tasks',
+            'can' => 'project_manager',
+            'route' => 'admin.tasks.index',
+        ],
         
         ['header' => 'Tools', 'can' => 'admin'],
         [
@@ -439,6 +454,12 @@ return [
             'text' => 'Profile',
             'icon' => 'fas fa-fw fa-user-circle',
             'route' => 'profile.edit',
+        ],
+        [
+            'text' => 'Back to Admin Panel',
+            'icon' => 'fas fa-fw fa-undo',
+            'can' => 'impersonating',
+            'route' => 'admin.impersonation.leave',
         ],
     ],
 

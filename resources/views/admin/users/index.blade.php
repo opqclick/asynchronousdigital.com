@@ -67,7 +67,7 @@
                             <td>{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
                             <td>
-                                <span class="badge badge-{{ $user->role->name === 'admin' ? 'danger' : ($user->role->name === 'team_member' ? 'primary' : 'info') }}">
+                                <span class="badge badge-{{ $user->role->name === 'admin' ? 'danger' : ($user->role->name === 'project_manager' ? 'warning' : ($user->role->name === 'team_member' ? 'primary' : 'info')) }}">
                                     {{ ucfirst(str_replace('_', ' ', $user->role->name)) }}
                                 </span>
                             </td>
@@ -102,6 +102,16 @@
                                             <i class="fas fa-envelope"></i>
                                         </button>
                                     </form>
+                                    @if(auth()->user()->isAdmin() && auth()->id() !== $user->id && $user->role->name !== 'admin' && !session()->has('impersonator_id'))
+                                        <form action="{{ route('admin.users.impersonate', $user) }}" method="POST"
+                                              style="display:inline;"
+                                              onsubmit="return confirm('Login as {{ $user->name }}?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-secondary btn-sm" title="Login As">
+                                                <i class="fas fa-user-secret"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                     <form action="{{ route('admin.users.destroy', $user) }}" method="POST" 
                                           style="display:inline;" 
                                           onsubmit="return confirm('Are you sure you want to delete this user?');">

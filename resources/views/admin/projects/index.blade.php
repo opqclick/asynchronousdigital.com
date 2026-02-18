@@ -1,17 +1,19 @@
 @extends('adminlte::page')
 
-@section('title', 'Projects')
+@php($isProjectManager = auth()->user()->isProjectManager())
+
+@section('title', $isProjectManager ? 'Assigned Projects' : 'Projects')
 
 @section('content_header')
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1>Projects</h1>
+                <h1>{{ $isProjectManager ? 'Assigned Projects' : 'Projects' }}</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
                     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Projects</li>
+                    <li class="breadcrumb-item active">{{ $isProjectManager ? 'Assigned Projects' : 'Projects' }}</li>
                 </ol>
             </div>
         </div>
@@ -21,11 +23,13 @@
 @section('content')
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">All Projects</h3>
+            <h3 class="card-title">{{ $isProjectManager ? 'My Assigned Projects' : 'All Projects' }}</h3>
             <div class="card-tools">
-                <a href="{{ route('admin.projects.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Add New Project
-                </a>
+                @if(!auth()->user()->isProjectManager())
+                    <a href="{{ route('admin.projects.create') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Add New Project
+                    </a>
+                @endif
             </div>
         </div>
         <div class="card-body">
@@ -35,6 +39,7 @@
                         <th>ID</th>
                         <th>Name</th>
                         <th>Client</th>
+                        <th>Project Manager</th>
                         <th>Status</th>
                         <th>Start Date</th>
                         <th>End Date</th>
@@ -49,6 +54,7 @@
                             <td>{{ $project->id }}</td>
                             <td>{{ $project->name }}</td>
                             <td>{{ $project->client->user->name }}</td>
+                            <td>{{ $project->projectManager?->name ?? 'Unassigned' }}</td>
                             <td>
                                 @switch($project->status)
                                     @case('planning')
@@ -77,16 +83,18 @@
                                     <a href="{{ route('admin.projects.show', $project) }}" class="btn btn-info btn-sm" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('admin.projects.edit', $project) }}" class="btn btn-warning btn-sm" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.projects.destroy', $project) }}" method="POST" style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this project?')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if(!auth()->user()->isProjectManager())
+                                        <a href="{{ route('admin.projects.edit', $project) }}" class="btn btn-warning btn-sm" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.projects.destroy', $project) }}" method="POST" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this project?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

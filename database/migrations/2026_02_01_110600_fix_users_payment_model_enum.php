@@ -1,8 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,6 +10,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Fix payment_model enum values
         DB::statement("ALTER TABLE users MODIFY payment_model ENUM('hourly', 'fixed', 'monthly') NULL");
     }
@@ -20,6 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Revert to old values if needed
         DB::statement("ALTER TABLE users MODIFY payment_model ENUM('hourly', 'monthly', 'project_based', 'task_based', 'contractual') NULL");
     }

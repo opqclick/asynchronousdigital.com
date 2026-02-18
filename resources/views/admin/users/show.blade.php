@@ -46,7 +46,7 @@ use Illuminate\Support\Facades\Storage;
                     <h3 class="profile-username text-center">{{ $user->name }}</h3>
 
                     <p class="text-muted text-center">
-                        <span class="badge badge-{{ $user->role->name === 'admin' ? 'danger' : ($user->role->name === 'team_member' ? 'primary' : 'info') }}">
+                        <span class="badge badge-{{ $user->role->name === 'admin' ? 'danger' : ($user->role->name === 'project_manager' ? 'warning' : ($user->role->name === 'team_member' ? 'primary' : 'info')) }}">
                             {{ ucfirst(str_replace('_', ' ', $user->role->name)) }}
                         </span>
                     </p>

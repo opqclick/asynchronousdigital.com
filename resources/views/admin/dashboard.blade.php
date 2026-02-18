@@ -1,12 +1,14 @@
 @extends('adminlte::page')
 
-@section('title', 'Admin Dashboard')
+@php($isProjectManager = auth()->user()->isProjectManager())
+
+@section('title', $isProjectManager ? 'Project Manager Dashboard' : 'Admin Dashboard')
 
 @section('content_header')
     <div class="container-fluid">
         <div class="row mb-2">
             <div class="col-sm-6">
-                <h1>Admin Dashboard</h1>
+                <h1>{{ $isProjectManager ? 'Project Manager Dashboard' : 'Admin Dashboard' }}</h1>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -35,20 +37,22 @@
             </div>
         </div>
         
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-success">
-                <div class="inner">
-                    <h3>{{ $stats['total_clients'] }}</h3>
-                    <p>Active Clients</p>
+        @if(!$isProjectManager)
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{{ $stats['total_clients'] }}</h3>
+                        <p>Active Clients</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <a href="{{ route('admin.clients.index') }}" class="small-box-footer">
+                        View Clients <i class="fas fa-arrow-circle-right"></i>
+                    </a>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <a href="{{ route('admin.clients.index') }}" class="small-box-footer">
-                    View Clients <i class="fas fa-arrow-circle-right"></i>
-                </a>
             </div>
-        </div>
+        @endif
         
         <div class="col-lg-3 col-6">
             <div class="small-box bg-warning">
@@ -65,20 +69,22 @@
             </div>
         </div>
         
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-danger">
-                <div class="inner">
-                    <h3>${{ number_format($stats['unpaid_invoices'], 2) }}</h3>
-                    <p>Unpaid Invoices</p>
+        @if(!$isProjectManager)
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3>${{ number_format($stats['unpaid_invoices'], 2) }}</h3>
+                        <p>Unpaid Invoices</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <a href="{{ route('admin.invoices.index') }}" class="small-box-footer">
+                        View Invoices <i class="fas fa-arrow-circle-right"></i>
+                    </a>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-dollar-sign"></i>
-                </div>
-                <a href="{{ route('admin.invoices.index') }}" class="small-box-footer">
-                    View Invoices <i class="fas fa-arrow-circle-right"></i>
-                </a>
             </div>
-        </div>
+        @endif
     </div>
 
     <!-- Task Board - Trello Style -->
