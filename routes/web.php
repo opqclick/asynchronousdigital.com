@@ -20,6 +20,7 @@ use App\Http\Controllers\Client\DashboardController as ClientDashboardController
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ContactController;
+use App\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,7 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 // Redirect after login based on role
 Route::get('/dashboard', function () {
     $user = Auth::user();
+    $user->ensureActiveRoleContext();
     
     if ($user->isAdmin()) {
         return redirect()->route('admin.dashboard');
@@ -41,6 +43,18 @@ Route::get('/dashboard', function () {
         return redirect()->route('client.dashboard');
     }
     
+    if ($user->hasAssignedRole(Role::ADMIN) || $user->hasAssignedRole(Role::PROJECT_MANAGER)) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    if ($user->hasAssignedRole(Role::TEAM_MEMBER)) {
+        return redirect()->route('team-member.dashboard');
+    }
+
+    if ($user->hasAssignedRole(Role::CLIENT)) {
+        return redirect()->route('client.dashboard');
+    }
+
     abort(403, 'No dashboard access.');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -48,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/switch-role', [ProfileController::class, 'switchRole'])->name('profile.switch-role');
 
     Route::get('/impersonation/leave', [UserController::class, 'stopImpersonation'])
         ->name('admin.impersonation.leave');
@@ -120,6 +135,8 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
 // Team Member routes
 Route::middleware(['auth', 'role:team_member'])->prefix('team')->name('team-member.')->group(function () {
     Route::get('/dashboard', [TeamMemberDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/tasks/create', [TeamMemberTaskController::class, 'create'])->name('tasks.create');
+    Route::post('/tasks', [TeamMemberTaskController::class, 'store'])->name('tasks.store');
     Route::post('/tasks/{task}/update-status', [TeamMemberTaskController::class, 'updateStatus'])->name('tasks.update-status');
     Route::get('/tasks/{task}/details', [TeamMemberTaskController::class, 'details'])->name('tasks.details');
     Route::post('/tasks/{task}/comments', [TeamMemberTaskController::class, 'storeComment'])->name('tasks.comments.store');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Project;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class TeamController extends Controller
      */
     public function create()
     {
-        $users = User::whereHas('role', function($q) {
+        $users = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['admin', 'team_member']);
         })->get();
         
@@ -61,7 +62,7 @@ class TeamController extends Controller
      */
     public function show(Team $team)
     {
-        $team->load(['users.role', 'projects.client.user', 'tasks.project']);
+        $team->load(['users.roles', 'users.role', 'projects.client.user', 'tasks.project']);
         return view('admin.teams.show', compact('team'));
     }
 
@@ -70,7 +71,7 @@ class TeamController extends Controller
      */
     public function edit(Team $team)
     {
-        $users = User::whereHas('role', function($q) {
+        $users = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['admin', 'team_member']);
         })->get();
         
@@ -90,6 +91,18 @@ class TeamController extends Controller
             'members' => 'nullable|array',
             'members.*' => 'exists:users,id',
         ]);
+
+        $memberIds = $validated['members'] ?? [];
+        $projectManagerIds = Project::whereHas('teams', function ($query) use ($team) {
+            $query->where('teams.id', $team->id);
+        })->pluck('project_manager_id')->filter()->unique()->all();
+
+        $conflictingIds = array_values(array_intersect($memberIds, $projectManagerIds));
+        if (!empty($conflictingIds)) {
+            return back()->withErrors([
+                'members' => 'Role conflict: one or more selected members are already Project Managers for projects assigned to this team. A user cannot be both Project Manager and Team Member under the same project.',
+            ])->withInput();
+        }
 
         $team->update([
             'name' => $validated['name'],

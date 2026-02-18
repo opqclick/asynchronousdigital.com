@@ -58,12 +58,70 @@
         </div>
     </div>
 
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">My Created Tasks</h3>
+                    <div class="card-tools">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="created-unassigned-only-toggle">
+                            <label class="custom-control-label" for="created-unassigned-only-toggle">Show only not assigned to me</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if($myCreatedTasks->isNotEmpty())
+                        <table class="table table-striped mb-0" id="my-created-tasks-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Project</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Due Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($myCreatedTasks as $createdTask)
+                                    <tr class="created-task-row" data-assigned-to-me="{{ $createdTask->users->contains('id', auth()->id()) ? '1' : '0' }}">
+                                        <td>{{ $createdTask->title }}</td>
+                                        <td>{{ $createdTask->project?->name ?? 'N/A' }}</td>
+                                        <td>
+                                            <span class="badge badge-{{ $createdTask->status === 'done' ? 'success' : ($createdTask->status === 'in_progress' ? 'primary' : ($createdTask->status === 'review' ? 'warning' : 'secondary')) }}">
+                                                {{ ucwords(str_replace('_', ' ', $createdTask->status)) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{{ $createdTask->priority === 'high' ? 'warning' : ($createdTask->priority === 'medium' ? 'info' : 'secondary') }}">
+                                                {{ ucfirst($createdTask->priority) }}
+                                            </span>
+                                        </td>
+                                        <td>{{ $createdTask->due_date?->format('M d, Y') ?? '-' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        <div id="created-task-empty-filtered" class="p-3 text-muted d-none">No created tasks match the current filter.</div>
+                    @else
+                        <div class="p-3 text-muted">No tasks created by you yet.</div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- My Task Board -->
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">My Tasks</h3>
+                    <div class="card-tools">
+                        <a href="{{ route('team-member.tasks.create') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Create Task
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -237,6 +295,22 @@
     <script>
         $(document).ready(function() {
             let draggedTask = null;
+
+            $('#created-unassigned-only-toggle').on('change', function() {
+                const onlyUnassigned = $(this).is(':checked');
+                let visibleCount = 0;
+
+                $('.created-task-row').each(function() {
+                    const assignedToMe = $(this).data('assigned-to-me') === 1 || $(this).data('assigned-to-me') === '1';
+                    const show = !onlyUnassigned || !assignedToMe;
+                    $(this).toggle(show);
+                    if (show) {
+                        visibleCount++;
+                    }
+                });
+
+                $('#created-task-empty-filtered').toggleClass('d-none', visibleCount > 0 || !onlyUnassigned);
+            });
 
             $('.task-card').on('dragstart', function(e) {
                 draggedTask = $(this);

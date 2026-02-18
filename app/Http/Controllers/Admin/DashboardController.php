@@ -14,7 +14,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $isProjectManager = Auth::user()->isProjectManager();
+        $isProjectManager = Auth::user()->isProjectManager() && !Auth::user()->isAdmin();
 
         $taskQuery = Task::query();
         $projectQuery = Project::query();
@@ -41,7 +41,7 @@ class DashboardController extends Controller
             'pending_tasks' => (clone $taskQuery)->whereIn('status', ['to_do', 'in_progress'])->count(),
             'unpaid_invoices' => $isProjectManager ? 0 : Invoice::where('status', 'sent')->sum('total_amount'),
             'overdue_invoices' => $isProjectManager ? 0 : Invoice::where('status', 'overdue')->count(),
-            'team_members' => $isProjectManager ? 0 : User::whereHas('role', function($q) {
+            'team_members' => $isProjectManager ? 0 : User::whereHas('roles', function($q) {
                 $q->where('name', 'team_member');
             })->count(),
         ];

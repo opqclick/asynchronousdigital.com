@@ -314,7 +314,7 @@ return [
         [
             'text' => 'Dashboard',
             'icon' => 'fas fa-fw fa-tachometer-alt',
-            'can' => 'dashboard.view',
+            'can' => 'admin_or_project_manager',
             'route' => 'admin.dashboard',
         ],
         
@@ -432,6 +432,12 @@ return [
             'icon' => 'fas fa-fw fa-tachometer-alt',
             'can' => 'team_member',
             'route' => 'team-member.dashboard',
+        ],
+        [
+            'text' => 'Create Task',
+            'icon' => 'fas fa-fw fa-plus-circle',
+            'can' => 'team_member',
+            'route' => 'team-member.tasks.create',
         ],
         [
             'text' => 'My Salaries',

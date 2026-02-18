@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Role;
 use App\Models\Team;
+use App\Models\User;
 use App\Mail\UserInvitation;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 
@@ -23,7 +23,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('role', 'teams')->latest()->get();
+        $users = User::with(['role', 'roles', 'teams'])->latest()->get();
         return view('admin.users.index', compact('users'));
     }
 
@@ -46,7 +46,9 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role_id' => ['required', 'exists:roles,id'],
+            'role_ids' => ['required', 'array', 'min:1'],
+            'role_ids.*' => ['integer', 'exists:roles,id'],
+            'active_role_id' => ['nullable', 'integer', 'exists:roles,id'],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string'],
             'date_of_birth' => ['nullable', 'date', 'before:today'],
@@ -65,6 +67,20 @@ class UserController extends Controller
             'teams' => ['nullable', 'array'],
             'teams.*' => ['exists:teams,id'],
         ]);
+
+        $roleIds = array_values(array_unique(array_map('intval', $validated['role_ids'])));
+        $selectedRoles = Role::whereIn('id', $roleIds)->get(['id', 'name']);
+        $hasClientRole = $selectedRoles->contains(fn (Role $role) => $role->name === Role::CLIENT);
+
+        if ($hasClientRole && count($roleIds) > 1) {
+            return back()->withErrors([
+                'role_ids' => 'Client role must stay exclusive and cannot be combined with other roles.',
+            ])->withInput();
+        }
+
+        $activeRoleId = isset($validated['active_role_id']) && in_array((int) $validated['active_role_id'], $roleIds, true)
+            ? (int) $validated['active_role_id']
+            : $roleIds[0];
 
         // Store the plain password for the invitation email
         $plainPassword = $validated['password'];
@@ -87,7 +103,8 @@ class UserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role_id' => $validated['role_id'],
+            'role_id' => $activeRoleId,
+            'active_role_id' => $activeRoleId,
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
             'date_of_birth' => $validated['date_of_birth'] ?? null,
@@ -103,6 +120,8 @@ class UserController extends Controller
             'monthly_salary' => $validated['monthly_salary'] ?? null,
             'is_active' => $request->has('is_active'),
         ]);
+
+        $user->syncRolesWithRules($roleIds, $activeRoleId);
 
         // Attach teams if any
         if (!empty($validated['teams'])) {
@@ -134,7 +153,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        $user->load('role', 'teams', 'tasks', 'salaries');
+        $user->load(['role', 'roles', 'teams', 'tasks', 'salaries']);
         return view('admin.users.show', compact('user'));
     }
 
@@ -146,7 +165,9 @@ class UserController extends Controller
         $roles = Role::all();
         $teams = Team::all();
         $userTeams = $user->teams->pluck('id')->toArray();
-        return view('admin.users.edit', compact('user', 'roles', 'teams', 'userTeams'));
+        $userRoleIds = $user->roles()->pluck('roles.id')->toArray();
+
+        return view('admin.users.edit', compact('user', 'roles', 'teams', 'userTeams', 'userRoleIds'));
     }
 
     /**
@@ -158,7 +179,9 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
-            'role_id' => ['required', 'exists:roles,id'],
+            'role_ids' => ['required', 'array', 'min:1'],
+            'role_ids.*' => ['integer', 'exists:roles,id'],
+            'active_role_id' => ['nullable', 'integer', 'exists:roles,id'],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string'],
             'date_of_birth' => ['nullable', 'date', 'before:today'],
@@ -176,6 +199,22 @@ class UserController extends Controller
             'teams' => ['nullable', 'array'],
             'teams.*' => ['exists:teams,id'],
         ]);
+
+        $roleIds = array_values(array_unique(array_map('intval', $validated['role_ids'])));
+        $selectedRoles = Role::whereIn('id', $roleIds)->get(['id', 'name']);
+        $hasClientRole = $selectedRoles->contains(fn (Role $role) => $role->name === Role::CLIENT);
+
+        if ($hasClientRole && count($roleIds) > 1) {
+            return back()->withErrors([
+                'role_ids' => 'Client role must stay exclusive and cannot be combined with other roles.',
+            ])->withInput();
+        }
+
+        $activeRoleId = isset($validated['active_role_id']) && in_array((int) $validated['active_role_id'], $roleIds, true)
+            ? (int) $validated['active_role_id']
+            : ($user->active_role_id && in_array((int) $user->active_role_id, $roleIds, true)
+                ? (int) $user->active_role_id
+                : $roleIds[0]);
 
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
@@ -198,7 +237,8 @@ class UserController extends Controller
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'role_id' => $validated['role_id'],
+            'role_id' => $activeRoleId,
+            'active_role_id' => $activeRoleId,
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
             'date_of_birth' => $validated['date_of_birth'] ?? null,
@@ -214,6 +254,8 @@ class UserController extends Controller
             'monthly_salary' => $validated['monthly_salary'] ?? null,
             'is_active' => $request->has('is_active'),
         ]);
+
+        $user->syncRolesWithRules($roleIds, $activeRoleId);
 
         // Update password if provided
         if (!empty($validated['password'])) {
@@ -287,7 +329,7 @@ class UserController extends Controller
             return back()->with('error', 'You are already logged in as this user.');
         }
 
-        if ($user->isAdmin()) {
+        if ($user->hasAssignedRole(Role::ADMIN)) {
             return back()->with('error', 'Impersonating another admin is not allowed.');
         }
 

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\TeamMember;
 
 use App\Http\Controllers\Controller;
 use App\Models\Task;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -38,6 +37,13 @@ class DashboardController extends Controller
             'total_assigned' => $user->tasks()->count(),
         ];
 
-        return view('team-member.dashboard', compact('tasksByStatus', 'stats'));
+        $myCreatedTasks = Task::query()
+            ->where('created_by', $user->id)
+            ->with(['project', 'users:id'])
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('team-member.dashboard', compact('tasksByStatus', 'stats', 'myCreatedTasks'));
     }
 }

@@ -53,6 +53,26 @@ class ProfileController extends Controller
     }
 
     /**
+     * Switch active role context for current user.
+     */
+    public function switchRole(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'active_role_id' => ['required', 'integer', 'exists:roles,id'],
+        ]);
+
+        $user = $request->user();
+
+        if (!$user->roles()->where('roles.id', $validated['active_role_id'])->exists()) {
+            return Redirect::back()->with('error', 'Selected role is not assigned to your account.');
+        }
+
+        $user->switchActiveRole((int) $validated['active_role_id']);
+
+        return Redirect::route('dashboard')->with('success', 'Active role switched successfully.');
+    }
+
+    /**
      * Delete the user's account (Admin only, soft delete).
      */
     public function destroy(Request $request): RedirectResponse

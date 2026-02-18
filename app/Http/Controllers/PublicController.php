@@ -22,7 +22,7 @@ class PublicController extends Controller
             ->get();
 
         // Team members for about section
-        $teamMembers = User::whereHas('role', function ($query) {
+        $teamMembers = User::whereHas('roles', function ($query) {
             $query->whereIn('name', ['admin', 'team_member']);
         })->get();
 
@@ -51,7 +51,7 @@ class PublicController extends Controller
 
     public function about()
     {
-        $teamMembers = User::whereHas('role', function ($query) {
+        $teamMembers = User::whereHas('roles', function ($query) {
             $query->whereIn('name', ['admin', 'team_member']);
         })->get();
 

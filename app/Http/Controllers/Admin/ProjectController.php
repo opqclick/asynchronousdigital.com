@@ -19,9 +19,10 @@ class ProjectController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
         $projectsQuery = Project::with(['client.user', 'projectManager', 'tasks']);
 
-        if (Auth::user()->isProjectManager()) {
+        if ($user->isProjectManager() && !$user->isAdmin()) {
             $projectsQuery->where('project_manager_id', Auth::id());
         }
 
@@ -35,17 +36,18 @@ class ProjectController extends Controller
      */
     public function create()
     {
+        $user = Auth::user();
         $this->authorizeProjectWrite();
 
         $clients = Client::with('user')->get();
-        $teams = Team::all();
-        $projectManagers = User::with('role')
-            ->whereHas('role', function ($query) {
+        $teams = Team::with('users:id')->get();
+        $projectManagers = User::with(['role', 'roles'])
+            ->whereHas('roles', function ($query) {
                 $query->where('name', Role::PROJECT_MANAGER);
             })
             ->get();
 
-        if (Auth::user()->isProjectManager()) {
+        if ($user->isProjectManager() && !$user->isAdmin()) {
             $projectManagers = $projectManagers->where('id', Auth::id());
         }
 
@@ -59,16 +61,12 @@ class ProjectController extends Controller
     {
         $this->authorizeProjectWrite();
 
-        $projectManagerRoleId = Role::where('name', Role::PROJECT_MANAGER)->value('id');
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
             'project_manager_id' => [
                 'required',
-                Rule::exists('users', 'id')->where(function ($query) use ($projectManagerRoleId) {
-                    $query->where('role_id', $projectManagerRoleId);
-                }),
+                Rule::exists('users', 'id'),
             ],
             'description' => 'nullable|string',
             'status' => 'required|in:active,paused,completed,cancelled',
@@ -82,6 +80,20 @@ class ProjectController extends Controller
             'teams' => 'nullable|array',
             'teams.*' => 'exists:teams,id',
         ]);
+
+        $pmUser = User::with('roles')->findOrFail($validated['project_manager_id']);
+        if (!$pmUser->hasAssignedRole(Role::PROJECT_MANAGER)) {
+            return back()->withErrors([
+                'project_manager_id' => 'Selected user must have the Project Manager role.',
+            ])->withInput();
+        }
+
+        if ($this->hasProjectRoleConflict((int) $validated['project_manager_id'], $validated['teams'] ?? [])) {
+            return back()->withErrors([
+                'project_manager_id' => 'Role conflict: this user cannot be Project Manager and Team Member in the same project.',
+                'teams' => 'Role conflict: selected teams include the chosen Project Manager. Remove the user from those teams or choose a different Project Manager.',
+            ])->withInput();
+        }
 
         // Handle file uploads to S3
         $attachmentPaths = [];
@@ -133,19 +145,20 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
+        $user = Auth::user();
         $this->authorizeProjectWrite();
         $this->authorizeProjectAccess($project);
 
         $clients = Client::with('user')->get();
-        $teams = Team::all();
+        $teams = Team::with('users:id')->get();
         $project->load('teams');
-        $projectManagers = User::with('role')
-            ->whereHas('role', function ($query) {
+        $projectManagers = User::with(['role', 'roles'])
+            ->whereHas('roles', function ($query) {
                 $query->where('name', Role::PROJECT_MANAGER);
             })
             ->get();
 
-        if (Auth::user()->isProjectManager()) {
+        if ($user->isProjectManager() && !$user->isAdmin()) {
             $projectManagers = $projectManagers->where('id', Auth::id());
         }
 
@@ -160,16 +173,12 @@ class ProjectController extends Controller
         $this->authorizeProjectWrite();
         $this->authorizeProjectAccess($project);
 
-        $projectManagerRoleId = Role::where('name', Role::PROJECT_MANAGER)->value('id');
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
             'project_manager_id' => [
                 'required',
-                Rule::exists('users', 'id')->where(function ($query) use ($projectManagerRoleId) {
-                    $query->where('role_id', $projectManagerRoleId);
-                }),
+                Rule::exists('users', 'id'),
             ],
             'description' => 'nullable|string',
             'status' => 'required|in:active,paused,completed,cancelled',
@@ -183,6 +192,20 @@ class ProjectController extends Controller
             'teams' => 'nullable|array',
             'teams.*' => 'exists:teams,id',
         ]);
+
+        $pmUser = User::with('roles')->findOrFail($validated['project_manager_id']);
+        if (!$pmUser->hasAssignedRole(Role::PROJECT_MANAGER)) {
+            return back()->withErrors([
+                'project_manager_id' => 'Selected user must have the Project Manager role.',
+            ])->withInput();
+        }
+
+        if ($this->hasProjectRoleConflict((int) $validated['project_manager_id'], $validated['teams'] ?? [])) {
+            return back()->withErrors([
+                'project_manager_id' => 'Role conflict: this user cannot be Project Manager and Team Member in the same project.',
+                'teams' => 'Role conflict: selected teams include the chosen Project Manager. Remove the user from those teams or choose a different Project Manager.',
+            ])->withInput();
+        }
 
         // Handle new file uploads to S3
         if ($request->hasFile('attachments')) {
@@ -234,15 +257,28 @@ class ProjectController extends Controller
 
     private function authorizeProjectAccess(Project $project): void
     {
-        if (Auth::user()->isProjectManager() && $project->project_manager_id !== Auth::id()) {
+        if (Auth::user()->isProjectManager() && !Auth::user()->isAdmin() && $project->project_manager_id !== Auth::id()) {
             abort(403, 'You can only manage your assigned projects.');
         }
     }
 
     private function authorizeProjectWrite(): void
     {
-        if (Auth::user()->isProjectManager()) {
+        if (Auth::user()->isProjectManager() && !Auth::user()->isAdmin()) {
             abort(403, 'Project managers can only view assigned projects.');
         }
+    }
+
+    private function hasProjectRoleConflict(int $projectManagerId, array $teamIds): bool
+    {
+        if (empty($teamIds)) {
+            return false;
+        }
+
+        return Team::whereIn('id', $teamIds)
+            ->whereHas('users', function ($query) use ($projectManagerId) {
+                $query->where('users.id', $projectManagerId);
+            })
+            ->exists();
     }
 }

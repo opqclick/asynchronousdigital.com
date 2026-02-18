@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\TeamMember;
 
 use App\Http\Controllers\Controller;
+use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskStatusHistory;
 use Illuminate\Http\Request;
@@ -10,6 +11,61 @@ use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
+    public function create()
+    {
+        $projects = $this->assignableProjectsQuery()->get();
+
+        return view('team-member.tasks.create', compact('projects'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'project_id' => 'required|exists:projects,id',
+            'description' => 'nullable|string',
+            'priority' => 'required|in:low,medium,high',
+            'estimated_hours' => 'nullable|numeric|min:0',
+            'due_date' => 'nullable|date',
+            'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:10240',
+        ]);
+
+        $project = Project::findOrFail($validated['project_id']);
+        $this->authorizeProjectTaskCreation($project);
+
+        $attachmentPaths = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->storePublicly('tasks', 'do_spaces');
+                $attachmentPaths[] = [
+                    'name' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'size' => $file->getSize(),
+                    'uploaded_at' => now()->toDateTimeString(),
+                ];
+            }
+        }
+
+        $task = Task::create([
+            'title' => $validated['title'],
+            'project_id' => $project->id,
+            'created_by' => Auth::id(),
+            'description' => $validated['description'] ?? null,
+            'status' => 'to_do',
+            'priority' => $validated['priority'],
+            'estimated_hours' => $validated['estimated_hours'] ?? null,
+            'due_date' => $validated['due_date'] ?? null,
+            'attachments' => !empty($attachmentPaths) ? $attachmentPaths : null,
+        ]);
+
+        $task->users()->syncWithoutDetaching([
+            Auth::id() => ['assigned_at' => now()],
+        ]);
+
+        return redirect()->route('team-member.dashboard')
+            ->with('success', 'Task created successfully.');
+    }
+
     public function updateStatus(Request $request, Task $task)
     {
         $request->validate([
@@ -69,6 +125,22 @@ class TaskController extends Controller
             ->exists();
 
         abort_unless($isAssigned, 403, 'You can only interact with tasks assigned to you.');
+    }
+
+    private function authorizeProjectTaskCreation(Project $project): void
+    {
+        $isAssignedToProject = $this->assignableProjectsQuery()
+            ->where('projects.id', $project->id)
+            ->exists();
+
+        abort_unless($isAssignedToProject, 403, 'You can only create tasks for projects assigned to your teams.');
+    }
+
+    private function assignableProjectsQuery()
+    {
+        return Project::query()->whereHas('teams.users', function ($query) {
+            $query->where('users.id', Auth::id());
+        });
     }
 
     private function logStatusChange(Task $task, string $fromStatus, string $toStatus): void

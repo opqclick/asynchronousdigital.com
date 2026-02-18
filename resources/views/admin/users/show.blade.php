@@ -46,9 +46,11 @@ use Illuminate\Support\Facades\Storage;
                     <h3 class="profile-username text-center">{{ $user->name }}</h3>
 
                     <p class="text-muted text-center">
-                        <span class="badge badge-{{ $user->role->name === 'admin' ? 'danger' : ($user->role->name === 'project_manager' ? 'warning' : ($user->role->name === 'team_member' ? 'primary' : 'info')) }}">
-                            {{ ucfirst(str_replace('_', ' ', $user->role->name)) }}
-                        </span>
+                        @foreach($user->roles as $role)
+                            <span class="badge badge-{{ $role->name === 'admin' ? 'danger' : ($role->name === 'project_manager' ? 'warning' : ($role->name === 'team_member' ? 'primary' : 'info')) }}">
+                                {{ ucfirst(str_replace('_', ' ', $role->name)) }}{{ ($user->role && $user->role->id === $role->id) ? ' (Active)' : '' }}
+                            </span>
+                        @endforeach
                     </p>
 
                     <ul class="list-group list-group-unbordered mb-3">

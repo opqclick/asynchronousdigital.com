@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use App\Models\Role;
 use Illuminate\Auth\Events\Login;
 use App\Listeners\LogUserActivity;
@@ -26,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register event listeners
         Event::listen(Login::class, LogUserActivity::class);
+        Event::listen(Login::class, function (Login $event) {
+            $user = User::find($event->user->getAuthIdentifier());
+            if ($user) {
+                $user->ensureActiveRoleContext();
+            }
+        });
 
         Gate::before(function ($user, string $ability) {
             if ($ability === 'impersonating') {
@@ -46,6 +53,10 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('project_manager', function ($user) {
             return $user->isProjectManager();
+        });
+
+        Gate::define('admin_or_project_manager', function ($user) {
+            return $user->isAdmin() || $user->isProjectManager();
         });
 
         Gate::define('team_member', function ($user) {

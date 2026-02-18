@@ -21,19 +21,23 @@ class UserSeeder extends Seeder
 
         // Create Admin User (only if doesn't exist)
         if (!User::where('email', 'admin@asynchronousdigital.com')->exists()) {
-            User::create([
+            $admin = User::create([
                 'role_id' => $adminRole->id,
+                'active_role_id' => $adminRole->id,
                 'name' => 'Admin User',
                 'email' => 'admin@asynchronousdigital.com',
                 'password' => Hash::make('password'),
                 'phone' => '+1234567890',
                 'is_active' => true,
             ]);
+
+            $admin->syncRolesWithRules([$adminRole->id], $adminRole->id);
         }
 
         // Create Sample Team Members
-        User::create([
+        $john = User::create([
             'role_id' => $teamMemberRole->id,
+            'active_role_id' => $teamMemberRole->id,
             'name' => 'John Developer',
             'email' => 'john@asynchronousdigital.com',
             'password' => Hash::make('password'),
@@ -42,9 +46,11 @@ class UserSeeder extends Seeder
             'monthly_salary' => 5000.00,
             'is_active' => true,
         ]);
+        $john->syncRolesWithRules([$teamMemberRole->id], $teamMemberRole->id);
 
-        User::create([
+        $sarah = User::create([
             'role_id' => $teamMemberRole->id,
+            'active_role_id' => $teamMemberRole->id,
             'name' => 'Sarah Designer',
             'email' => 'sarah@asynchronousdigital.com',
             'password' => Hash::make('password'),
@@ -53,16 +59,19 @@ class UserSeeder extends Seeder
             'monthly_salary' => 4500.00,
             'is_active' => true,
         ]);
+        $sarah->syncRolesWithRules([$teamMemberRole->id], $teamMemberRole->id);
 
         // Create Sample Client User
         $clientUser = User::create([
             'role_id' => $clientRole->id,
+            'active_role_id' => $clientRole->id,
             'name' => 'Demo Client',
             'email' => 'client@example.com',
             'password' => Hash::make('password'),
             'phone' => '+1234567893',
             'is_active' => true,
         ]);
+        $clientUser->syncRolesWithRules([$clientRole->id], $clientRole->id);
 
         // Create Client Profile
         $clientUser->client()->create([

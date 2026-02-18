@@ -79,17 +79,38 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="role_id">Role <span class="text-danger">*</span></label>
-                            <select class="form-control @error('role_id') is-invalid @enderror" 
-                                    id="role_id" name="role_id" required>
-                                <option value="">Select Role</option>
+                            <label for="role_ids">Roles <span class="text-danger">*</span></label>
+                            <select class="form-control @error('role_ids') is-invalid @enderror @error('role_ids.*') is-invalid @enderror"
+                                    id="role_ids" name="role_ids[]" multiple required size="4">
                                 @foreach($roles as $role)
-                                    <option value="{{ $role->id }}" {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
+                                    <option value="{{ $role->id }}" {{ in_array($role->id, old('role_ids', $userRoleIds ?? [])) ? 'selected' : '' }}>
                                         {{ ucfirst(str_replace('_', ' ', $role->name)) }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('role_id')
+                            <small class="form-text text-muted">Select at least one role. Client role must be exclusive.</small>
+                            @error('role_ids')
+                                <span class="invalid-feedback d-block">{{ $message }}</span>
+                            @enderror
+                            @error('role_ids.*')
+                                <span class="invalid-feedback d-block">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="active_role_id">Active Role Context</label>
+                            <select class="form-control @error('active_role_id') is-invalid @enderror"
+                                    id="active_role_id" name="active_role_id">
+                                <option value="">Auto (keep current/first selected)</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->id }}" {{ old('active_role_id', $user->active_role_id ?? $user->role_id) == $role->id ? 'selected' : '' }}>
+                                        {{ ucfirst(str_replace('_', ' ', $role->name)) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('active_role_id')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>

@@ -182,6 +182,9 @@
                     @error('teams')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
+                    <div id="pm-team-conflict-warning" class="alert alert-warning mt-2 d-none mb-0">
+                        Role conflict warning: selected Project Manager exists in one of the selected teams. A user cannot be both Project Manager and Team Member under the same project.
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -230,6 +233,28 @@
                 theme: 'bootstrap4',
                 placeholder: 'Select teams'
             });
+
+            const teamUsersMap = {
+                @foreach($teams as $team)
+                    "{{ $team->id }}": [{{ $team->users->pluck('id')->implode(',') }}],
+                @endforeach
+            };
+
+            function updatePmTeamConflictWarning() {
+                const selectedPm = Number($('#project_manager_id').val() || 0);
+                const selectedTeams = $('#teams').val() || [];
+
+                const hasConflict = selectedPm > 0 && selectedTeams.some(function (teamId) {
+                    const teamUsers = teamUsersMap[teamId] || [];
+                    return teamUsers.includes(selectedPm);
+                });
+
+                $('#pm-team-conflict-warning').toggleClass('d-none', !hasConflict);
+            }
+
+            $('#project_manager_id').on('change', updatePmTeamConflictWarning);
+            $('#teams').on('change', updatePmTeamConflictWarning);
+            updatePmTeamConflictWarning();
             
             // Initialize custom file input
             bsCustomFileInput.init();

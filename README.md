@@ -6,13 +6,16 @@ A comprehensive Customer Relationship Management system built with Laravel 12, f
 
 ### 🎯 Core Modules
 
-- **User Management** - Role-based access control (Admin, Team Member, Client)
+- **User Management** - Role-based access control (Admin, Project Manager, Team Member, Client)
+- **Admin Impersonation (Login As)** - Admin can securely login as non-admin users and return back to admin panel
 - **User Invitation System** - Automated email invitations with login credentials
 - **Project Management** - Complete project lifecycle management with milestones
 - **Task Management** - Kanban-style task board with assignments and tracking
 - **Contact Messages** - Centralized inbox for client inquiries
 - **Services & Portfolio** - Showcase company services and completed projects
 - **Testimonials** - Client feedback and reviews management
+- **Global Page Load Progress Bar** - Top progress indicator for navigation, form submits, and AJAX/fetch requests
+- **Backend Timing Header** - `Server-Timing` response header added for web requests
 
 ### 📧 Email Features
 
@@ -27,9 +30,16 @@ A comprehensive Customer Relationship Management system built with Laravel 12, f
 #### Admin
 - Full system access and configuration
 - User management and role assignments
+- Login as (impersonate) non-admin users
 - Project and task oversight
 - Client communication management
 - Service and testimonial management
+
+#### Project Manager
+- Access to assigned projects only (can be assigned to multiple projects)
+- Can create/manage tasks only within assigned projects
+- Dedicated menu entries: Assigned Projects and Task Management
+- No access to clients, billing, HR/payroll, service/testimonial, or user admin tools
 
 #### Team Member
 - Personal dashboard with assigned tasks
@@ -46,6 +56,7 @@ A comprehensive Customer Relationship Management system built with Laravel 12, f
 ### 📊 Dashboard Features
 
 - **Admin Dashboard** - System-wide statistics, user activity, project overview
+- **Project Manager Dashboard** - Assigned-project and task-focused dashboard
 - **Team Member Dashboard** - Personal task board, due dates, completion metrics
 - **Client Dashboard** - Project status, assigned tasks, document access
 
@@ -302,13 +313,17 @@ AsynchronousDigitalCRM/
 
 - **User Invitation System** - Automated email invitations when creating users/clients
 - **Resend Invitations** - One-click invitation resend with new temporary password
+- **Admin Login As** - Secure impersonation flow with “Back to Admin Panel” action
 - **Environment-aware Emails** - Email subjects show environment (LOCAL/DEV/STAGING)
 - **Kanban Task Board** - Drag-and-drop task management (To Do, In Progress, Review, Done)
+- **Project Manager Scope** - PM can only see assigned projects and manage tasks under those projects
 - **Role-based Dashboards** - Customized views for each user role
 - **File Management** - Secure file uploads with Digital Ocean Spaces integration
 - **Activity Tracking** - Comprehensive audit trail for projects and tasks
 - **Responsive Design** - Mobile-friendly interface across all modules
 - **Custom Logo Implementation** - Branded frontend and backend interfaces
+- **Global Load UX** - Top page-load progress bar (supports navigation, forms, fetch, and XHR)
+- **Backend Response Timing** - Request duration surfaced via `Server-Timing` header
 
 ## Email Configuration
 
@@ -335,7 +350,7 @@ php artisan cache:clear
 
 ### Run Tests
 ```bash
-php artisan test
+./vendor/bin/phpunit
 ```
 
 ### Code Style

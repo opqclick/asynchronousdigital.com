@@ -18,9 +18,10 @@ class TaskController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
         $tasksQuery = Task::with(['project', 'users']);
 
-        if (Auth::user()->isProjectManager()) {
+        if ($user->isProjectManager() && !$user->isAdmin()) {
             $tasksQuery->whereHas('project', function ($query) {
                 $query->where('project_manager_id', Auth::id());
             });
@@ -36,15 +37,16 @@ class TaskController extends Controller
      */
     public function create()
     {
+        $user = Auth::user();
         $projectsQuery = Project::query();
 
-        if (Auth::user()->isProjectManager()) {
+        if ($user->isProjectManager() && !$user->isAdmin()) {
             $projectsQuery->where('project_manager_id', Auth::id());
         }
 
         $projects = $projectsQuery->get();
 
-        $users = User::whereHas('role', function($q) {
+        $users = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['admin', 'team_member']);
         })->get();
         $teams = Team::all();
@@ -87,6 +89,7 @@ class TaskController extends Controller
         }
 
         $validated['attachments'] = !empty($attachmentPaths) ? $attachmentPaths : null;
+        $validated['created_by'] = Auth::id();
 
         $project = Project::findOrFail($validated['project_id']);
         $this->authorizeProjectAccess($project);
@@ -121,17 +124,18 @@ class TaskController extends Controller
      */
     public function edit(Task $task)
     {
+        $user = Auth::user();
         $this->authorizeTaskAccess($task);
 
         $projectsQuery = Project::query();
 
-        if (Auth::user()->isProjectManager()) {
+        if ($user->isProjectManager() && !$user->isAdmin()) {
             $projectsQuery->where('project_manager_id', Auth::id());
         }
 
         $projects = $projectsQuery->get();
 
-        $users = User::whereHas('role', function($q) {
+        $users = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['admin', 'team_member']);
         })->get();
         $teams = Team::all();
@@ -302,7 +306,7 @@ class TaskController extends Controller
 
     private function authorizeProjectAccess(Project $project): void
     {
-        if (Auth::user()->isProjectManager() && $project->project_manager_id !== Auth::id()) {
+        if (Auth::user()->isProjectManager() && !Auth::user()->isAdmin() && $project->project_manager_id !== Auth::id()) {
             abort(403, 'You can only manage tasks in your assigned projects.');
         }
     }
