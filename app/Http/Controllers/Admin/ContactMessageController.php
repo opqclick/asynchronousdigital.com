@@ -31,7 +31,7 @@ class ContactMessageController extends Controller
             $contactMessage->markAsRead();
         }
         
-        $users = User::whereHas('role', function($query) {
+        $users = User::whereHas('roles', function($query) {
             $query->whereIn('name', ['admin', 'team_member']);
         })->get();
         

@@ -56,6 +56,25 @@
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="project_manager_id">Project Manager <span class="text-danger">*</span></label>
+                            <select class="form-control @error('project_manager_id') is-invalid @enderror" id="project_manager_id" name="project_manager_id" required>
+                                <option value="">Select Project Manager</option>
+                                @foreach($projectManagers as $projectManager)
+                                    <option value="{{ $projectManager->id }}" {{ old('project_manager_id', auth()->id()) == $projectManager->id ? 'selected' : '' }}>
+                                        {{ $projectManager->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('project_manager_id')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="description">Description</label>
                     <textarea class="form-control @error('description') is-invalid @enderror" 
@@ -160,6 +179,9 @@
                     @error('teams')
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror
+                    <div id="pm-team-conflict-warning" class="alert alert-warning mt-2 d-none mb-0">
+                        Role conflict warning: selected Project Manager exists in one of the selected teams. A user cannot be both Project Manager and Team Member under the same project.
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -203,6 +225,28 @@
                 theme: 'bootstrap4',
                 placeholder: 'Select teams'
             });
+
+            const teamUsersMap = {
+                @foreach($teams as $team)
+                    "{{ $team->id }}": [{{ $team->users->pluck('id')->implode(',') }}],
+                @endforeach
+            };
+
+            function updatePmTeamConflictWarning() {
+                const selectedPm = Number($('#project_manager_id').val() || 0);
+                const selectedTeams = $('#teams').val() || [];
+
+                const hasConflict = selectedPm > 0 && selectedTeams.some(function (teamId) {
+                    const teamUsers = teamUsersMap[teamId] || [];
+                    return teamUsers.includes(selectedPm);
+                });
+
+                $('#pm-team-conflict-warning').toggleClass('d-none', !hasConflict);
+            }
+
+            $('#project_manager_id').on('change', updatePmTeamConflictWarning);
+            $('#teams').on('change', updatePmTeamConflictWarning);
+            updatePmTeamConflictWarning();
             
             // Initialize custom file input
             bsCustomFileInput.init();

@@ -41,7 +41,7 @@
         </div>
 
         <!-- Delete Account (Admin Only) -->
-        @if(auth()->user()->role->name === 'admin')
+        @if(auth()->user()->isAdmin())
         <div class="card card-danger card-outline">
             <div class="card-header">
                 <h3 class="card-title">Delete Account</h3>

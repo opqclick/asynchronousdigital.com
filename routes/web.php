@@ -15,10 +15,13 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserActivityController;
 use App\Http\Controllers\TeamMember\DashboardController as TeamMemberDashboardController;
 use App\Http\Controllers\TeamMember\SalaryController as TeamMemberSalaryController;
+use App\Http\Controllers\TeamMember\TaskController as TeamMemberTaskController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ContactController;
+use App\Models\Role;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // Public routes - Single page website
@@ -27,9 +30,12 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 
 // Redirect after login based on role
 Route::get('/dashboard', function () {
-    $user = auth()->user();
+    $user = Auth::user();
+    $user->ensureActiveRoleContext();
     
     if ($user->isAdmin()) {
+        return redirect()->route('admin.dashboard');
+    } elseif ($user->isProjectManager()) {
         return redirect()->route('admin.dashboard');
     } elseif ($user->isTeamMember()) {
         return redirect()->route('team-member.dashboard');
@@ -37,6 +43,18 @@ Route::get('/dashboard', function () {
         return redirect()->route('client.dashboard');
     }
     
+    if ($user->hasAssignedRole(Role::ADMIN) || $user->hasAssignedRole(Role::PROJECT_MANAGER)) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    if ($user->hasAssignedRole(Role::TEAM_MEMBER)) {
+        return redirect()->route('team-member.dashboard');
+    }
+
+    if ($user->hasAssignedRole(Role::CLIENT)) {
+        return redirect()->route('client.dashboard');
+    }
+
     abort(403, 'No dashboard access.');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -44,45 +62,84 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/switch-role', [ProfileController::class, 'switchRole'])->name('profile.switch-role');
+
+    Route::get('/impersonation/leave', [UserController::class, 'stopImpersonation'])
+        ->name('admin.impersonation.leave');
 });
 
 // Admin routes
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])
+        ->middleware('permission:dashboard.view')
+        ->name('dashboard');
     
-    // Resource routes for all modules
-    Route::resource('clients', ClientController::class);
-    Route::resource('projects', ProjectController::class);
-    Route::resource('tasks', TaskController::class);
+    // Resource routes
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('clients', ClientController::class);
+    });
+
+    Route::resource('projects', ProjectController::class)->middleware('permission:projects.manage');
+    Route::resource('tasks', TaskController::class)->middleware('permission:tasks.manage');
     
     // Task AJAX routes
-    Route::post('/tasks/{task}/update-status', [TaskController::class, 'updateStatus'])->name('tasks.update-status');
-    Route::get('/tasks/{task}/details', [TaskController::class, 'details'])->name('tasks.details');
-    Route::post('/tasks/{task}/comments', [TaskController::class, 'storeComment'])->name('tasks.comments.store');
+    Route::post('/tasks/{task}/update-status', [TaskController::class, 'updateStatus'])
+        ->middleware('permission:tasks.manage')
+        ->name('tasks.update-status');
+    Route::get('/tasks/{task}/details', [TaskController::class, 'details'])
+        ->middleware('permission:tasks.manage')
+        ->name('tasks.details');
+    Route::post('/tasks/{task}/comments', [TaskController::class, 'storeComment'])
+        ->middleware('permission:tasks.manage')
+        ->name('tasks.comments.store');
     
-    Route::resource('teams', TeamController::class);
-    Route::resource('invoices', InvoiceController::class);
-    Route::resource('payments', PaymentController::class);
-    Route::resource('salaries', SalaryController::class);
-    Route::resource('users', UserController::class);
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('teams', TeamController::class);
+        Route::resource('invoices', InvoiceController::class);
+        Route::resource('payments', PaymentController::class);
+    });
+
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('salaries', SalaryController::class);
+        Route::resource('users', UserController::class);
+    });
     
     // Send invitation emails
-    Route::post('/users/{user}/send-invitation', [UserController::class, 'sendInvitation'])->name('users.send-invitation');
-    Route::post('/clients/{client}/send-invitation', [ClientController::class, 'sendInvitation'])->name('clients.send-invitation');
+    Route::post('/users/{user}/send-invitation', [UserController::class, 'sendInvitation'])
+        ->middleware('role:admin')
+        ->name('users.send-invitation');
+    Route::post('/users/{user}/impersonate', [UserController::class, 'impersonate'])
+        ->middleware('role:admin')
+        ->name('users.impersonate');
+    Route::post('/clients/{client}/send-invitation', [ClientController::class, 'sendInvitation'])
+        ->middleware('role:admin')
+        ->name('clients.send-invitation');
     
     // User activity logs
-    Route::get('/user-activities', [UserActivityController::class, 'index'])->name('user-activities.index');
-    Route::get('/user-activities/{activity}', [UserActivityController::class, 'show'])->name('user-activities.show');
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/user-activities', [UserActivityController::class, 'index'])->name('user-activities.index');
+        Route::get('/user-activities/{activity}', [UserActivityController::class, 'show'])->name('user-activities.show');
+    });
     
     // Public website management
-    Route::resource('services', AdminServiceController::class);
-    Route::resource('testimonials', TestimonialController::class);
-    Route::resource('contact-messages', ContactMessageController::class)->only(['index', 'show', 'update', 'destroy']);
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('services', AdminServiceController::class);
+        Route::resource('testimonials', TestimonialController::class);
+    });
+
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('contact-messages', ContactMessageController::class)->only(['index', 'show', 'update', 'destroy']);
+    });
 });
 
 // Team Member routes
 Route::middleware(['auth', 'role:team_member'])->prefix('team')->name('team-member.')->group(function () {
     Route::get('/dashboard', [TeamMemberDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/tasks/create', [TeamMemberTaskController::class, 'create'])->name('tasks.create');
+    Route::post('/tasks', [TeamMemberTaskController::class, 'store'])->name('tasks.store');
+    Route::post('/tasks/{task}/update-status', [TeamMemberTaskController::class, 'updateStatus'])->name('tasks.update-status');
+    Route::get('/tasks/{task}/details', [TeamMemberTaskController::class, 'details'])->name('tasks.details');
+    Route::post('/tasks/{task}/comments', [TeamMemberTaskController::class, 'storeComment'])->name('tasks.comments.store');
     Route::get('/salaries', [TeamMemberSalaryController::class, 'index'])->name('salaries.index');
     Route::get('/salaries/{salary}', [TeamMemberSalaryController::class, 'show'])->name('salaries.show');
     Route::get('/salaries/{salary}/share', [TeamMemberSalaryController::class, 'share'])->name('salaries.share');

@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TaskStatusHistory;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -17,7 +18,17 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $tasks = Task::with(['project', 'users'])->get();
+        $user = Auth::user();
+        $tasksQuery = Task::with(['project', 'users']);
+
+        if ($user->isProjectManager() && !$user->isAdmin()) {
+            $tasksQuery->whereHas('project', function ($query) {
+                $query->where('project_manager_id', Auth::id());
+            });
+        }
+
+        $tasks = $tasksQuery->get();
+
         return view('admin.tasks.index', compact('tasks'));
     }
 
@@ -26,8 +37,16 @@ class TaskController extends Controller
      */
     public function create()
     {
-        $projects = Project::all();
-        $users = User::whereHas('role', function($q) {
+        $user = Auth::user();
+        $projectsQuery = Project::query();
+
+        if ($user->isProjectManager() && !$user->isAdmin()) {
+            $projectsQuery->where('project_manager_id', Auth::id());
+        }
+
+        $projects = $projectsQuery->get();
+
+        $users = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['admin', 'team_member']);
         })->get();
         $teams = Team::all();
@@ -70,6 +89,10 @@ class TaskController extends Controller
         }
 
         $validated['attachments'] = !empty($attachmentPaths) ? $attachmentPaths : null;
+        $validated['created_by'] = Auth::id();
+
+        $project = Project::findOrFail($validated['project_id']);
+        $this->authorizeProjectAccess($project);
 
         $task = Task::create($validated);
 
@@ -90,6 +113,8 @@ class TaskController extends Controller
      */
     public function show(Task $task)
     {
+        $this->authorizeTaskAccess($task);
+
         $task->load(['project', 'users', 'teams']);
         return view('admin.tasks.show', compact('task'));
     }
@@ -99,8 +124,18 @@ class TaskController extends Controller
      */
     public function edit(Task $task)
     {
-        $projects = Project::all();
-        $users = User::whereHas('role', function($q) {
+        $user = Auth::user();
+        $this->authorizeTaskAccess($task);
+
+        $projectsQuery = Project::query();
+
+        if ($user->isProjectManager() && !$user->isAdmin()) {
+            $projectsQuery->where('project_manager_id', Auth::id());
+        }
+
+        $projects = $projectsQuery->get();
+
+        $users = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['admin', 'team_member']);
         })->get();
         $teams = Team::all();
@@ -114,6 +149,8 @@ class TaskController extends Controller
      */
     public function update(Request $request, Task $task)
     {
+        $this->authorizeTaskAccess($task);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'project_id' => 'required|exists:projects,id',
@@ -128,6 +165,9 @@ class TaskController extends Controller
             'teams' => 'nullable|array',
             'teams.*' => 'exists:teams,id',
         ]);
+
+        $project = Project::findOrFail($validated['project_id']);
+        $this->authorizeProjectAccess($project);
 
         // Handle new file uploads to S3
         if ($request->hasFile('attachments')) {
@@ -145,6 +185,14 @@ class TaskController extends Controller
         }
 
         $task->update($validated);
+
+        if ($task->wasChanged('status')) {
+            $this->logStatusChange(
+                $task,
+                $task->getOriginal('status'),
+                $task->status
+            );
+        }
 
         // Sync users and teams
         if (isset($validated['users'])) {
@@ -168,6 +216,8 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
+        $this->authorizeTaskAccess($task);
+
         $task->delete();
         return redirect()->route('admin.tasks.index')
             ->with('success', 'Task deleted successfully.');
@@ -178,11 +228,16 @@ class TaskController extends Controller
      */
     public function updateStatus(Request $request, Task $task)
     {
+        $this->authorizeTaskAccess($task);
+
         $request->validate([
             'status' => 'required|in:to_do,in_progress,review,done'
         ]);
 
+        $oldStatus = $task->status;
         $task->update(['status' => $request->status]);
+
+        $this->logStatusChange($task, $oldStatus, $request->status);
 
         return response()->json([
             'success' => true,
@@ -195,7 +250,9 @@ class TaskController extends Controller
      */
     public function details(Task $task)
     {
-        $task->load(['project', 'users', 'comments']);
+        $this->authorizeTaskAccess($task);
+
+        $task->load(['project', 'users', 'comments', 'statusHistories']);
         
         return view('admin.tasks.details-partial', compact('task'));
     }
@@ -205,13 +262,15 @@ class TaskController extends Controller
      */
     public function storeComment(Request $request, Task $task)
     {
+        $this->authorizeTaskAccess($task);
+
         $request->validate([
             'comment' => 'required|string|max:1000',
             'parent_id' => 'nullable|exists:task_comments,id'
         ]);
 
         $comment = $task->comments()->create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'parent_id' => $request->parent_id,
             'comment' => $request->comment,
         ]);
@@ -223,5 +282,32 @@ class TaskController extends Controller
             'comment' => $comment,
             'html' => view('admin.tasks.comment-item', compact('comment'))->render()
         ]);
+    }
+
+    private function logStatusChange(Task $task, string $fromStatus, string $toStatus): void
+    {
+        if ($fromStatus === $toStatus) {
+            return;
+        }
+
+        TaskStatusHistory::create([
+            'task_id' => $task->id,
+            'user_id' => Auth::id(),
+            'from_status' => $fromStatus,
+            'to_status' => $toStatus,
+        ]);
+    }
+
+    private function authorizeTaskAccess(Task $task): void
+    {
+        $task->loadMissing('project');
+        $this->authorizeProjectAccess($task->project);
+    }
+
+    private function authorizeProjectAccess(Project $project): void
+    {
+        if (Auth::user()->isProjectManager() && !Auth::user()->isAdmin() && $project->project_manager_id !== Auth::id()) {
+            abort(403, 'You can only manage tasks in your assigned projects.');
+        }
     }
 }

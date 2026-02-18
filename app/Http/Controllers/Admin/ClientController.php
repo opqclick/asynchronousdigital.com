@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Mail\UserInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -64,7 +65,10 @@ class ClientController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role_id' => $clientRole->id,
+            'active_role_id' => $clientRole->id,
         ]);
+
+        $user->syncRolesWithRules([$clientRole->id], $clientRole->id);
 
         // Create client profile
         Client::create([
@@ -85,7 +89,7 @@ class ClientController extends Controller
                 Mail::to($user->email)->send(new UserInvitation($user, $plainPassword));
             } catch (\Exception $e) {
                 // Log the error but don't fail the client creation
-                \Log::error('Failed to send invitation email: ' . $e->getMessage());
+                Log::error('Failed to send invitation email: ' . $e->getMessage());
             }
         }
 
@@ -195,7 +199,7 @@ class ClientController extends Controller
             return redirect()->route('admin.clients.index')
                 ->with('success', 'Invitation email sent successfully to ' . $client->user->email);
         } catch (\Exception $e) {
-            \Log::error('Failed to send invitation email: ' . $e->getMessage());
+            Log::error('Failed to send invitation email: ' . $e->getMessage());
             return redirect()->route('admin.clients.index')
                 ->with('error', 'Failed to send invitation email. Please try again.');
         }

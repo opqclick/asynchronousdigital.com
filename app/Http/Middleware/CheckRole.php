@@ -16,13 +16,13 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!$request->user()) {
+        $user = $request->user();
+
+        if (!$user) {
             return redirect()->route('login');
         }
 
-        $userRole = $request->user()->role->name;
-
-        if (!in_array($userRole, $roles)) {
+        if (!$user->hasAnyRole($roles)) {
             abort(403, 'Unauthorized access.');
         }
 

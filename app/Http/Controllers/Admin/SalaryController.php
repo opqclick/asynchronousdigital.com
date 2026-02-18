@@ -31,7 +31,7 @@ class SalaryController extends Controller
      */
     public function create()
     {
-        $users = User::whereHas('role', function($q) {
+        $users = User::whereHas('roles', function($q) {
             $q->whereIn('name', ['admin', 'team_member']);
         })->get();
         $projects = Project::all();
@@ -72,7 +72,7 @@ class SalaryController extends Controller
      */
     public function show(Salary $salary)
     {
-        $salary->load(['user.role', 'project.client.user']);
+        $salary->load(['user.role', 'user.roles', 'project.client.user']);
         return view('admin.salaries.show', compact('salary'));
     }
 

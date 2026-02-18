@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends Model
@@ -13,6 +14,7 @@ class Task extends Model
 
     protected $fillable = [
         'project_id',
+        'created_by',
         'title',
         'description',
         'status',
@@ -35,6 +37,14 @@ class Task extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Get the creator of this task.
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
@@ -63,5 +73,13 @@ class Task extends Model
         return $this->belongsToMany(Team::class)
             ->withTimestamps()
             ->withPivot('assigned_at');
+    }
+
+    /**
+     * Get status movement history for this task
+     */
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(\App\Models\TaskStatusHistory::class)->with('user')->latest();
     }
 }

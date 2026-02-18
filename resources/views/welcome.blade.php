@@ -25,6 +25,8 @@
 </head>
 <body class="bg-slate-900 text-white">
 
+    @include('partials.page-load-progress')
+
     <!-- Page Loader -->
     <div id="loader" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center transition-opacity duration-500">
         <div class="flex space-x-2">

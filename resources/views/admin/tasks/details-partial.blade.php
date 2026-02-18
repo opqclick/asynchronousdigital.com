@@ -88,6 +88,41 @@
 
 <hr class="my-4">
 
+<!-- Card History Section -->
+<div class="history-section mb-4">
+    <h5 class="mb-3">
+        <i class="fas fa-history"></i> Card History
+        <span class="badge badge-secondary">{{ $task->statusHistories->count() }}</span>
+    </h5>
+
+    <div class="timeline">
+        @forelse($task->statusHistories as $history)
+            <div class="d-flex align-items-start mb-2 pb-2" style="border-bottom: 1px solid #f1f1f1;">
+                <div class="mr-2 mt-1">
+                    <i class="fas fa-exchange-alt text-primary"></i>
+                </div>
+                <div>
+                    <div>
+                        <strong>{{ $history->user?->name ?? 'System' }}</strong>
+                        moved this card from
+                        <span class="badge badge-light">{{ str_replace('_', ' ', ucfirst($history->from_status)) }}</span>
+                        to
+                        <span class="badge badge-info">{{ str_replace('_', ' ', ucfirst($history->to_status)) }}</span>
+                    </div>
+                    <small class="text-muted">{{ $history->created_at->format('M d, Y h:i A') }}</small>
+                </div>
+            </div>
+        @empty
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <p class="mb-0">No movement history yet.</p>
+            </div>
+        @endforelse
+    </div>
+</div>
+
+<hr class="my-4">
+
 <!-- Comments Section -->
 <div class="comments-section">
     <h5 class="mb-3">

@@ -14,6 +14,7 @@ class Project extends Model
 
     protected $fillable = [
         'client_id',
+        'project_manager_id',
         'name',
         'description',
         'tech_stack',
@@ -39,6 +40,14 @@ class Project extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Get the project manager for this project
+     */
+    public function projectManager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'project_manager_id');
     }
 
     /**

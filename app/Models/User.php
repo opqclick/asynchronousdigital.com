@@ -16,6 +16,33 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::created(function (User $user) {
+            if ($user->role_id) {
+                $user->roles()->syncWithoutDetaching([$user->role_id]);
+
+                if (!$user->active_role_id) {
+                    $user->forceFill([
+                        'active_role_id' => $user->role_id,
+                    ])->saveQuietly();
+                }
+            }
+        });
+
+        static::updated(function (User $user) {
+            if ($user->role_id) {
+                $user->roles()->syncWithoutDetaching([$user->role_id]);
+
+                if (!$user->active_role_id) {
+                    $user->forceFill([
+                        'active_role_id' => $user->role_id,
+                    ])->saveQuietly();
+                }
+            }
+        });
+    }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -23,6 +50,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'role_id',
+        'active_role_id',
         'name',
         'email',
         'password',
@@ -75,7 +103,15 @@ class User extends Authenticatable
      */
     public function role(): BelongsTo
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class, 'active_role_id');
+    }
+
+    /**
+     * Get all roles assigned to the user.
+     */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'user_roles')->withTimestamps();
     }
 
     /**
@@ -115,11 +151,27 @@ class User extends Authenticatable
     }
 
     /**
+     * Get projects managed by this user
+     */
+    public function managedProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'project_manager_id');
+    }
+
+    /**
      * Check if user is admin
      */
     public function isAdmin(): bool
     {
-        return $this->role->name === 'admin';
+        return $this->hasAssignedRole(Role::ADMIN);
+    }
+
+    /**
+     * Check if user is project manager
+     */
+    public function isProjectManager(): bool
+    {
+        return $this->hasAssignedRole(Role::PROJECT_MANAGER);
     }
 
     /**
@@ -127,7 +179,7 @@ class User extends Authenticatable
      */
     public function isTeamMember(): bool
     {
-        return $this->role->name === 'team_member';
+        return $this->hasAssignedRole(Role::TEAM_MEMBER);
     }
 
     /**
@@ -135,7 +187,126 @@ class User extends Authenticatable
      */
     public function isClient(): bool
     {
-        return $this->role->name === 'client';
+        return $this->hasAssignedRole(Role::CLIENT);
+    }
+
+    /**
+     * Check if user has a specific role.
+     */
+    public function hasRole(string $roleName): bool
+    {
+        return $this->hasAssignedRole($roleName);
+    }
+
+    /**
+     * Check if user has any of the provided roles.
+     */
+    public function hasAnyRole(array $roleNames): bool
+    {
+        return $this->hasAnyAssignedRole($roleNames);
+    }
+
+    /**
+     * Check if user has a specific role assigned (ignores active context).
+     */
+    public function hasAssignedRole(string $roleName): bool
+    {
+        return $this->roles()->where('name', $roleName)->exists();
+    }
+
+    /**
+     * Check if user has any assigned role (ignores active context).
+     */
+    public function hasAnyAssignedRole(array $roleNames): bool
+    {
+        return $this->roles()->whereIn('name', $roleNames)->exists();
+    }
+
+    /**
+     * Check if user has a specific permission.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        return $this->roles()
+            ->get()
+            ->contains(fn (Role $role) => $role->hasPermission($permission));
+    }
+
+    /**
+     * Return all role names assigned to the user.
+     */
+    public function roleNames(): array
+    {
+        return $this->roles()->pluck('name')->all();
+    }
+
+    /**
+     * Sync roles while enforcing business constraints.
+     */
+    public function syncRolesWithRules(array $roleIds, ?int $activeRoleId = null): void
+    {
+        $roleIds = array_values(array_unique(array_map('intval', $roleIds)));
+
+        if (count($roleIds) < 1) {
+            throw new \InvalidArgumentException('At least one role is required.');
+        }
+
+        $assignedRoles = Role::query()->whereIn('id', $roleIds)->get(['id', 'name']);
+
+        if ($assignedRoles->count() !== count($roleIds)) {
+            throw new \InvalidArgumentException('One or more selected roles are invalid.');
+        }
+
+        $hasClient = $assignedRoles->contains(fn (Role $role) => $role->name === Role::CLIENT);
+        if ($hasClient && count($roleIds) > 1) {
+            throw new \InvalidArgumentException('Client role must remain exclusive.');
+        }
+
+        $activeRoleId = $activeRoleId ?? $this->active_role_id ?? $this->role_id ?? $roleIds[0];
+        if (!in_array($activeRoleId, $roleIds, true)) {
+            $activeRoleId = $roleIds[0];
+        }
+
+        $this->roles()->sync($roleIds);
+        $this->forceFill([
+            'role_id' => $activeRoleId,
+            'active_role_id' => $activeRoleId,
+        ])->save();
+    }
+
+    /**
+     * Switch currently active role context.
+     */
+    public function switchActiveRole(int $roleId): void
+    {
+        if (!$this->roles()->where('roles.id', $roleId)->exists()) {
+            throw new \InvalidArgumentException('Selected role is not assigned to this user.');
+        }
+
+        $this->forceFill([
+            'role_id' => $roleId,
+            'active_role_id' => $roleId,
+        ])->save();
+    }
+
+    /**
+     * Ensure active role is valid and set.
+     */
+    public function ensureActiveRoleContext(): void
+    {
+        $assignedIds = $this->roles()->pluck('roles.id')->all();
+        if (empty($assignedIds)) {
+            return;
+        }
+
+        $activeRoleId = $this->active_role_id ?? $this->role_id;
+        if (!$activeRoleId || !in_array($activeRoleId, $assignedIds, true)) {
+            $fallbackRoleId = $assignedIds[0];
+            $this->forceFill([
+                'role_id' => $fallbackRoleId,
+                'active_role_id' => $fallbackRoleId,
+            ])->save();
+        }
     }
 
     /**

@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -32,8 +31,9 @@ class AdminUserSeeder extends Seeder
         }
 
         // Create admin user
-        User::create([
+        $admin = User::create([
             'role_id' => $adminRole->id,
+            'active_role_id' => $adminRole->id,
             'name' => 'Admin',
             'email' => 'admin@asynchronousdigital.com',
             'password' => Hash::make('password'), // Change this in production!
@@ -52,6 +52,8 @@ class AdminUserSeeder extends Seeder
             'monthly_salary' => 0,
             'is_active' => true,
         ]);
+
+        $admin->syncRolesWithRules([$adminRole->id], $adminRole->id);
 
         $this->command->info('Admin user created successfully!');
         $this->command->info('Email: admin@asynchronousdigital.com');

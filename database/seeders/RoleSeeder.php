@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Role;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class RoleSeeder extends Seeder
@@ -20,6 +19,11 @@ class RoleSeeder extends Seeder
                 'description' => 'Full system access with all permissions',
             ],
             [
+                'name' => 'project_manager',
+                'display_name' => 'Project Manager',
+                'description' => 'Manages clients, projects, tasks, teams, and billing operations',
+            ],
+            [
                 'name' => 'team_member',
                 'display_name' => 'Team Member',
                 'description' => 'Access to assigned tasks and projects',
@@ -32,7 +36,10 @@ class RoleSeeder extends Seeder
         ];
 
         foreach ($roles as $role) {
-            Role::create($role);
+            Role::updateOrCreate(
+                ['name' => $role['name']],
+                $role
+            );
         }
     }
 }
