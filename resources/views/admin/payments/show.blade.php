@@ -138,7 +138,7 @@
                     <form action="{{ route('admin.payments.destroy', $payment) }}" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Are you sure you want to delete this payment? This will affect the invoice balance.')">
+                        <button type="submit" class="btn btn-danger btn-block" data-confirm-message="Are you sure you want to delete this payment? This will affect the invoice balance.">
                             <i class="fas fa-trash"></i> Delete Payment
                         </button>
                     </form>

@@ -81,7 +81,7 @@
                                         <i class="fas fa-eye"></i> View
                                     </a>
                                     <form action="{{ route('admin.contact-messages.destroy', $message) }}" method="POST" style="display:inline;" 
-                                          onsubmit="return confirm('Are you sure?');">
+                                          data-confirm-message="Are you sure?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-xs btn-danger">

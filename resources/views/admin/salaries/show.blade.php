@@ -170,7 +170,7 @@
                     <form action="{{ route('admin.salaries.destroy', $salary) }}" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Are you sure you want to delete this salary record?')">
+                        <button type="submit" class="btn btn-danger btn-block" data-confirm-message="Are you sure you want to delete this salary record?">
                             <i class="fas fa-trash"></i> Delete Record
                         </button>
                     </form>

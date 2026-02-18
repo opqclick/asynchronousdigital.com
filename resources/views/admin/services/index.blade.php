@@ -77,7 +77,7 @@
                                     </a>
                                     <form action="{{ route('admin.services.destroy', $service) }}" method="POST" 
                                           style="display:inline;" 
-                                          onsubmit="return confirm('Are you sure you want to delete this service?');">
+                                          data-confirm-message="Are you sure you want to delete this service?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-danger btn-sm" title="Delete">

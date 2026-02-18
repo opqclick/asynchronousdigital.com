@@ -88,7 +88,7 @@
                                     </a>
                                     <form action="{{ route('admin.clients.send-invitation', $client) }}" method="POST" 
                                           style="display:inline;" 
-                                          onsubmit="return confirm('Send invitation email to {{ $client->user->email }}?');">
+                                          data-confirm-message="Send invitation email to {{ $client->user->email }}?">
                                         @csrf
                                         <button type="submit" class="btn btn-success btn-sm" title="Send Invitation">
                                             <i class="fas fa-envelope"></i>
@@ -97,7 +97,7 @@
                                     <form action="{{ route('admin.clients.destroy', $client) }}" method="POST" style="display: inline;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this client?')">
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure you want to delete this client?">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>

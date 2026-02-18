@@ -67,7 +67,7 @@
                                     <form action="{{ route('admin.teams.destroy', $team) }}" method="POST" style="display: inline;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this team?')">
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure you want to delete this team?">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>

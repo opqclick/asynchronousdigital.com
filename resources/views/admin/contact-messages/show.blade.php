@@ -91,7 +91,7 @@
                         <i class="fas fa-arrow-left"></i> Back to Inbox
                     </a>
                     <form action="{{ route('admin.contact-messages.destroy', $contactMessage) }}" method="POST" style="display:inline;" 
-                          onsubmit="return confirm('Are you sure you want to delete this message?');">
+                          data-confirm-message="Are you sure you want to delete this message?">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger">

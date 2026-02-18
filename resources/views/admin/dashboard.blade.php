@@ -629,42 +629,61 @@
                         'done': 'Done'
                     };
                     
+                    const completeStatusChange = function () {
+                        // Move the card visually
+                        $(this).append(draggedTask);
+
+                        // Update via AJAX
+                        $.ajax({
+                            url: '/admin/tasks/' + taskId + '/update-status',
+                            method: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                status: newStatus
+                            },
+                            success: function(response) {
+                                console.log('Task status updated successfully', response);
+
+                                // Update badge counts
+                                updateBadgeCounts();
+                            },
+                            error: function(xhr) {
+                                // Revert on error
+                                toastr.error('Failed to update task status');
+                                location.reload();
+                            }
+                        });
+
+                        draggedTask = null;
+                    }.bind(this);
+
                     // Only confirm if status is actually changing
                     if (oldStatus !== newStatus) {
                         const confirmMessage = 'Change "' + taskTitle + '" status from "' + statusNames[oldStatus] + '" to "' + statusNames[newStatus] + '"?';
-                        
-                        if (!confirm(confirmMessage)) {
-                            // User cancelled, don't move the card
+
+                        if (!(window.Swal && typeof window.Swal.fire === 'function')) {
                             draggedTask = null;
                             return false;
                         }
+
+                        window.Swal.fire({
+                            title: 'Change task status?',
+                            text: confirmMessage,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, change it',
+                            cancelButtonText: 'Cancel'
+                        }).then(function (result) {
+                            if (result.isConfirmed) {
+                                completeStatusChange();
+                            } else {
+                                draggedTask = null;
+                            }
+                        });
+                        return false;
                     }
-                    
-                    // Move the card visually
-                    $(this).append(draggedTask);
-                    
-                    // Update via AJAX
-                    $.ajax({
-                        url: '/admin/tasks/' + taskId + '/update-status',
-                        method: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            status: newStatus
-                        },
-                        success: function(response) {
-                            console.log('Task status updated successfully', response);
-                            
-                            // Update badge counts
-                            updateBadgeCounts();
-                        },
-                        error: function(xhr) {
-                            // Revert on error
-                            toastr.error('Failed to update task status');
-                            location.reload();
-                        }
-                    });
-                    
-                    draggedTask = null;
+
+                    completeStatusChange();
                 }
                 
                 return false;

@@ -98,7 +98,7 @@
                                     </a>
                                     <form action="{{ route('admin.users.send-invitation', $user) }}" method="POST" 
                                           style="display:inline;" 
-                                          onsubmit="return confirm('Send invitation email to {{ $user->email }}?');">
+                                          data-confirm-message="Send invitation email to {{ $user->email }}?">
                                         @csrf
                                         <button type="submit" class="btn btn-success btn-sm" title="Send Invitation">
                                             <i class="fas fa-envelope"></i>
@@ -107,7 +107,7 @@
                                     @if(auth()->user()->isAdmin() && auth()->id() !== $user->id && !$user->hasAssignedRole('admin') && !session()->has('impersonator_id'))
                                         <form action="{{ route('admin.users.impersonate', $user) }}" method="POST"
                                               style="display:inline;"
-                                              onsubmit="return confirm('Login as {{ $user->name }}?');">
+                                              data-confirm-message="Login as {{ $user->name }}?">
                                             @csrf
                                             <button type="submit" class="btn btn-secondary btn-sm" title="Login As">
                                                 <i class="fas fa-user-secret"></i>
@@ -116,7 +116,7 @@
                                     @endif
                                     <form action="{{ route('admin.users.destroy', $user) }}" method="POST" 
                                           style="display:inline;" 
-                                          onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                          data-confirm-message="Are you sure you want to delete this user?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-danger btn-sm" title="Delete">

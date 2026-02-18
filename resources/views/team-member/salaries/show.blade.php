@@ -29,7 +29,7 @@
                         @if($salary->status === 'paid' && !$salary->is_received)
                             <form action="{{ route('team-member.salaries.confirm-received', $salary) }}" method="POST" class="d-inline">
                                 @csrf
-                                <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Confirm that you have received this salary payment?')">
+                                <button type="submit" class="btn btn-primary btn-sm" data-confirm-message="Confirm that you have received this salary payment?">
                                     <i class="fas fa-check-circle"></i> Confirm Received
                                 </button>
                             </form>

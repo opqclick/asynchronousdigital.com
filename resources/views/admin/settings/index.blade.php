@@ -780,19 +780,46 @@
             const isProduction = @json(app()->environment('production'));
             if (!isProduction) return;
 
+            let productionSubmitConfirmed = false;
+
             form.addEventListener('submit', function (event) {
                 const activeLinkOnSubmit = form.querySelector('#settingsTabs .nav-link.active[data-toggle="tab"]');
                 if (activeLinkOnSubmit) {
                     updateActiveTabState(activeLinkOnSubmit);
                 }
 
-                const confirmed = window.confirm(
-                    'You are in PRODUCTION. This will update live configuration and clear cache. Do you want to continue?'
-                );
-
-                if (!confirmed) {
-                    event.preventDefault();
+                if (productionSubmitConfirmed) {
+                    productionSubmitConfirmed = false;
+                    return;
                 }
+
+                event.preventDefault();
+
+                const confirmationMessage = 'You are in PRODUCTION. This will update live configuration and clear cache. Do you want to continue?';
+
+                if (!(window.Swal && typeof window.Swal.fire === 'function')) {
+                    return;
+                }
+
+                window.Swal.fire({
+                    title: 'Apply production settings?',
+                    text: confirmationMessage,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, apply changes',
+                    cancelButtonText: 'Cancel'
+                }).then(function (result) {
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+
+                    productionSubmitConfirmed = true;
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
+                });
             });
         })();
     </script>

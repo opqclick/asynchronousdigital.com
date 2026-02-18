@@ -43,7 +43,7 @@ class NotificationController extends Controller
     {
         $user = $request->user();
 
-        $notifications = $request->user()
+        $notifications = $user
             ->unreadNotifications()
             ->latest()
             ->take(20)
@@ -62,7 +62,7 @@ class NotificationController extends Controller
 
         return response()->json([
             'notifications' => $notifications,
-            'unread_count' => $request->user()->unreadNotifications()->count(),
+            'unread_count' => $user->unreadNotifications()->count(),
         ]);
     }
 
@@ -95,4 +95,5 @@ class NotificationController extends Controller
 
         return route('notifications.index');
     }
+
 }

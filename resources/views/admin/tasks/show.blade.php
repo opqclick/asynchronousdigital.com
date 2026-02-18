@@ -152,7 +152,7 @@ use Illuminate\Support\Facades\Storage;
                     <form action="{{ route('admin.tasks.destroy', $task) }}" method="POST" class="mt-2">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Are you sure you want to delete this task?')">
+                        <button type="submit" class="btn btn-danger btn-block" data-confirm-message="Are you sure you want to delete this task?">
                             <i class="fas fa-trash"></i> Delete Task
                         </button>
                     </form>
