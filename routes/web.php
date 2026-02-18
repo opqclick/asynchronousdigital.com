@@ -11,8 +11,11 @@ use App\Http\Controllers\Admin\SalaryController;
 use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Admin\TestimonialController;
 use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserActivityController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TeamMember\DashboardController as TeamMemberDashboardController;
 use App\Http\Controllers\TeamMember\SalaryController as TeamMemberSalaryController;
 use App\Http\Controllers\TeamMember\TaskController as TeamMemberTaskController;
@@ -64,6 +67,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/profile/switch-role', [ProfileController::class, 'switchRole'])->name('profile.switch-role');
 
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::patch('/notifications/{notificationId}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+
     Route::get('/impersonation/leave', [UserController::class, 'stopImpersonation'])
         ->name('admin.impersonation.leave');
 });
@@ -102,6 +109,18 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
     Route::middleware('role:admin')->group(function () {
         Route::resource('salaries', SalaryController::class);
         Route::resource('users', UserController::class);
+        Route::get('/settings', [SystemSettingController::class, 'edit'])->name('settings.edit');
+        Route::put('/settings', [SystemSettingController::class, 'update'])->name('settings.update');
+
+        Route::prefix('permissions')->name('permissions.')->group(function () {
+            Route::get('/roles', [PermissionController::class, 'roleIndex'])->name('roles.index');
+            Route::get('/roles/{role}/edit', [PermissionController::class, 'roleEdit'])->name('roles.edit');
+            Route::put('/roles/{role}', [PermissionController::class, 'roleUpdate'])->name('roles.update');
+
+            Route::get('/users', [PermissionController::class, 'userIndex'])->name('users.index');
+            Route::get('/users/{user}/edit', [PermissionController::class, 'userEdit'])->name('users.edit');
+            Route::put('/users/{user}', [PermissionController::class, 'userUpdate'])->name('users.update');
+        });
     });
     
     // Send invitation emails

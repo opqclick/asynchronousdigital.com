@@ -46,6 +46,14 @@ class Role extends Model
     }
 
     /**
+     * Get permissions assigned to this role.
+     */
+    public function permissionItems(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'permission_role')->withTimestamps();
+    }
+
+    /**
      * Return all distinct permissions in the system.
      */
     public static function allPermissions(): array
@@ -70,6 +78,12 @@ class Role extends Model
      */
     public function permissions(): array
     {
+        $dbPermissions = $this->permissionItems()->pluck('permissions.name')->all();
+
+        if (!empty($dbPermissions)) {
+            return $dbPermissions;
+        }
+
         return self::PERMISSIONS[$this->name] ?? [];
     }
 

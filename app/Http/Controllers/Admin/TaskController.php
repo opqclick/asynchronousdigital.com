@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\TaskAssigned;
 use App\Models\Project;
+use App\Models\SystemSetting;
 use App\Models\Task;
 use App\Models\TaskStatusHistory;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\TaskAssignedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class TaskController extends Controller
 {
@@ -104,6 +108,8 @@ class TaskController extends Controller
             $task->teams()->attach($validated['teams']);
         }
 
+        $this->notifyTaskAssignees($task, $validated['users'] ?? []);
+
         return redirect()->route('admin.tasks.index')
             ->with('success', 'Task created successfully.');
     }
@@ -194,6 +200,8 @@ class TaskController extends Controller
             );
         }
 
+        $previousAssigneeIds = $task->users()->pluck('users.id')->map(fn ($id) => (int) $id)->all();
+
         // Sync users and teams
         if (isset($validated['users'])) {
             $task->users()->sync($validated['users']);
@@ -206,6 +214,8 @@ class TaskController extends Controller
         } else {
             $task->teams()->detach();
         }
+
+        $this->notifyTaskAssignees($task, $validated['users'] ?? [], $previousAssigneeIds);
 
         return redirect()->route('admin.tasks.index')
             ->with('success', 'Task updated successfully.');
@@ -308,6 +318,37 @@ class TaskController extends Controller
     {
         if (Auth::user()->isProjectManager() && !Auth::user()->isAdmin() && $project->project_manager_id !== Auth::id()) {
             abort(403, 'You can only manage tasks in your assigned projects.');
+        }
+    }
+
+    private function notifyTaskAssignees(Task $task, array $assigneeIds, array $previousAssigneeIds = []): void
+    {
+        $currentAssigneeIds = collect($assigneeIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $newAssigneeIds = array_values(array_diff($currentAssigneeIds, $previousAssigneeIds));
+        if (empty($newAssigneeIds)) {
+            return;
+        }
+
+        $task->loadMissing(['project', 'creator']);
+        $assignedBy = Auth::user();
+        $inAppEnabled = SystemSetting::getBool('notification_in_app_enabled', true);
+        $emailEnabled = SystemSetting::getBool('notification_email_enabled', true);
+
+        $assignees = User::whereIn('id', $newAssigneeIds)->get();
+        foreach ($assignees as $assignee) {
+            if ($inAppEnabled) {
+                $assignee->notify(new TaskAssignedNotification($task, $assignedBy));
+            }
+
+            if ($emailEnabled && !empty($assignee->email)) {
+                Mail::to($assignee->email)->queue(new TaskAssigned($task, $assignee, $assignedBy));
+            }
         }
     }
 }

@@ -31,9 +31,7 @@
     }
 </style>
 <div id="global-page-progress" aria-hidden="true"></div>
-@if(app()->environment('local'))
-    <div id="server-timing-debug-badge" aria-live="polite">Server: -- ms</div>
-@endif
+<div id="server-timing-debug-badge" aria-live="polite">Server: -- ms</div>
 <script>
     (function () {
         const progressBar = document.getElementById('global-page-progress');

@@ -2,5 +2,21 @@
 
 /* Brand link padding */
 .brand-link {
-    padding: 0.5rem !important;
+    padding: 0.35rem 0.55rem !important;
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
+.brand-link .ad-brand-logo {
+    max-height: 40px !important;
+    width: auto !important;
+    float: none !important;
+    margin: 0 0.2rem 0 0 !important;
+    opacity: 1 !important;
+}
+
+.brand-link .brand-text {
+    margin-left: 0 !important;
 }

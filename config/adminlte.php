@@ -63,10 +63,10 @@ return [
     |
     */
 
-    'logo' => '<img src="/logo.png" alt="Asynchronous Digital" style="max-height: 45px; width: auto; object-fit: contain;">',
-    'logo_img' => null,
-    'logo_img_class' => null,
-    'logo_img_style' => null,
+    'logo' => 'Asynchronous Digital',
+    'logo_img' => 'logo.png',
+    'logo_img_class' => 'ad-brand-logo',
+    'logo_img_style' => 'max-height: 40px; width: auto; object-fit: contain;',
     'logo_img_xl' => null,
     'logo_img_xl_class' => null,
     'logo_img_alt' => null,
@@ -309,6 +309,12 @@ return [
             'type' => 'navbar-user-menu',
             'topnav_right' => true,
         ],
+        [
+            'text' => 'Notifications',
+            'icon' => 'fas fa-fw fa-bell',
+            'route' => 'notifications.index',
+            'topnav_right' => true,
+        ],
 
         // Sidebar items:
         [
@@ -352,6 +358,18 @@ return [
             'icon' => 'fas fa-fw fa-user',
             'can' => 'admin',
             'route' => 'admin.users.index',
+        ],
+        [
+            'text' => 'Role Permissions',
+            'icon' => 'fas fa-fw fa-user-shield',
+            'can' => 'admin',
+            'route' => 'admin.permissions.roles.index',
+        ],
+        [
+            'text' => 'User Overrides',
+            'icon' => 'fas fa-fw fa-user-cog',
+            'can' => 'admin',
+            'route' => 'admin.permissions.users.index',
         ],
         
         ['header' => 'Billing', 'can' => 'admin'],
@@ -397,21 +415,27 @@ return [
         ],
 
         // Project Manager Menu
-        ['header' => 'Project Manager', 'can' => 'project_manager'],
+        ['header' => 'Project Manager', 'can' => 'project_manager_only'],
         [
             'text' => 'Assigned Projects',
             'icon' => 'fas fa-fw fa-project-diagram',
-            'can' => 'project_manager',
+            'can' => 'project_manager_only',
             'route' => 'admin.projects.index',
         ],
         [
             'text' => 'Task Management',
             'icon' => 'fas fa-fw fa-tasks',
-            'can' => 'project_manager',
+            'can' => 'project_manager_only',
             'route' => 'admin.tasks.index',
         ],
         
         ['header' => 'Tools', 'can' => 'admin'],
+        [
+            'text' => 'System Settings',
+            'icon' => 'fas fa-fw fa-sliders-h',
+            'can' => 'admin',
+            'route' => 'admin.settings.edit',
+        ],
         [
             'text' => 'User Activities',
             'icon' => 'fas fa-fw fa-history',
@@ -425,41 +449,38 @@ return [
             'url' => '/telescope',
             'target' => '_blank',
         ],
-        
+
         // Team Member Menu
         [
             'text' => 'My Dashboard',
             'icon' => 'fas fa-fw fa-tachometer-alt',
-            'can' => 'team_member',
+            'can' => 'team_member_only',
             'route' => 'team-member.dashboard',
         ],
         [
             'text' => 'Create Task',
             'icon' => 'fas fa-fw fa-plus-circle',
-            'can' => 'team_member',
+            'can' => 'team_member_only',
             'route' => 'team-member.tasks.create',
         ],
         [
             'text' => 'My Salaries',
             'icon' => 'fas fa-fw fa-wallet',
-            'can' => 'team_member',
+            'can' => 'team_member_only',
             'route' => 'team-member.salaries.index',
         ],
         
-        // Client Menu
-        [
-            'text' => 'My Projects',
-            'icon' => 'fas fa-fw fa-folder',
-            'can' => 'client',
-            'route' => 'client.dashboard',
-        ],
-
         // Profile for all users
         ['header' => 'Account'],
         [
             'text' => 'Profile',
             'icon' => 'fas fa-fw fa-user-circle',
             'route' => 'profile.edit',
+        ],
+        [
+            'text' => 'Notifications',
+            'icon' => 'fas fa-fw fa-bell',
+            'route' => 'notifications.index',
         ],
         [
             'text' => 'Back to Admin Panel',

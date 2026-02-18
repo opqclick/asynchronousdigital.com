@@ -65,7 +65,7 @@ class ProjectController extends Controller
             'name' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
             'project_manager_id' => [
-                'required',
+                'nullable',
                 Rule::exists('users', 'id'),
             ],
             'description' => 'nullable|string',
@@ -81,18 +81,20 @@ class ProjectController extends Controller
             'teams.*' => 'exists:teams,id',
         ]);
 
-        $pmUser = User::with('roles')->findOrFail($validated['project_manager_id']);
-        if (!$pmUser->hasAssignedRole(Role::PROJECT_MANAGER)) {
-            return back()->withErrors([
-                'project_manager_id' => 'Selected user must have the Project Manager role.',
-            ])->withInput();
-        }
+        if (!empty($validated['project_manager_id'])) {
+            $pmUser = User::with('roles')->findOrFail($validated['project_manager_id']);
+            if (!$pmUser->hasAssignedRole(Role::PROJECT_MANAGER)) {
+                return back()->withErrors([
+                    'project_manager_id' => 'Selected user must have the Project Manager role.',
+                ])->withInput();
+            }
 
-        if ($this->hasProjectRoleConflict((int) $validated['project_manager_id'], $validated['teams'] ?? [])) {
-            return back()->withErrors([
-                'project_manager_id' => 'Role conflict: this user cannot be Project Manager and Team Member in the same project.',
-                'teams' => 'Role conflict: selected teams include the chosen Project Manager. Remove the user from those teams or choose a different Project Manager.',
-            ])->withInput();
+            if ($this->hasProjectRoleConflict((int) $validated['project_manager_id'], $validated['teams'] ?? [])) {
+                return back()->withErrors([
+                    'project_manager_id' => 'Role conflict: this user cannot be Project Manager and Team Member in the same project.',
+                    'teams' => 'Role conflict: selected teams include the chosen Project Manager. Remove the user from those teams or choose a different Project Manager.',
+                ])->withInput();
+            }
         }
 
         // Handle file uploads to S3
@@ -177,7 +179,7 @@ class ProjectController extends Controller
             'name' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
             'project_manager_id' => [
-                'required',
+                'nullable',
                 Rule::exists('users', 'id'),
             ],
             'description' => 'nullable|string',
@@ -193,18 +195,20 @@ class ProjectController extends Controller
             'teams.*' => 'exists:teams,id',
         ]);
 
-        $pmUser = User::with('roles')->findOrFail($validated['project_manager_id']);
-        if (!$pmUser->hasAssignedRole(Role::PROJECT_MANAGER)) {
-            return back()->withErrors([
-                'project_manager_id' => 'Selected user must have the Project Manager role.',
-            ])->withInput();
-        }
+        if (!empty($validated['project_manager_id'])) {
+            $pmUser = User::with('roles')->findOrFail($validated['project_manager_id']);
+            if (!$pmUser->hasAssignedRole(Role::PROJECT_MANAGER)) {
+                return back()->withErrors([
+                    'project_manager_id' => 'Selected user must have the Project Manager role.',
+                ])->withInput();
+            }
 
-        if ($this->hasProjectRoleConflict((int) $validated['project_manager_id'], $validated['teams'] ?? [])) {
-            return back()->withErrors([
-                'project_manager_id' => 'Role conflict: this user cannot be Project Manager and Team Member in the same project.',
-                'teams' => 'Role conflict: selected teams include the chosen Project Manager. Remove the user from those teams or choose a different Project Manager.',
-            ])->withInput();
+            if ($this->hasProjectRoleConflict((int) $validated['project_manager_id'], $validated['teams'] ?? [])) {
+                return back()->withErrors([
+                    'project_manager_id' => 'Role conflict: this user cannot be Project Manager and Team Member in the same project.',
+                    'teams' => 'Role conflict: selected teams include the chosen Project Manager. Remove the user from those teams or choose a different Project Manager.',
+                ])->withInput();
+            }
         }
 
         // Handle new file uploads to S3
