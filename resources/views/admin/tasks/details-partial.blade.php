@@ -1,3 +1,5 @@
+<div data-task-title="{{ $task->title }}"></div>
+
 <div class="row">
     <div class="col-md-6">
         <h6><strong>Project:</strong></h6>

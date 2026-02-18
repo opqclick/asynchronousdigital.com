@@ -64,8 +64,8 @@ class UserController extends Controller
             'monthly_salary' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
             'send_invitation_email' => ['boolean'],
-            'teams' => ['nullable', 'array'],
-            'teams.*' => ['exists:teams,id'],
+            'teams' => ['required', 'array', 'min:1'],
+            'teams.*' => ['integer', 'exists:teams,id'],
         ]);
 
         $roleIds = array_values(array_unique(array_map('intval', $validated['role_ids'])));
@@ -123,12 +123,10 @@ class UserController extends Controller
 
         $user->syncRolesWithRules($roleIds, $activeRoleId);
 
-        // Attach teams if any
-        if (!empty($validated['teams'])) {
-            $user->teams()->attach($validated['teams'], [
-                'joined_at' => now(),
-            ]);
-        }
+        // Attach required teams
+        $user->teams()->attach($validated['teams'], [
+            'joined_at' => now(),
+        ]);
 
         // Send invitation email if checkbox is checked
         if ($request->has('send_invitation_email')) {
@@ -196,8 +194,8 @@ class UserController extends Controller
             'payment_model' => ['nullable', 'in:hourly,fixed,monthly'],
             'monthly_salary' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
-            'teams' => ['nullable', 'array'],
-            'teams.*' => ['exists:teams,id'],
+            'teams' => ['required', 'array', 'min:1'],
+            'teams.*' => ['integer', 'exists:teams,id'],
         ]);
 
         $roleIds = array_values(array_unique(array_map('intval', $validated['role_ids'])));
@@ -265,15 +263,11 @@ class UserController extends Controller
         }
 
         // Sync teams
-        if (isset($validated['teams'])) {
-            $teamsWithTimestamp = [];
-            foreach ($validated['teams'] as $teamId) {
-                $teamsWithTimestamp[$teamId] = ['joined_at' => now()];
-            }
-            $user->teams()->sync($teamsWithTimestamp);
-        } else {
-            $user->teams()->detach();
+        $teamsWithTimestamp = [];
+        foreach ($validated['teams'] as $teamId) {
+            $teamsWithTimestamp[$teamId] = ['joined_at' => now()];
         }
+        $user->teams()->sync($teamsWithTimestamp);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');

@@ -118,7 +118,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="form-group">
                             <label for="users">Assign to Users</label>
                             <select class="form-control select2 @error('users') is-invalid @enderror" id="users" name="users[]" multiple>
@@ -129,21 +129,6 @@
                                 @endforeach
                             </select>
                             @error('users')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="teams">Assign to Teams</label>
-                            <select class="form-control select2 @error('teams') is-invalid @enderror" id="teams" name="teams[]" multiple>
-                                @foreach($teams as $team)
-                                    <option value="{{ $team->id }}" {{ in_array($team->id, old('teams', $task->teams->pluck('id')->toArray())) ? 'selected' : '' }}>
-                                        {{ $team->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('teams')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>

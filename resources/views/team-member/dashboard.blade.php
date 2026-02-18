@@ -118,9 +118,15 @@
                 <div class="card-header">
                     <h3 class="card-title">My Tasks</h3>
                     <div class="card-tools">
-                        <a href="{{ route('team-member.tasks.create') }}" class="btn btn-primary btn-sm">
+                        <form method="GET" action="{{ route('team-member.dashboard') }}" class="d-inline-block mr-2">
+                            <select name="task_filter" class="form-control form-control-sm d-inline-block" style="width: 180px;" onchange="this.form.submit()">
+                                <option value="assigned_to_me" {{ ($taskFilter ?? 'assigned_to_me') === 'assigned_to_me' ? 'selected' : '' }}>Assigned to me</option>
+                                <option value="all_project_tasks" {{ ($taskFilter ?? 'assigned_to_me') === 'all_project_tasks' ? 'selected' : '' }}>All project tasks</option>
+                            </select>
+                        </form>
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#createTeamTaskModal">
                             <i class="fas fa-plus"></i> Create Task
-                        </a>
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -134,7 +140,8 @@
                                 </div>
                                 <div class="card-body p-2 task-column" data-status="to_do" style="min-height: 400px;">
                                     @foreach($tasksByStatus['to_do'] as $task)
-                                        <div class="card mb-2 task-card" draggable="true" data-task-id="{{ $task->id }}" style="cursor: move;">
+                                        @php($canMoveTask = $task->users->contains('id', auth()->id()))
+                                        <div class="card mb-2 task-card {{ $canMoveTask ? '' : 'task-card-readonly' }}" draggable="{{ $canMoveTask ? 'true' : 'false' }}" data-can-move="{{ $canMoveTask ? '1' : '0' }}" data-task-id="{{ $task->id }}" style="cursor: {{ $canMoveTask ? 'move' : 'not-allowed' }};">
                                             <div class="card-body p-2">
                                                 <h6 class="card-title">{{ $task->title }}</h6>
                                                 <p class="card-text small text-muted">{{ $task->project->name }}</p>
@@ -148,6 +155,23 @@
                                                         </small>
                                                     @endif
                                                 </div>
+                                                @if($task->users->count() > 0)
+                                                    <div class="d-flex align-items-center mt-2" style="font-size: 0.75rem;">
+                                                        <span class="text-muted mr-1">Assignees:</span>
+                                                        <div class="d-flex">
+                                                            @foreach($task->users->take(3) as $assignee)
+                                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-1"
+                                                                     style="width: 24px; height: 24px; font-size: 10px;"
+                                                                     title="{{ $assignee->name }}">
+                                                                    {{ strtoupper(substr($assignee->name, 0, 1)) }}
+                                                                </div>
+                                                            @endforeach
+                                                            @if($task->users->count() > 3)
+                                                                <small class="text-muted">+{{ $task->users->count() - 3 }}</small>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     @endforeach
@@ -164,7 +188,8 @@
                                 </div>
                                 <div class="card-body p-2 task-column" data-status="in_progress" style="min-height: 400px;">
                                     @foreach($tasksByStatus['in_progress'] as $task)
-                                        <div class="card mb-2 border-primary task-card" draggable="true" data-task-id="{{ $task->id }}" style="cursor: move;">
+                                        @php($canMoveTask = $task->users->contains('id', auth()->id()))
+                                        <div class="card mb-2 border-primary task-card {{ $canMoveTask ? '' : 'task-card-readonly' }}" draggable="{{ $canMoveTask ? 'true' : 'false' }}" data-can-move="{{ $canMoveTask ? '1' : '0' }}" data-task-id="{{ $task->id }}" style="cursor: {{ $canMoveTask ? 'move' : 'not-allowed' }};">
                                             <div class="card-body p-2">
                                                 <h6 class="card-title">{{ $task->title }}</h6>
                                                 <p class="card-text small text-muted">{{ $task->project->name }}</p>
@@ -178,6 +203,23 @@
                                                         </small>
                                                     @endif
                                                 </div>
+                                                @if($task->users->count() > 0)
+                                                    <div class="d-flex align-items-center mt-2" style="font-size: 0.75rem;">
+                                                        <span class="text-muted mr-1">Assignees:</span>
+                                                        <div class="d-flex">
+                                                            @foreach($task->users->take(3) as $assignee)
+                                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-1"
+                                                                     style="width: 24px; height: 24px; font-size: 10px;"
+                                                                     title="{{ $assignee->name }}">
+                                                                    {{ strtoupper(substr($assignee->name, 0, 1)) }}
+                                                                </div>
+                                                            @endforeach
+                                                            @if($task->users->count() > 3)
+                                                                <small class="text-muted">+{{ $task->users->count() - 3 }}</small>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     @endforeach
@@ -194,7 +236,8 @@
                                 </div>
                                 <div class="card-body p-2 task-column" data-status="review" style="min-height: 400px;">
                                     @foreach($tasksByStatus['review'] as $task)
-                                        <div class="card mb-2 border-warning task-card" draggable="true" data-task-id="{{ $task->id }}" style="cursor: move;">
+                                        @php($canMoveTask = $task->users->contains('id', auth()->id()))
+                                        <div class="card mb-2 border-warning task-card {{ $canMoveTask ? '' : 'task-card-readonly' }}" draggable="{{ $canMoveTask ? 'true' : 'false' }}" data-can-move="{{ $canMoveTask ? '1' : '0' }}" data-task-id="{{ $task->id }}" style="cursor: {{ $canMoveTask ? 'move' : 'not-allowed' }};">
                                             <div class="card-body p-2">
                                                 <h6 class="card-title">{{ $task->title }}</h6>
                                                 <p class="card-text small text-muted">{{ $task->project->name }}</p>
@@ -206,6 +249,23 @@
                                                         <small class="text-muted">{{ $task->due_date->format('M d') }}</small>
                                                     @endif
                                                 </div>
+                                                @if($task->users->count() > 0)
+                                                    <div class="d-flex align-items-center mt-2" style="font-size: 0.75rem;">
+                                                        <span class="text-muted mr-1">Assignees:</span>
+                                                        <div class="d-flex">
+                                                            @foreach($task->users->take(3) as $assignee)
+                                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-1"
+                                                                     style="width: 24px; height: 24px; font-size: 10px;"
+                                                                     title="{{ $assignee->name }}">
+                                                                    {{ strtoupper(substr($assignee->name, 0, 1)) }}
+                                                                </div>
+                                                            @endforeach
+                                                            @if($task->users->count() > 3)
+                                                                <small class="text-muted">+{{ $task->users->count() - 3 }}</small>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     @endforeach
@@ -222,18 +282,36 @@
                                 </div>
                                 <div class="card-body p-2 task-column" data-status="done" style="min-height: 400px;">
                                     @foreach($tasksByStatus['done'] as $task)
-                                        <div class="card mb-2 border-success task-card" draggable="true" data-task-id="{{ $task->id }}" style="cursor: move;">
+                                        @php($canMoveTask = $task->users->contains('id', auth()->id()))
+                                        <div class="card mb-2 border-success task-card {{ $canMoveTask ? '' : 'task-card-readonly' }}" draggable="{{ $canMoveTask ? 'true' : 'false' }}" data-can-move="{{ $canMoveTask ? '1' : '0' }}" data-task-id="{{ $task->id }}" style="cursor: {{ $canMoveTask ? 'move' : 'not-allowed' }};">
                                             <div class="card-body p-2">
                                                 <h6 class="card-title">{{ $task->title }}</h6>
                                                 <p class="card-text small text-muted">{{ $task->project->name }}</p>
                                                 <div class="d-flex justify-content-between align-items-center">
-                                                    <span class="badge badge-success">
-                                                        Completed
+                                                    <span class="badge badge-{{ $task->priority == 'urgent' ? 'danger' : ($task->priority == 'high' ? 'warning' : 'info') }}">
+                                                        {{ ucfirst($task->priority) }}
                                                     </span>
-                                                    @if($task->updated_at)
-                                                        <small class="text-muted">{{ $task->updated_at->format('M d') }}</small>
+                                                    @if($task->due_date)
+                                                        <small class="text-muted">{{ $task->due_date->format('M d') }}</small>
                                                     @endif
                                                 </div>
+                                                @if($task->users->count() > 0)
+                                                    <div class="d-flex align-items-center mt-2" style="font-size: 0.75rem;">
+                                                        <span class="text-muted mr-1">Assignees:</span>
+                                                        <div class="d-flex">
+                                                            @foreach($task->users->take(3) as $assignee)
+                                                                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mr-1"
+                                                                     style="width: 24px; height: 24px; font-size: 10px;"
+                                                                     title="{{ $assignee->name }}">
+                                                                    {{ strtoupper(substr($assignee->name, 0, 1)) }}
+                                                                </div>
+                                                            @endforeach
+                                                            @if($task->users->count() > 3)
+                                                                <small class="text-muted">+{{ $task->users->count() - 3 }}</small>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </div>
                                     @endforeach
@@ -246,12 +324,96 @@
         </div>
     </div>
 
+    <div class="modal fade" id="createTeamTaskModal" tabindex="-1" role="dialog" aria-labelledby="createTeamTaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <form id="team-create-task-form" action="{{ route('team-member.tasks.store') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createTeamTaskModalLabel">Create Task</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="team-create-task-errors" class="alert alert-danger d-none mb-3"></div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="team_modal_title">Task Title <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="team_modal_title" name="title" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="team_modal_project_id">Project <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="team_modal_project_id" name="project_id" required>
+                                        <option value="">Select Project</option>
+                                        @foreach($projects as $project)
+                                            <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="team_modal_description">Description</label>
+                            <textarea class="form-control" id="team_modal_description" name="description" rows="4"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="team_modal_priority">Priority <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="team_modal_priority" name="priority" required>
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="team_modal_estimated_hours">Estimated Hours</label>
+                                    <input type="number" step="0.5" class="form-control" id="team_modal_estimated_hours" name="estimated_hours">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="team_modal_due_date">Due Date</label>
+                                    <input type="date" class="form-control" id="team_modal_due_date" name="due_date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="team_modal_attachments">Task Files</label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="team_modal_attachments" name="attachments[]" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+                                <label class="custom-file-label" for="team_modal_attachments">Choose files</label>
+                            </div>
+                            <small class="form-text text-muted">Max 10MB per file</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="team-create-task-submit-btn">
+                            <i class="fas fa-save"></i> Create Task
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Task Detail Modal -->
     <div class="modal fade" id="taskDetailModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Task Details</h5>
+                    <h5 class="modal-title" id="taskDetailModalTitle">Task Details</h5>
                     <button type="button" class="close" data-dismiss="modal">
                         <span>&times;</span>
                     </button>
@@ -284,6 +446,9 @@
         .task-card.dragging {
             opacity: 0.5;
         }
+        .task-card-readonly {
+            opacity: 0.9;
+        }
         .task-column.drag-over {
             background-color: #e9ecef;
             border: 2px dashed #007bff;
@@ -292,9 +457,80 @@
 @stop
 
 @section('js')
+    <script src="https://cdn.jsdelivr.net/npm/bs-custom-file-input/dist/bs-custom-file-input.min.js"></script>
     <script>
         $(document).ready(function() {
             let draggedTask = null;
+
+            bsCustomFileInput.init();
+
+            const $teamCreateTaskForm = $('#team-create-task-form');
+            const $teamCreateTaskErrors = $('#team-create-task-errors');
+            const $teamCreateTaskSubmitBtn = $('#team-create-task-submit-btn');
+
+            const resetTeamCreateTaskValidation = function () {
+                $teamCreateTaskErrors.addClass('d-none').empty();
+                $teamCreateTaskForm.find('.is-invalid').removeClass('is-invalid');
+            };
+
+            $teamCreateTaskForm.on('submit', function (event) {
+                event.preventDefault();
+                resetTeamCreateTaskValidation();
+
+                const formData = new FormData(this);
+                $teamCreateTaskSubmitBtn.prop('disabled', true);
+
+                $.ajax({
+                    url: $teamCreateTaskForm.attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function (response) {
+                        $('#createTeamTaskModal').modal('hide');
+                        $teamCreateTaskForm[0].reset();
+
+                        if (response && response.message) {
+                            toastr.success(response.message);
+                        }
+
+                        window.location.reload();
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                            const errors = xhr.responseJSON.errors;
+                            const messages = [];
+
+                            Object.keys(errors).forEach(function (field) {
+                                const fieldMessages = errors[field] || [];
+                                messages.push(...fieldMessages);
+
+                                const baseField = field.replace(/\..*$/, '');
+                                const selector = '[name="' + baseField + '"]' + ', [name="' + baseField + '[]"]';
+                                $teamCreateTaskForm.find(selector).addClass('is-invalid');
+                            });
+
+                            $teamCreateTaskErrors.html(messages.join('<br>')).removeClass('d-none');
+                            return;
+                        }
+
+                        $teamCreateTaskErrors
+                            .text('Something went wrong while creating the task. Please try again.')
+                            .removeClass('d-none');
+                    },
+                    complete: function () {
+                        $teamCreateTaskSubmitBtn.prop('disabled', false);
+                    }
+                });
+            });
+
+            $('#createTeamTaskModal').on('hidden.bs.modal', function () {
+                resetTeamCreateTaskValidation();
+            });
 
             $('#created-unassigned-only-toggle').on('change', function() {
                 const onlyUnassigned = $(this).is(':checked');
@@ -313,6 +549,13 @@
             });
 
             $('.task-card').on('dragstart', function(e) {
+                const canMove = String($(this).data('can-move')) === '1';
+                if (!canMove) {
+                    e.preventDefault();
+                    toastr.error('You can only move tasks assigned to you.');
+                    return false;
+                }
+
                 draggedTask = $(this);
                 $(this).addClass('dragging');
                 e.originalEvent.dataTransfer.effectAllowed = 'move';
@@ -340,6 +583,13 @@
                 $(this).removeClass('drag-over');
 
                 if (!draggedTask) {
+                    return false;
+                }
+
+                const canMove = String(draggedTask.data('can-move')) === '1';
+                if (!canMove) {
+                    toastr.error('You can only move tasks assigned to you.');
+                    draggedTask = null;
                     return false;
                 }
 
@@ -379,20 +629,28 @@
 
             $(document).on('click', '.task-card', function(e) {
                 if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') {
-                    const taskId = $(this).data('task-id');
-                    showTaskDetails(taskId);
+                    const $taskCard = $(this);
+                    const taskId = $taskCard.data('task-id');
+                    const canInteract = String($taskCard.data('can-move')) === '1';
+                    showTaskDetails(taskId, canInteract);
                 }
             });
 
-            function showTaskDetails(taskId) {
+            function showTaskDetails(taskId, canInteract = true) {
                 $('#taskDetailModal').modal('show');
+                const taskTitle = $('.task-card[data-task-id="' + taskId + '"]').first().find('.card-title').first().text().trim();
+                $('#taskDetailModalTitle').text(taskTitle ? taskTitle : 'Task Details');
 
                 $.ajax({
                     url: '/team/tasks/' + taskId + '/details',
                     method: 'GET',
                     success: function(response) {
                         $('#taskDetailContent').html(response);
-                        initializeComments(taskId);
+                        const loadedTitle = $('#taskDetailContent').find('[data-task-title]').first().data('task-title');
+                        if (loadedTitle) {
+                            $('#taskDetailModalTitle').text(loadedTitle);
+                        }
+                        initializeComments(taskId, canInteract);
                     },
                     error: function() {
                         $('#taskDetailContent').html('<div class="alert alert-danger">Failed to load task details</div>');
@@ -400,8 +658,20 @@
                 });
             }
 
-            function initializeComments(taskId) {
+            function initializeComments(taskId, canInteract = true) {
+                if (!canInteract) {
+                    $('#task-status-select').prop('disabled', true);
+                    $('#new-comment-input').prop('disabled', true).attr('placeholder', 'You can only comment on tasks assigned to you');
+                    $('#submit-comment').prop('disabled', true);
+                    $('.reply-btn, .submit-reply').prop('disabled', true).addClass('disabled');
+                }
+
                 $(document).off('click', '#submit-comment').on('click', '#submit-comment', function() {
+                    if (!canInteract) {
+                        toastr.error('You can only comment on tasks assigned to you.');
+                        return;
+                    }
+
                     const comment = $('#new-comment-input').val().trim();
 
                     if (!comment) {
@@ -443,6 +713,11 @@
                 });
 
                 $(document).off('click', '.submit-reply').on('click', '.submit-reply', function() {
+                    if (!canInteract) {
+                        toastr.error('You can only reply on tasks assigned to you.');
+                        return;
+                    }
+
                     const parentId = $(this).data('parent-id');
                     const reply = $(this).closest('.reply-form').find('.reply-input').val().trim();
 
@@ -481,6 +756,11 @@
                 });
 
                 $(document).off('change', '#task-status-select').on('change', '#task-status-select', function() {
+                    if (!canInteract) {
+                        toastr.error('You can only change status for tasks assigned to you.');
+                        return;
+                    }
+
                     const taskId = $(this).data('task-id');
                     const newStatus = $(this).val();
 
@@ -521,6 +801,17 @@
                     const count = $(this).find('.task-card').length;
                     $(this).closest('.card').find('.badge').text(count);
                 });
+            }
+
+            const openTaskIdFromUrl = new URLSearchParams(window.location.search).get('open_task');
+            if (openTaskIdFromUrl) {
+                const canInteract = String($('.task-card[data-task-id="' + openTaskIdFromUrl + '"]').first().data('can-move')) === '1';
+                showTaskDetails(openTaskIdFromUrl, canInteract);
+
+                if (window.history && typeof window.history.replaceState === 'function') {
+                    const cleanedUrl = window.location.pathname + window.location.hash;
+                    window.history.replaceState({}, document.title, cleanedUrl);
+                }
             }
 
             if (typeof toastr === 'undefined') {

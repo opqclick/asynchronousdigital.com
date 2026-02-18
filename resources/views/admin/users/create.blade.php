@@ -296,18 +296,21 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="teams">Assign to Teams</label>
-                    <select class="form-control select2 @error('teams') is-invalid @enderror" 
-                            id="teams" name="teams[]" multiple>
+                    <label for="teams">Assign to Teams <span class="text-danger">*</span></label>
+                    <select class="form-control select2 @error('teams') is-invalid @enderror @error('teams.*') is-invalid @enderror"
+                            id="teams" name="teams[]" multiple required>
                         @foreach($teams as $team)
                             <option value="{{ $team->id }}" {{ in_array($team->id, old('teams', [])) ? 'selected' : '' }}>
                                 {{ $team->name }}
                             </option>
                         @endforeach
                     </select>
-                    <small class="form-text text-muted">Select teams this user will be a member of</small>
+                    <small class="form-text text-muted">Select at least one team for this user.</small>
                     @error('teams')
-                        <span class="invalid-feedback">{{ $message }}</span>
+                        <span class="invalid-feedback d-block">{{ $message }}</span>
+                    @enderror
+                    @error('teams.*')
+                        <span class="invalid-feedback d-block">{{ $message }}</span>
                     @enderror
                 </div>
 

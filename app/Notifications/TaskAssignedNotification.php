@@ -24,8 +24,9 @@ class TaskAssignedNotification extends Notification
 
     public function toArray(object $notifiable): array
     {
-        $targetPath = route('admin.tasks.show', $this->task, false);
-        $targetUrl = rtrim((string) config('app.url'), '/').$targetPath;
+        $targetUrl = method_exists($notifiable, 'isTeamMember') && $notifiable->isTeamMember()
+            ? route('team-member.dashboard', ['open_task' => $this->task->id])
+            : route('admin.tasks.show', $this->task);
 
         return [
             'task_id' => $this->task->id,

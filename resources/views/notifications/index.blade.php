@@ -26,9 +26,13 @@
                         $isRead = !is_null($notification->read_at);
                         $payload = $notification->data;
                         $appBaseUrl = rtrim((string) config('app.url'), '/');
-                        $fallbackTaskUrl = !empty($payload['task_id'])
-                            ? $appBaseUrl.route('admin.tasks.show', $payload['task_id'], false)
-                            : route('notifications.index');
+                        $fallbackTaskUrl = route('notifications.index');
+
+                        if (!empty($payload['task_id'])) {
+                            $fallbackTaskUrl = auth()->user()->isTeamMember()
+                                ? route('team-member.dashboard', ['open_task' => $payload['task_id']])
+                                : $appBaseUrl.route('admin.tasks.show', $payload['task_id'], false);
+                        }
 
                         $rawTargetUrl = (string) ($payload['target_url'] ?? '');
                         $targetUrl = $fallbackTaskUrl;
