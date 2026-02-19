@@ -77,6 +77,10 @@ class AppServiceProvider extends ServiceProvider
             return session()->has('impersonator_id');
         });
 
+        Gate::define('viewLogViewer', function ($user) {
+            return $user->isAdmin();
+        });
+
         foreach (Role::allPermissions() as $permission) {
             Gate::define($permission, function ($user) use ($permission) {
                 return $user->hasPermission($permission);

@@ -104,7 +104,10 @@
                     'Frontend / Vite' => ['VITE_'],
                 ];
 
-                $remainingEnv = collect($envSettingsWithDefaults);
+                $remainingEnv = collect($envSettingsWithDefaults)
+                    ->reject(function ($value, $key) {
+                        return str_starts_with((string) $key, 'MAIL_');
+                    });
                 $envGroups = [];
 
                 foreach ($groupDefinitions as $groupName => $prefixes) {

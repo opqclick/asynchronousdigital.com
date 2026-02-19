@@ -437,6 +437,27 @@ return [
         
         ['header' => 'Tools', 'can' => 'admin'],
         [
+            'text' => 'Observability',
+            'icon' => 'fas fa-fw fa-eye',
+            'can' => 'admin',
+            'submenu' => [
+                [
+                    'text' => 'Log Viewer',
+                    'icon' => 'fas fa-fw fa-file-alt',
+                    'can' => 'admin',
+                    'url' => '/log-viewer',
+                    'target' => '_blank',
+                ],
+                [
+                    'text' => 'Telescope',
+                    'icon' => 'fas fa-fw fa-satellite-dish',
+                    'can' => 'admin',
+                    'url' => '/telescope',
+                    'target' => '_blank',
+                ],
+            ],
+        ],
+        [
             'text' => 'System Settings',
             'icon' => 'fas fa-fw fa-sliders-h',
             'can' => 'settings.manage',
@@ -453,13 +474,6 @@ return [
             'icon' => 'fas fa-fw fa-trash-restore',
             'can' => 'recycle-bin.view',
             'route' => 'admin.recycle-bin.index',
-        ],
-        [
-            'text' => 'Telescope',
-            'icon' => 'fas fa-fw fa-satellite-dish',
-            'can' => 'admin',
-            'url' => '/telescope',
-            'target' => '_blank',
         ],
 
         // Team Member Menu

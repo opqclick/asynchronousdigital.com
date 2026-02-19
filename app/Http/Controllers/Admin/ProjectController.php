@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ProjectController extends Controller
 {
@@ -28,7 +29,7 @@ class ProjectController extends Controller
             ]),
             'projectManager' => fn ($query) => $query->withTrashed(),
             'tasks' => fn ($query) => $query->withTrashed(),
-        ]);
+        ])->withCount(['teams', 'users']);
 
         if ($user->isProjectManager() && !$user->isAdmin()) {
             $projectsQuery->where('project_manager_id', Auth::id());
@@ -49,6 +50,11 @@ class ProjectController extends Controller
 
         $clients = Client::with('user')->get();
         $teams = Team::with('users:id')->get();
+        $teamMembers = User::with(['role', 'roles'])
+            ->whereHas('roles', function ($query) {
+                $query->where('name', Role::TEAM_MEMBER);
+            })
+            ->get();
         $projectManagers = User::with(['role', 'roles'])
             ->whereHas('roles', function ($query) {
                 $query->where('name', Role::PROJECT_MANAGER);
@@ -59,7 +65,7 @@ class ProjectController extends Controller
             $projectManagers = $projectManagers->where('id', Auth::id());
         }
 
-        return view('admin.projects.create', compact('clients', 'teams', 'projectManagers'));
+        return view('admin.projects.create', compact('clients', 'teams', 'teamMembers', 'projectManagers'));
     }
 
     /**
@@ -71,7 +77,7 @@ class ProjectController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'client_id' => 'required|exists:clients,id',
+            'client_id' => 'nullable|exists:clients,id',
             'project_manager_id' => [
                 'nullable',
                 Rule::exists('users', 'id'),
@@ -87,7 +93,13 @@ class ProjectController extends Controller
             'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:10240',
             'teams' => 'nullable|array',
             'teams.*' => 'exists:teams,id',
+            'users' => 'nullable|array',
+            'users.*' => 'exists:users,id',
         ]);
+
+        $selectedTeamIds = collect($validated['teams'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
+        $selectedUserIds = collect($validated['users'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
+        $this->ensureAssignableTeamMembers($selectedUserIds);
 
         if (!empty($validated['project_manager_id'])) {
             $pmUser = User::with('roles')->findOrFail($validated['project_manager_id']);
@@ -97,10 +109,11 @@ class ProjectController extends Controller
                 ])->withInput();
             }
 
-            if ($this->hasProjectRoleConflict((int) $validated['project_manager_id'], $validated['teams'] ?? [])) {
+            if ($this->hasProjectRoleConflict((int) $validated['project_manager_id'], $selectedTeamIds, $selectedUserIds)) {
                 return back()->withErrors([
                     'project_manager_id' => 'Role conflict: this user cannot be Project Manager and Team Member in the same project.',
                     'teams' => 'Role conflict: selected teams include the chosen Project Manager. Remove the user from those teams or choose a different Project Manager.',
+                    'users' => 'Role conflict: selected members include the chosen Project Manager. Remove that member or choose a different Project Manager.',
                 ])->withInput();
             }
         }
@@ -128,11 +141,17 @@ class ProjectController extends Controller
 
         $validated['attachments'] = !empty($attachmentPaths) ? $attachmentPaths : null;
 
+        unset($validated['teams'], $validated['users']);
+
         $project = Project::create($validated);
 
         // Attach teams if provided
-        if (!empty($validated['teams'])) {
-            $project->teams()->attach($validated['teams']);
+        if (!empty($selectedTeamIds)) {
+            $project->teams()->attach($selectedTeamIds);
+        }
+
+        if (!empty($selectedUserIds)) {
+            $project->users()->attach($selectedUserIds);
         }
 
         return redirect()->route('admin.projects.index')
@@ -146,7 +165,7 @@ class ProjectController extends Controller
     {
         $this->authorizeProjectAccess($project);
 
-        $project->load(['client.user', 'projectManager', 'teams.users', 'tasks', 'invoices']);
+        $project->load(['client.user', 'projectManager', 'teams.users', 'users', 'tasks', 'invoices']);
         return view('admin.projects.show', compact('project'));
     }
 
@@ -161,7 +180,12 @@ class ProjectController extends Controller
 
         $clients = Client::with('user')->get();
         $teams = Team::with('users:id')->get();
-        $project->load('teams');
+        $teamMembers = User::with(['role', 'roles'])
+            ->whereHas('roles', function ($query) {
+                $query->where('name', Role::TEAM_MEMBER);
+            })
+            ->get();
+        $project->load(['teams', 'users']);
         $projectManagers = User::with(['role', 'roles'])
             ->whereHas('roles', function ($query) {
                 $query->where('name', Role::PROJECT_MANAGER);
@@ -172,7 +196,7 @@ class ProjectController extends Controller
             $projectManagers = $projectManagers->where('id', Auth::id());
         }
 
-        return view('admin.projects.edit', compact('project', 'clients', 'teams', 'projectManagers'));
+        return view('admin.projects.edit', compact('project', 'clients', 'teams', 'teamMembers', 'projectManagers'));
     }
 
     /**
@@ -201,7 +225,13 @@ class ProjectController extends Controller
             'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:10240',
             'teams' => 'nullable|array',
             'teams.*' => 'exists:teams,id',
+            'users' => 'nullable|array',
+            'users.*' => 'exists:users,id',
         ]);
+
+        $selectedTeamIds = collect($validated['teams'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
+        $selectedUserIds = collect($validated['users'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
+        $this->ensureAssignableTeamMembers($selectedUserIds);
 
         if (!empty($validated['project_manager_id'])) {
             $pmUser = User::with('roles')->findOrFail($validated['project_manager_id']);
@@ -211,10 +241,11 @@ class ProjectController extends Controller
                 ])->withInput();
             }
 
-            if ($this->hasProjectRoleConflict((int) $validated['project_manager_id'], $validated['teams'] ?? [])) {
+            if ($this->hasProjectRoleConflict((int) $validated['project_manager_id'], $selectedTeamIds, $selectedUserIds)) {
                 return back()->withErrors([
                     'project_manager_id' => 'Role conflict: this user cannot be Project Manager and Team Member in the same project.',
                     'teams' => 'Role conflict: selected teams include the chosen Project Manager. Remove the user from those teams or choose a different Project Manager.',
+                    'users' => 'Role conflict: selected members include the chosen Project Manager. Remove that member or choose a different Project Manager.',
                 ])->withInput();
             }
         }
@@ -241,14 +272,12 @@ class ProjectController extends Controller
             $validated['tech_stack'] = null;
         }
 
+        unset($validated['teams'], $validated['users']);
+
         $project->update($validated);
 
-        // Sync teams
-        if (isset($validated['teams'])) {
-            $project->teams()->sync($validated['teams']);
-        } else {
-            $project->teams()->detach();
-        }
+        $project->teams()->sync($selectedTeamIds);
+        $project->users()->sync($selectedUserIds);
 
         return redirect()->route('admin.projects.index')
             ->with('success', 'Project updated successfully.');
@@ -310,17 +339,40 @@ class ProjectController extends Controller
         }
     }
 
-    private function hasProjectRoleConflict(int $projectManagerId, array $teamIds): bool
+    private function hasProjectRoleConflict(int $projectManagerId, array $teamIds, array $memberUserIds = []): bool
     {
-        if (empty($teamIds)) {
-            return false;
-        }
-
-        return Team::whereIn('id', $teamIds)
+        $inAssignedTeams = !empty($teamIds) && Team::whereIn('id', $teamIds)
             ->whereHas('users', function ($query) use ($projectManagerId) {
                 $query->where('users.id', $projectManagerId);
             })
             ->exists();
+
+        if ($inAssignedTeams) {
+            return true;
+        }
+
+        return in_array($projectManagerId, array_map('intval', $memberUserIds), true);
+    }
+
+    private function ensureAssignableTeamMembers(array $userIds): void
+    {
+        if (empty($userIds)) {
+            return;
+        }
+
+        $validTeamMemberIds = User::whereIn('id', $userIds)
+            ->whereHas('roles', function ($query) {
+                $query->where('name', Role::TEAM_MEMBER);
+            })
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (count($validTeamMemberIds) !== count($userIds)) {
+            throw ValidationException::withMessages([
+                'users' => 'Only users with Team Member role can be assigned directly to a project.',
+            ]);
+        }
     }
 
     private function collectProjectDependencies(Project $project): array
@@ -330,6 +382,7 @@ class ProjectController extends Controller
             'invoices' => $project->invoices()->withTrashed()->count(),
             'salaries' => $project->salaries()->withTrashed()->count(),
             'team_assignments' => DB::table('project_team')->where('project_id', $project->id)->count(),
+            'member_assignments' => DB::table('project_user')->where('project_id', $project->id)->count(),
             'payments' => Payment::withTrashed()
                 ->whereHas('invoice', function ($query) use ($project) {
                     $query->withTrashed()->where('project_id', $project->id);

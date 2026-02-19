@@ -169,6 +169,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Get projects assigned directly to this user
+     */
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class)
+            ->withTimestamps()
+            ->withPivot('assigned_at');
+    }
+
+    /**
      * Check if user is admin
      */
     public function isAdmin(): bool

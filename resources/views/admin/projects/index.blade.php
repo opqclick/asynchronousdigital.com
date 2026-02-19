@@ -49,6 +49,8 @@
                         <th>Name</th>
                         <th>Client</th>
                         <th>Project Manager</th>
+                        <th>Teams</th>
+                        <th>Members</th>
                         <th>Status</th>
                         <th>Start Date</th>
                         <th>End Date</th>
@@ -69,6 +71,8 @@
                             </td>
                             <td>{{ $project->client?->user?->name ?? 'Deleted Client' }}</td>
                             <td>{{ $project->projectManager?->name ?? 'Unassigned' }}</td>
+                            <td><span class="badge badge-primary">{{ $project->teams_count }}</span></td>
+                            <td><span class="badge badge-secondary">{{ $project->users_count }}</span></td>
                             <td>
                                 @switch($project->status)
                                     @case('planning')

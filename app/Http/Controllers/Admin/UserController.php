@@ -68,7 +68,7 @@ class UserController extends Controller
             'monthly_salary' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
             'send_invitation_email' => ['boolean'],
-            'teams' => ['required', 'array', 'min:1'],
+            'teams' => ['nullable', 'array'],
             'teams.*' => ['integer', 'exists:teams,id'],
         ]);
 
@@ -127,10 +127,12 @@ class UserController extends Controller
 
         $user->syncRolesWithRules($roleIds, $activeRoleId);
 
-        // Attach required teams
-        $user->teams()->attach($validated['teams'], [
-            'joined_at' => now(),
-        ]);
+        // Attach teams if provided
+        if (!empty($validated['teams'])) {
+            $user->teams()->attach($validated['teams'], [
+                'joined_at' => now(),
+            ]);
+        }
 
         // Send invitation email if checkbox is checked
         if ($request->has('send_invitation_email')) {

@@ -21,6 +21,8 @@ class DashboardController extends Controller
             ->where(function ($query) use ($user) {
                 $query->whereHas('teams.users', function ($teamUsersQuery) use ($user) {
                     $teamUsersQuery->where('users.id', $user->id);
+                })->orWhereHas('users', function ($userQuery) use ($user) {
+                    $userQuery->where('users.id', $user->id);
                 })->orWhereHas('tasks.users', function ($taskUsersQuery) use ($user) {
                     $taskUsersQuery->where('users.id', $user->id);
                 });
@@ -73,6 +75,8 @@ class DashboardController extends Controller
             ->where(function ($query) use ($user) {
                 $query->whereHas('teams.users', function ($teamUsersQuery) use ($user) {
                     $teamUsersQuery->where('users.id', $user->id);
+                })->orWhereHas('users', function ($userQuery) use ($user) {
+                    $userQuery->where('users.id', $user->id);
                 })->orWhereHas('tasks.users', function ($taskUsersQuery) use ($user) {
                     $taskUsersQuery->where('users.id', $user->id);
                 });

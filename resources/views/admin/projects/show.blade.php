@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\Storage;
                 <div class="card-body">
                     <dl class="row">
                         <dt class="col-sm-4">Client:</dt>
-                        <dd class="col-sm-8">{{ $project->client->user->name }}</dd>
+                        <dd class="col-sm-8">{{ $project->client?->user?->name ?? 'Unassigned' }}</dd>
 
                         <dt class="col-sm-4">Project Manager:</dt>
                         <dd class="col-sm-8">{{ $project->projectManager?->name ?? 'Unassigned' }}</dd>
@@ -121,6 +121,25 @@ use Illuminate\Support\Facades\Storage;
                         </ul>
                     @else
                         <p class="text-muted p-3">No teams assigned to this project.</p>
+                    @endif
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-check"></i> Assigned Team Members
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    @if($project->users->count() > 0)
+                        <ul class="list-group list-group-flush">
+                            @foreach($project->users as $user)
+                                <li class="list-group-item">{{ $user->name }}</li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="text-muted p-3">No team members assigned directly to this project.</p>
                     @endif
                 </div>
             </div>

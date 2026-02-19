@@ -190,7 +190,7 @@ class TaskController extends Controller
             ->where('projects.id', $project->id)
             ->exists();
 
-        abort_unless($isAssignedToProject, 403, 'You can only create tasks for projects assigned to your teams.');
+        abort_unless($isAssignedToProject, 403, 'You can only create tasks for projects assigned to you or your teams.');
     }
 
     private function authorizeTaskVisibility(Task $task): void
@@ -208,6 +208,8 @@ class TaskController extends Controller
             ->where(function ($query) {
                 $query->whereHas('teams.users', function ($teamUsersQuery) {
                     $teamUsersQuery->where('users.id', Auth::id());
+                })->orWhereHas('users', function ($userQuery) {
+                    $userQuery->where('users.id', Auth::id());
                 })->orWhereHas('tasks.users', function ($taskUsersQuery) {
                     $taskUsersQuery->where('users.id', Auth::id());
                 });
