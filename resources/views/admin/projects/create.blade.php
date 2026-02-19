@@ -40,9 +40,9 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="client_id">Client <span class="text-danger">*</span></label>
-                            <select class="form-control @error('client_id') is-invalid @enderror" id="client_id" name="client_id" required>
-                                <option value="">Select Client</option>
+                            <label for="client_id">Client (Optional)</label>
+                            <select class="form-control @error('client_id') is-invalid @enderror" id="client_id" name="client_id">
+                                <option value="">No Client</option>
                                 @foreach($clients as $client)
                                     <option value="{{ $client->id }}" {{ old('client_id') == $client->id ? 'selected' : '' }}>
                                         {{ $client->user->name }} - {{ $client->company_name ?? 'N/A' }}
@@ -185,6 +185,21 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="users">Assign Team Members</label>
+                    <select class="form-control select2 @error('users') is-invalid @enderror" id="users" name="users[]" multiple>
+                        @foreach($teamMembers as $teamMember)
+                            <option value="{{ $teamMember->id }}" {{ in_array($teamMember->id, old('users', [])) ? 'selected' : '' }}>
+                                {{ $teamMember->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('users')
+                        <span class="invalid-feedback">{{ $message }}</span>
+                    @enderror
+                    <small class="form-text text-muted">Optional. Assign individual members directly, or assign teams, or both.</small>
+                </div>
+
+                <div class="form-group">
                     <label for="attachments">Project Files</label>
                     <div class="custom-file">
                         <input type="file" class="custom-file-input @error('attachments.*') is-invalid @enderror" 
@@ -235,17 +250,22 @@
             function updatePmTeamConflictWarning() {
                 const selectedPm = Number($('#project_manager_id').val() || 0);
                 const selectedTeams = $('#teams').val() || [];
+                const selectedUsers = ($('#users').val() || []).map(function (id) { return Number(id); });
 
-                const hasConflict = selectedPm > 0 && selectedTeams.some(function (teamId) {
+                const conflictFromTeams = selectedPm > 0 && selectedTeams.some(function (teamId) {
                     const teamUsers = teamUsersMap[teamId] || [];
                     return teamUsers.includes(selectedPm);
                 });
+
+                const conflictFromUsers = selectedPm > 0 && selectedUsers.includes(selectedPm);
+                const hasConflict = conflictFromTeams || conflictFromUsers;
 
                 $('#pm-team-conflict-warning').toggleClass('d-none', !hasConflict);
             }
 
             $('#project_manager_id').on('change', updatePmTeamConflictWarning);
             $('#teams').on('change', updatePmTeamConflictWarning);
+            $('#users').on('change', updatePmTeamConflictWarning);
             updatePmTeamConflictWarning();
             
             // Initialize custom file input

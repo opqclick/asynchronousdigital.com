@@ -188,6 +188,21 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="users">Assign Team Members</label>
+                    <select class="form-control select2 @error('users') is-invalid @enderror" id="users" name="users[]" multiple>
+                        @foreach($teamMembers as $teamMember)
+                            <option value="{{ $teamMember->id }}" {{ in_array($teamMember->id, old('users', $project->users->pluck('id')->toArray())) ? 'selected' : '' }}>
+                                {{ $teamMember->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('users')
+                        <span class="invalid-feedback">{{ $message }}</span>
+                    @enderror
+                    <small class="form-text text-muted">Optional. Assign individual members directly, or assign teams, or both.</small>
+                </div>
+
+                <div class="form-group">
                     <label for="attachments">Project Files</label>
                     @if($project->attachments && count($project->attachments) > 0)
                         <div class="mb-2">
@@ -243,17 +258,22 @@
             function updatePmTeamConflictWarning() {
                 const selectedPm = Number($('#project_manager_id').val() || 0);
                 const selectedTeams = $('#teams').val() || [];
+                const selectedUsers = ($('#users').val() || []).map(function (id) { return Number(id); });
 
-                const hasConflict = selectedPm > 0 && selectedTeams.some(function (teamId) {
+                const conflictFromTeams = selectedPm > 0 && selectedTeams.some(function (teamId) {
                     const teamUsers = teamUsersMap[teamId] || [];
                     return teamUsers.includes(selectedPm);
                 });
+
+                const conflictFromUsers = selectedPm > 0 && selectedUsers.includes(selectedPm);
+                const hasConflict = conflictFromTeams || conflictFromUsers;
 
                 $('#pm-team-conflict-warning').toggleClass('d-none', !hasConflict);
             }
 
             $('#project_manager_id').on('change', updatePmTeamConflictWarning);
             $('#teams').on('change', updatePmTeamConflictWarning);
+            $('#users').on('change', updatePmTeamConflictWarning);
             updatePmTeamConflictWarning();
             
             // Initialize custom file input

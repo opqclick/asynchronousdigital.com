@@ -61,6 +61,16 @@ class Project extends Model
     }
 
     /**
+     * Get users assigned directly to this project
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)
+            ->withTimestamps()
+            ->withPivot('assigned_at');
+    }
+
+    /**
      * Get all tasks for this project
      */
     public function tasks(): HasMany

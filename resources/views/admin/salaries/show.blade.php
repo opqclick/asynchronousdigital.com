@@ -188,7 +188,7 @@
                             <dd class="col-sm-7">{{ $salary->project->name }}</dd>
 
                             <dt class="col-sm-5">Client:</dt>
-                            <dd class="col-sm-7">{{ $salary->project->client->user->name }}</dd>
+                            <dd class="col-sm-7">{{ $salary->project->client?->user?->name ?? 'Unassigned' }}</dd>
 
                             <dt class="col-sm-5">Budget:</dt>
                             <dd class="col-sm-7">${{ number_format($salary->project->budget, 2) }}</dd>

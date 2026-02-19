@@ -45,7 +45,7 @@
                                 <option value="">-- Select Project --</option>
                                 @foreach($projects as $project)
                                     <option value="{{ $project->id }}">
-                                        {{ $project->name }} ({{ $project->client->company_name }})
+                                        {{ $project->name }} ({{ $project->client?->company_name ?? 'No Client' }})
                                     </option>
                                 @endforeach
                             </select>

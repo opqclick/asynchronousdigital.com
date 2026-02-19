@@ -101,7 +101,7 @@
                                 @foreach($team->projects as $project)
                                     <tr>
                                         <td>{{ $project->name }}</td>
-                                        <td>{{ $project->client->user->name }}</td>
+                                        <td>{{ $project->client?->user?->name ?? 'Unassigned' }}</td>
                                         <td>
                                             @switch($project->status)
                                                 @case('planning')
