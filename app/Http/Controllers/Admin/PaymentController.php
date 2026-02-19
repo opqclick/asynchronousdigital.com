@@ -14,7 +14,13 @@ class PaymentController extends Controller
      */
     public function index()
     {
-        $payments = Payment::with(['invoice.client.user'])->get();
+        $payments = Payment::withTrashed()->with([
+            'invoice' => fn ($query) => $query->withTrashed()->with([
+                'client' => fn ($clientQuery) => $clientQuery->withTrashed()->with([
+                    'user' => fn ($userQuery) => $userQuery->withTrashed(),
+                ]),
+            ]),
+        ])->get();
         return view('admin.payments.index', compact('payments'));
     }
 
@@ -91,8 +97,13 @@ class PaymentController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Payment $payment)
+    public function destroy(Request $request, Payment $payment)
     {
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
         // Update invoice paid amount before deleting
         $invoice = $payment->invoice;
         $invoice->paid_amount -= $payment->amount;
@@ -103,7 +114,19 @@ class PaymentController extends Controller
         }
         
         $invoice->save();
-        
+
+        if ($forceDelete) {
+            try {
+                $payment->forceDelete();
+
+                return redirect()->route('admin.payments.index')
+                    ->with('success', 'Payment permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.payments.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
+
         $payment->delete();
         
         return redirect()->route('admin.payments.index')

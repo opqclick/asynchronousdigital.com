@@ -17,7 +17,10 @@ class SalaryController extends Controller
     {
         $filterMonth = $request->input('month', now()->format('Y-m'));
         
-        $salaries = Salary::with(['user', 'project'])
+        $salaries = Salary::withTrashed()->with([
+                'user' => fn ($query) => $query->withTrashed(),
+                'project' => fn ($query) => $query->withTrashed(),
+            ])
             ->whereYear('month', '=', substr($filterMonth, 0, 4))
             ->whereMonth('month', '=', substr($filterMonth, 5, 2))
             ->orderBy('month', 'desc')
@@ -116,8 +119,25 @@ class SalaryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Salary $salary)
+    public function destroy(Request $request, Salary $salary)
     {
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
+        if ($forceDelete) {
+            try {
+                $salary->forceDelete();
+
+                return redirect()->route('admin.salaries.index')
+                    ->with('success', 'Salary record permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.salaries.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
+
         $salary->delete();
         return redirect()->route('admin.salaries.index')
             ->with('success', 'Salary record deleted successfully.');

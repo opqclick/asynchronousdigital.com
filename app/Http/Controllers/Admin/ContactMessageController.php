@@ -14,7 +14,7 @@ class ContactMessageController extends Controller
      */
     public function index()
     {
-        $messages = ContactMessage::with('assignedUser')->latest()->get();
+        $messages = ContactMessage::withTrashed()->with('assignedUser')->latest()->get();
         $unreadCount = ContactMessage::unread()->count();
         $newCount = ContactMessage::new()->count();
         
@@ -58,8 +58,25 @@ class ContactMessageController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ContactMessage $contactMessage)
+    public function destroy(Request $request, ContactMessage $contactMessage)
     {
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
+        if ($forceDelete) {
+            try {
+                $contactMessage->forceDelete();
+
+                return redirect()->route('admin.contact-messages.index')
+                    ->with('success', 'Contact message permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.contact-messages.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
+
         $contactMessage->delete();
         return redirect()->route('admin.contact-messages.index')
             ->with('success', 'Contact message deleted successfully.');

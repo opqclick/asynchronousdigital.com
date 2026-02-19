@@ -40,22 +40,6 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        Gate::before(function ($user, string $ability) {
-            if ($ability === 'impersonating') {
-                return null;
-            }
-
-            if (str_ends_with($ability, '_only')) {
-                return null;
-            }
-
-            if ($user->isAdmin()) {
-                return true;
-            }
-
-            return null;
-        });
-
         // Define Gates for role-based menu access
         Gate::define('admin', function ($user) {
             return $user->isAdmin();

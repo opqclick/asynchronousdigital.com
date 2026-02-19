@@ -328,13 +328,13 @@ return [
         [
             'text' => 'Clients',
             'icon' => 'fas fa-fw fa-users',
-            'can' => 'admin',
+            'can' => 'clients.manage',
             'route' => 'admin.clients.index',
         ],
         [
             'text' => 'Projects',
             'icon' => 'fas fa-fw fa-project-diagram',
-            'can' => 'admin',
+            'can' => 'projects.manage',
             'route' => 'admin.projects.index',
         ],
         
@@ -342,7 +342,7 @@ return [
         [
             'text' => 'Tasks',
             'icon' => 'fas fa-fw fa-tasks',
-            'can' => 'admin',
+            'can' => 'tasks.manage',
             'route' => 'admin.tasks.index',
         ],
         [
@@ -356,19 +356,19 @@ return [
         [
             'text' => 'Users',
             'icon' => 'fas fa-fw fa-user',
-            'can' => 'admin',
+            'can' => 'users.manage',
             'route' => 'admin.users.index',
         ],
         [
             'text' => 'Role Permissions',
             'icon' => 'fas fa-fw fa-user-shield',
-            'can' => 'admin',
+            'can' => 'permissions.manage',
             'route' => 'admin.permissions.roles.index',
         ],
         [
             'text' => 'User Overrides',
             'icon' => 'fas fa-fw fa-user-cog',
-            'can' => 'admin',
+            'can' => 'permissions.manage',
             'route' => 'admin.permissions.users.index',
         ],
         
@@ -376,13 +376,13 @@ return [
         [
             'text' => 'Invoices',
             'icon' => 'fas fa-fw fa-file-invoice-dollar',
-            'can' => 'admin',
+            'can' => 'invoices.manage',
             'route' => 'admin.invoices.index',
         ],
         [
             'text' => 'Payments',
             'icon' => 'fas fa-fw fa-money-check-alt',
-            'can' => 'admin',
+            'can' => 'payments.manage',
             'route' => 'admin.payments.index',
         ],
         
@@ -390,7 +390,7 @@ return [
         [
             'text' => 'Salaries',
             'icon' => 'fas fa-fw fa-wallet',
-            'can' => 'admin',
+            'can' => 'salaries.manage',
             'route' => 'admin.salaries.index',
         ],
         
@@ -398,19 +398,25 @@ return [
         [
             'text' => 'Services',
             'icon' => 'fas fa-fw fa-cogs',
-            'can' => 'admin',
+            'can' => 'services.manage',
             'route' => 'admin.services.index',
+        ],
+        [
+            'text' => 'Team Content',
+            'icon' => 'fas fa-fw fa-users',
+            'can' => 'team-content.manage',
+            'route' => 'admin.team-contents.index',
         ],
         [
             'text' => 'Testimonials',
             'icon' => 'fas fa-fw fa-star',
-            'can' => 'admin',
+            'can' => 'testimonials.manage',
             'route' => 'admin.testimonials.index',
         ],
         [
             'text' => 'Contact Messages',
             'icon' => 'fas fa-fw fa-envelope',
-            'can' => 'admin',
+            'can' => 'contact-messages.manage',
             'route' => 'admin.contact-messages.index',
         ],
 
@@ -433,14 +439,20 @@ return [
         [
             'text' => 'System Settings',
             'icon' => 'fas fa-fw fa-sliders-h',
-            'can' => 'admin',
+            'can' => 'settings.manage',
             'route' => 'admin.settings.edit',
         ],
         [
             'text' => 'User Activities',
             'icon' => 'fas fa-fw fa-history',
-            'can' => 'admin',
+            'can' => 'user-activities.view',
             'route' => 'admin.user-activities.index',
+        ],
+        [
+            'text' => 'Recycle Bin',
+            'icon' => 'fas fa-fw fa-trash-restore',
+            'can' => 'recycle-bin.view',
+            'route' => 'admin.recycle-bin.index',
         ],
         [
             'text' => 'Telescope',

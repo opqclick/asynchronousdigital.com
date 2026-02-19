@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TeamController extends Controller
 {
@@ -15,7 +16,7 @@ class TeamController extends Controller
      */
     public function index()
     {
-        $teams = Team::withCount(['users', 'projects', 'tasks'])->get();
+        $teams = Team::withTrashed()->withCount(['users', 'projects', 'tasks'])->get();
         return view('admin.teams.index', compact('teams'));
     }
 
@@ -123,10 +124,48 @@ class TeamController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Team $team)
+    public function destroy(Request $request, Team $team)
     {
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
+        if ($forceDelete) {
+            $dependencies = $this->collectTeamDependencies($team);
+            $activeDependencies = array_filter($dependencies, fn (int $count) => $count > 0);
+
+            if (!empty($activeDependencies)) {
+                $dependencySummary = collect($activeDependencies)
+                    ->map(fn (int $count, string $key) => ucfirst(str_replace('_', ' ', $key)) . ': ' . $count)
+                    ->implode(', ');
+
+                return redirect()->route('admin.teams.index')
+                    ->with('error', 'Permanent delete blocked. This team has dependent data. ' . $dependencySummary . '. Please use soft delete.');
+            }
+
+            try {
+                $team->forceDelete();
+
+                return redirect()->route('admin.teams.index')
+                    ->with('success', 'Team permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.teams.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
+
         $team->delete();
         return redirect()->route('admin.teams.index')
             ->with('success', 'Team deleted successfully.');
+    }
+
+    private function collectTeamDependencies(Team $team): array
+    {
+        return [
+            'member_assignments' => DB::table('team_user')->where('team_id', $team->id)->count(),
+            'project_assignments' => DB::table('project_team')->where('team_id', $team->id)->count(),
+            'task_assignments' => DB::table('task_team')->where('team_id', $team->id)->count(),
+        ];
     }
 }

@@ -27,7 +27,10 @@ class TaskController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $tasksQuery = Task::with(['project', 'users']);
+        $tasksQuery = Task::withTrashed()->with([
+            'project' => fn ($query) => $query->withTrashed(),
+            'users' => fn ($query) => $query->withTrashed(),
+        ]);
         $projectsQuery = Project::query();
 
         if ($user->isProjectManager() && !$user->isAdmin()) {
@@ -288,7 +291,7 @@ class TaskController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Task $task)
+    public function destroy(Request $request, Task $task)
     {
         $this->authorizeTaskAccess($task);
 
@@ -298,6 +301,23 @@ class TaskController extends Controller
             'task_deleted',
             sprintf('Task "%s" was deleted by %s.', $task->title, Auth::user()->name)
         );
+
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
+        if ($forceDelete) {
+            try {
+                $task->forceDelete();
+
+                return redirect()->route('admin.tasks.index')
+                    ->with('success', 'Task permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.tasks.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
 
         $task->delete();
         return redirect()->route('admin.tasks.index')

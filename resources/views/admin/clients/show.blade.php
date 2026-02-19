@@ -21,7 +21,7 @@
                     <h3 class="profile-username text-center">{{ $client->user->name }}</h3>
 
                     <p class="text-muted text-center">
-                        @if($client->status === 'active')
+                        @if($client->is_active)
                             <span class="badge badge-success">Active</span>
                         @else
                             <span class="badge badge-secondary">Inactive</span>

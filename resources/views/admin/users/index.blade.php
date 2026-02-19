@@ -62,9 +62,14 @@
                 </thead>
                 <tbody>
                     @foreach($users as $user)
-                        <tr>
+                        <tr class="{{ $user->trashed() ? 'table-secondary' : '' }}">
                             <td>{{ $user->id }}</td>
-                            <td>{{ $user->name }}</td>
+                            <td>
+                                {{ $user->name }}
+                                @if($user->trashed())
+                                    <span class="badge badge-danger ml-1">Deleted</span>
+                                @endif
+                            </td>
                             <td>{{ $user->email }}</td>
                             <td>
                                 @foreach($user->roles as $role)
@@ -90,39 +95,48 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="{{ route('admin.users.show', $user) }}" class="btn btn-info btn-sm" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-warning btn-sm" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.users.send-invitation', $user) }}" method="POST" 
-                                          style="display:inline;" 
-                                          data-confirm-message="Send invitation email to {{ $user->email }}?">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success btn-sm" title="Send Invitation">
-                                            <i class="fas fa-envelope"></i>
-                                        </button>
-                                    </form>
-                                    @if(auth()->user()->isAdmin() && auth()->id() !== $user->id && !$user->hasAssignedRole('admin') && !session()->has('impersonator_id'))
-                                        <form action="{{ route('admin.users.impersonate', $user) }}" method="POST"
-                                              style="display:inline;"
-                                              data-confirm-message="Login as {{ $user->name }}?">
+                                    @if($user->trashed() && auth()->user()->isAdmin())
+                                        <form action="{{ route('admin.recycle-bin.restore', ['type' => 'users', 'id' => $user->id]) }}" method="POST" style="display:inline;" data-confirm-message="Restore this user and related deleted records?">
                                             @csrf
-                                            <button type="submit" class="btn btn-secondary btn-sm" title="Login As">
-                                                <i class="fas fa-user-secret"></i>
+                                            <button type="submit" class="btn btn-success btn-sm" title="Restore">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @elseif(!$user->trashed())
+                                        <a href="{{ route('admin.users.show', $user) }}" class="btn btn-info btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-warning btn-sm" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.users.send-invitation', $user) }}" method="POST" 
+                                              style="display:inline;" 
+                                              data-confirm-message="Send invitation email to {{ $user->email }}?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm" title="Send Invitation">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                        </form>
+                                        @if(auth()->user()->isAdmin() && auth()->id() !== $user->id && !$user->hasAssignedRole('admin') && !session()->has('impersonator_id'))
+                                            <form action="{{ route('admin.users.impersonate', $user) }}" method="POST"
+                                                  style="display:inline;"
+                                                  data-confirm-message="Login as {{ $user->name }}?">
+                                                @csrf
+                                                <button type="submit" class="btn btn-secondary btn-sm" title="Login As">
+                                                    <i class="fas fa-user-secret"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" 
+                                              style="display:inline;" 
+                                              data-confirm-message="Are you sure you want to delete this user?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
                                     @endif
-                                    <form action="{{ route('admin.users.destroy', $user) }}" method="POST" 
-                                          style="display:inline;" 
-                                          data-confirm-message="Are you sure you want to delete this user?">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
                                 </div>
                             </td>
                         </tr>

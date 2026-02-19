@@ -20,6 +20,24 @@
 @stop
 
 @section('content')
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
     <!-- Statistics Cards -->
     <div class="row">
         <div class="col-lg-3 col-6">
@@ -125,7 +143,7 @@
                                         <div class="card mb-2 task-card {{ $canMoveTask ? '' : 'task-card-readonly' }}" draggable="{{ $canMoveTask ? 'true' : 'false' }}" data-can-move="{{ $canMoveTask ? '1' : '0' }}" data-task-id="{{ $task->id }}" style="cursor: {{ $canMoveTask ? 'move' : 'not-allowed' }};">
                                             <div class="card-body p-2">
                                                 <h6 class="card-title mb-1">{{ $task->title }}</h6>
-                                                <p class="card-text small text-muted mb-2"><i class="fas fa-folder"></i> {{ $task->project->name }}</p>
+                                                <p class="card-text small text-muted mb-2"><i class="fas fa-folder"></i> {{ $task->project?->name ?? 'Deleted Project' }}</p>
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                                     <span class="badge badge-{{ $task->priority == 'urgent' ? 'danger' : ($task->priority == 'high' ? 'warning' : 'info') }}">
                                                         {{ ucfirst($task->priority) }}
@@ -171,7 +189,7 @@
                                         <div class="card mb-2 border-primary task-card {{ $canMoveTask ? '' : 'task-card-readonly' }}" draggable="{{ $canMoveTask ? 'true' : 'false' }}" data-can-move="{{ $canMoveTask ? '1' : '0' }}" data-task-id="{{ $task->id }}" style="cursor: {{ $canMoveTask ? 'move' : 'not-allowed' }};">
                                             <div class="card-body p-2">
                                                 <h6 class="card-title mb-1">{{ $task->title }}</h6>
-                                                <p class="card-text small text-muted mb-2"><i class="fas fa-folder"></i> {{ $task->project->name }}</p>
+                                                <p class="card-text small text-muted mb-2"><i class="fas fa-folder"></i> {{ $task->project?->name ?? 'Deleted Project' }}</p>
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                                     <span class="badge badge-{{ $task->priority == 'urgent' ? 'danger' : ($task->priority == 'high' ? 'warning' : 'info') }}">
                                                         {{ ucfirst($task->priority) }}
@@ -217,7 +235,7 @@
                                         <div class="card mb-2 border-warning task-card {{ $canMoveTask ? '' : 'task-card-readonly' }}" draggable="{{ $canMoveTask ? 'true' : 'false' }}" data-can-move="{{ $canMoveTask ? '1' : '0' }}" data-task-id="{{ $task->id }}" style="cursor: {{ $canMoveTask ? 'move' : 'not-allowed' }};">
                                             <div class="card-body p-2">
                                                 <h6 class="card-title mb-1">{{ $task->title }}</h6>
-                                                <p class="card-text small text-muted mb-2"><i class="fas fa-folder"></i> {{ $task->project->name }}</p>
+                                                <p class="card-text small text-muted mb-2"><i class="fas fa-folder"></i> {{ $task->project?->name ?? 'Deleted Project' }}</p>
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                                     <span class="badge badge-{{ $task->priority == 'urgent' ? 'danger' : ($task->priority == 'high' ? 'warning' : 'info') }}">
                                                         {{ ucfirst($task->priority) }}
@@ -263,7 +281,7 @@
                                         <div class="card mb-2 border-success task-card {{ $canMoveTask ? '' : 'task-card-readonly' }}" draggable="{{ $canMoveTask ? 'true' : 'false' }}" data-can-move="{{ $canMoveTask ? '1' : '0' }}" data-task-id="{{ $task->id }}" style="cursor: {{ $canMoveTask ? 'move' : 'not-allowed' }};">
                                             <div class="card-body p-2">
                                                 <h6 class="card-title mb-1">{{ $task->title }}</h6>
-                                                <p class="card-text small text-muted mb-2"><i class="fas fa-folder"></i> {{ $task->project->name }}</p>
+                                                <p class="card-text small text-muted mb-2"><i class="fas fa-folder"></i> {{ $task->project?->name ?? 'Deleted Project' }}</p>
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                                     <span class="badge badge-{{ $task->priority == 'urgent' ? 'danger' : ($task->priority == 'high' ? 'warning' : 'info') }}">
                                                         {{ ucfirst($task->priority) }}
@@ -380,7 +398,7 @@
                             <label for="dashboard_modal_users">Assign to Users</label>
                             <select class="form-control select2" id="dashboard_modal_users" name="users[]" multiple>
                                 @foreach($users as $user)
-                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->role->name }})</option>
+                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->role?->name ?? 'No Role' }})</option>
                                 @endforeach
                             </select>
                         </div>

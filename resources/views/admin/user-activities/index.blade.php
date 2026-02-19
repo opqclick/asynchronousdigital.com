@@ -70,11 +70,21 @@
                     </div>
                     <div class="col-md-2">
                         <div class="form-group">
+                            <label>Status</label>
+                            <select name="status" class="form-control">
+                                <option value="">All</option>
+                                <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>Deleted</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <div class="form-group">
                             <label>From Date</label>
                             <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-1">
                         <div class="form-group">
                             <label>To Date</label>
                             <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
@@ -116,8 +126,11 @@
                         <tr>
                             <td>{{ $activity->id }}</td>
                             <td>
-                                <strong>{{ $activity->user->name }}</strong><br>
-                                <small class="text-muted">{{ $activity->user->email }}</small>
+                                <strong>{{ $activity->user?->name ?? 'Deleted User' }}</strong><br>
+                                <small class="text-muted">{{ $activity->user?->email ?? 'N/A' }}</small>
+                                @if($activity->trashed())
+                                    <br><span class="badge badge-danger mt-1">Deleted</span>
+                                @endif
                             </td>
                             <td>
                                 @switch($activity->action)
@@ -162,6 +175,33 @@
                                    title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                @if(!$activity->trashed())
+                                    @can('user-activities.edit')
+                                        <a href="{{ route('admin.user-activities.edit', $activity) }}"
+                                           class="btn btn-sm btn-primary"
+                                           title="Edit Activity">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    @endcan
+                                    @can('user-activities.delete')
+                                        <form action="{{ route('admin.user-activities.destroy', $activity) }}" method="POST" class="d-inline" data-confirm-message="Delete this activity log?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Delete Activity">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endcan
+                                @else
+                                    @can('user-activities.restore')
+                                        <form action="{{ route('admin.user-activities.restore', $activity->id) }}" method="POST" class="d-inline" data-confirm-message="Restore this activity log?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success" title="Restore Activity">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @endcan
+                                @endif
                             </td>
                         </tr>
                     @empty

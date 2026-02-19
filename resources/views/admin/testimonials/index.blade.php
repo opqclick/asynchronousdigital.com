@@ -48,10 +48,13 @@
                 </thead>
                 <tbody>
                     @foreach($testimonials as $testimonial)
-                        <tr>
+                        <tr class="{{ $testimonial->trashed() ? 'table-secondary' : '' }}">
                             <td>{{ $testimonial->order }}</td>
                             <td>
                                 {{ $testimonial->client_name }}
+                                @if($testimonial->trashed() && auth()->user()->isAdmin())
+                                    <span class="badge badge-danger ml-1">Deleted</span>
+                                @endif
                                 @if($testimonial->client_position)
                                     <br><small class="text-muted">{{ $testimonial->client_position }}</small>
                                 @endif
@@ -67,7 +70,7 @@
                                     <a href="{{ route('admin.projects.show', $testimonial->project) }}">
                                         {{ $testimonial->project->name }}
                                     </a>
-                                @else
+                                @elseif(!$testimonial->trashed())
                                     <span class="text-muted">N/A</span>
                                 @endif
                             </td>
@@ -82,20 +85,29 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="{{ route('admin.testimonials.show', $testimonial) }}" class="btn btn-xs btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{{ route('admin.testimonials.edit', $testimonial) }}" class="btn btn-xs btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form action="{{ route('admin.testimonials.destroy', $testimonial) }}" method="POST" style="display:inline;" 
-                                      data-confirm-message="Are you sure?">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-xs btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                @if($testimonial->trashed())
+                                    <form action="{{ route('admin.recycle-bin.restore', ['type' => 'testimonials', 'id' => $testimonial->id]) }}" method="POST" style="display:inline;" data-confirm-message="Restore this testimonial?">
+                                        @csrf
+                                        <button type="submit" class="btn btn-xs btn-success">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('admin.testimonials.show', $testimonial) }}" class="btn btn-xs btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ route('admin.testimonials.edit', $testimonial) }}" class="btn btn-xs btn-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form action="{{ route('admin.testimonials.destroy', $testimonial) }}" method="POST" style="display:inline;" 
+                                          data-confirm-message="Are you sure?">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-xs btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

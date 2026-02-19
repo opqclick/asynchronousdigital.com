@@ -151,12 +151,18 @@
                 @foreach($teamMembers as $member)
                 <div class="bg-slate-800/50 backdrop-blur-lg rounded-xl border border-slate-700 overflow-hidden text-center hover:border-purple-500 transition-all duration-300 transform hover:scale-105">
                     <div class="p-6">
-                        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4">
-                            <span class="text-3xl font-bold text-white">{{ substr($member->name, 0, 1) }}</span>
+                        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                            @if($member->image_url)
+                                <img src="{{ $member->image_url }}" alt="{{ $member->name }}" class="w-full h-full object-cover">
+                            @else
+                                <span class="text-3xl font-bold text-white">{{ substr($member->name, 0, 1) }}</span>
+                            @endif
                         </div>
                         <h3 class="text-xl font-bold mb-1">{{ $member->name }}</h3>
-                        <p class="text-purple-400 text-sm mb-2">{{ ucfirst($member->role->name ?? 'Team Member') }}</p>
-                        <p class="text-slate-400 text-sm">{{ $member->email }}</p>
+                        <p class="text-purple-400 text-sm mb-2">{{ $member->role_title ?? 'Team Member' }}</p>
+                        @if($member->bio)
+                            <p class="text-slate-400 text-sm">{{ Str::limit($member->bio, 120) }}</p>
+                        @endif
                     </div>
                 </div>
                 @endforeach

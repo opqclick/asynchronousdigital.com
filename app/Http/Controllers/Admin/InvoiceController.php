@@ -15,7 +15,12 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        $invoices = Invoice::with(['client.user', 'project'])->get();
+        $invoices = Invoice::withTrashed()->with([
+            'client' => fn ($query) => $query->withTrashed()->with([
+                'user' => fn ($userQuery) => $userQuery->withTrashed(),
+            ]),
+            'project' => fn ($query) => $query->withTrashed(),
+        ])->get();
         return view('admin.invoices.index', compact('invoices'));
     }
 
@@ -115,8 +120,25 @@ class InvoiceController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Invoice $invoice)
+    public function destroy(Request $request, Invoice $invoice)
     {
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
+        if ($forceDelete) {
+            try {
+                $invoice->forceDelete();
+
+                return redirect()->route('admin.invoices.index')
+                    ->with('success', 'Invoice permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.invoices.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
+
         $invoice->delete();
         return redirect()->route('admin.invoices.index')
             ->with('success', 'Invoice deleted successfully.');

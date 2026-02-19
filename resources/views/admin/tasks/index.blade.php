@@ -57,10 +57,15 @@
                 </thead>
                 <tbody>
                     @foreach($tasks as $task)
-                        <tr>
+                        <tr class="{{ $task->trashed() ? 'table-secondary' : '' }}">
                             <td>{{ $task->id }}</td>
-                            <td>{{ $task->title }}</td>
-                            <td>{{ $task->project->name }}</td>
+                            <td>
+                                {{ $task->title }}
+                                @if($task->trashed())
+                                    <span class="badge badge-danger ml-1">Deleted</span>
+                                @endif
+                            </td>
+                            <td>{{ $task->project?->name ?? 'Deleted Project' }}</td>
                             <td>
                                 @switch($task->status)
                                     @case('to_do')
@@ -115,19 +120,28 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ route('admin.tasks.show', $task) }}" class="btn btn-info btn-sm" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.tasks.edit', $task) }}" class="btn btn-warning btn-sm" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.tasks.destroy', $task) }}" method="POST" style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure you want to delete this task?">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($task->trashed() && auth()->user()->isAdmin())
+                                        <form action="{{ route('admin.recycle-bin.restore', ['type' => 'tasks', 'id' => $task->id]) }}" method="POST" style="display:inline;" data-confirm-message="Restore this task?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm" title="Restore">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @elseif(!$task->trashed())
+                                        <a href="{{ route('admin.tasks.show', $task) }}" class="btn btn-info btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.tasks.edit', $task) }}" class="btn btn-warning btn-sm" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.tasks.destroy', $task) }}" method="POST" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure you want to delete this task?">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

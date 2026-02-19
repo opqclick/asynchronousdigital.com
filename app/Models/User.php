@@ -237,10 +237,6 @@ class User extends Authenticatable
      */
     public function hasPermission(string $permission): bool
     {
-        if ($this->hasAssignedRole(Role::ADMIN)) {
-            return true;
-        }
-
         $override = $this->permissionOverrides()
             ->where('permissions.name', $permission)
             ->first();

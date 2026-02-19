@@ -31,6 +31,27 @@ class Role extends Model
         ],
     ];
 
+    public const EXTRA_PERMISSIONS = [
+        'clients.manage',
+        'teams.manage',
+        'invoices.manage',
+        'payments.manage',
+        'salaries.manage',
+        'users.manage',
+        'settings.manage',
+        'permissions.manage',
+        'user-activities.view',
+        'user-activities.edit',
+        'user-activities.delete',
+        'user-activities.restore',
+        'services.manage',
+        'team-content.manage',
+        'testimonials.manage',
+        'contact-messages.manage',
+        'recycle-bin.view',
+        'recycle-bin.restore',
+    ];
+
     protected $fillable = [
         'name',
         'display_name',
@@ -68,6 +89,10 @@ class Role extends Model
 
                 $permissions[$permission] = true;
             }
+        }
+
+        foreach (self::EXTRA_PERMISSIONS as $permission) {
+            $permissions[$permission] = true;
         }
 
         return array_keys($permissions);

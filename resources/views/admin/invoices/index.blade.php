@@ -46,10 +46,15 @@
                 </thead>
                 <tbody>
                     @foreach($invoices as $invoice)
-                        <tr>
+                        <tr class="{{ $invoice->trashed() ? 'table-secondary' : '' }}">
                             <td><strong>{{ $invoice->invoice_number }}</strong></td>
-                            <td>{{ $invoice->client->user->name }}</td>
-                            <td>{{ $invoice->project->name }}</td>
+                            <td>
+                                {{ $invoice->client?->user?->name ?? 'Deleted Client' }}
+                                @if($invoice->trashed())
+                                    <span class="badge badge-danger ml-1">Deleted</span>
+                                @endif
+                            </td>
+                            <td>{{ $invoice->project?->name ?? 'Deleted Project' }}</td>
                             <td>{{ $invoice->issue_date->format('M d, Y') }}</td>
                             <td>
                                 @if($invoice->due_date->isPast() && $invoice->status !== 'paid')
@@ -82,19 +87,28 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ route('admin.invoices.show', $invoice) }}" class="btn btn-info btn-sm" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.invoices.edit', $invoice) }}" class="btn btn-warning btn-sm" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.invoices.destroy', $invoice) }}" method="POST" style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure?">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($invoice->trashed() && auth()->user()->isAdmin())
+                                        <form action="{{ route('admin.recycle-bin.restore', ['type' => 'invoices', 'id' => $invoice->id]) }}" method="POST" style="display:inline;" data-confirm-message="Restore this invoice and related payments?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm" title="Restore">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @elseif(!$invoice->trashed())
+                                        <a href="{{ route('admin.invoices.show', $invoice) }}" class="btn btn-info btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.invoices.edit', $invoice) }}" class="btn btn-warning btn-sm" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.invoices.destroy', $invoice) }}" method="POST" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure?">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Payment;
 use App\Models\Project;
 use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
@@ -20,7 +22,13 @@ class ProjectController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $projectsQuery = Project::with(['client.user', 'projectManager', 'tasks']);
+        $projectsQuery = Project::withTrashed()->with([
+            'client' => fn ($query) => $query->withTrashed()->with([
+                'user' => fn ($userQuery) => $userQuery->withTrashed(),
+            ]),
+            'projectManager' => fn ($query) => $query->withTrashed(),
+            'tasks' => fn ($query) => $query->withTrashed(),
+        ]);
 
         if ($user->isProjectManager() && !$user->isAdmin()) {
             $projectsQuery->where('project_manager_id', Auth::id());
@@ -249,10 +257,39 @@ class ProjectController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Project $project)
+    public function destroy(Request $request, Project $project)
     {
         $this->authorizeProjectWrite();
         $this->authorizeProjectAccess($project);
+
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
+        if ($forceDelete) {
+            $dependencies = $this->collectProjectDependencies($project);
+            $activeDependencies = array_filter($dependencies, fn (int $count) => $count > 0);
+
+            if (!empty($activeDependencies)) {
+                $dependencySummary = collect($activeDependencies)
+                    ->map(fn (int $count, string $key) => ucfirst(str_replace('_', ' ', $key)) . ': ' . $count)
+                    ->implode(', ');
+
+                return redirect()->route('admin.projects.index')
+                    ->with('error', 'Permanent delete blocked. This project has dependent data. ' . $dependencySummary . '. Please use soft delete.');
+            }
+
+            try {
+                $project->forceDelete();
+
+                return redirect()->route('admin.projects.index')
+                    ->with('success', 'Project permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.projects.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
 
         $project->delete();
         return redirect()->route('admin.projects.index')
@@ -284,5 +321,19 @@ class ProjectController extends Controller
                 $query->where('users.id', $projectManagerId);
             })
             ->exists();
+    }
+
+    private function collectProjectDependencies(Project $project): array
+    {
+        return [
+            'tasks' => $project->tasks()->withTrashed()->count(),
+            'invoices' => $project->invoices()->withTrashed()->count(),
+            'salaries' => $project->salaries()->withTrashed()->count(),
+            'team_assignments' => DB::table('project_team')->where('project_id', $project->id)->count(),
+            'payments' => Payment::withTrashed()
+                ->whereHas('invoice', function ($query) use ($project) {
+                    $query->withTrashed()->where('project_id', $project->id);
+                })->count(),
+        ];
     }
 }

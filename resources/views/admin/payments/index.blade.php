@@ -44,14 +44,27 @@
                 </thead>
                 <tbody>
                     @foreach($payments as $payment)
-                        <tr>
+                        <tr class="{{ $payment->trashed() ? 'table-secondary' : '' }}">
                             <td>{{ $payment->id }}</td>
                             <td>
-                                <a href="{{ route('admin.invoices.show', $payment->invoice) }}">
-                                    {{ $payment->invoice->invoice_number }}
-                                </a>
+                                @if($payment->invoice)
+                                    @if(!$payment->invoice->trashed())
+                                        <a href="{{ route('admin.invoices.show', $payment->invoice) }}">
+                                            {{ $payment->invoice->invoice_number }}
+                                        </a>
+                                    @else
+                                        {{ $payment->invoice->invoice_number }}
+                                    @endif
+                                @else
+                                    Deleted Invoice
+                                @endif
                             </td>
-                            <td>{{ $payment->invoice->client->user->name }}</td>
+                            <td>
+                                {{ $payment->invoice?->client?->user?->name ?? 'Deleted Client' }}
+                                @if($payment->trashed())
+                                    <span class="badge badge-danger ml-1">Deleted</span>
+                                @endif
+                            </td>
                             <td><strong>${{ number_format($payment->amount, 2) }}</strong></td>
                             <td>{{ $payment->payment_date->format('M d, Y') }}</td>
                             <td>
@@ -75,16 +88,25 @@
                             <td>{{ $payment->transaction_id ?? 'N/A' }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ route('admin.payments.show', $payment) }}" class="btn btn-info btn-sm" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <form action="{{ route('admin.payments.destroy', $payment) }}" method="POST" style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure you want to delete this payment?">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($payment->trashed() && auth()->user()->isAdmin())
+                                        <form action="{{ route('admin.recycle-bin.restore', ['type' => 'payments', 'id' => $payment->id]) }}" method="POST" style="display:inline;" data-confirm-message="Restore this payment?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm" title="Restore">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @elseif(!$payment->trashed())
+                                        <a href="{{ route('admin.payments.show', $payment) }}" class="btn btn-info btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <form action="{{ route('admin.payments.destroy', $payment) }}" method="POST" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure you want to delete this payment?">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

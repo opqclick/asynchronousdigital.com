@@ -19,6 +19,15 @@
 @stop
 
 @section('content')
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">All Teams</h3>
@@ -43,9 +52,14 @@
                 </thead>
                 <tbody>
                     @foreach($teams as $team)
-                        <tr>
+                        <tr class="{{ $team->trashed() ? 'table-secondary' : '' }}">
                             <td>{{ $team->id }}</td>
-                            <td><strong>{{ $team->name }}</strong></td>
+                            <td>
+                                <strong>{{ $team->name }}</strong>
+                                @if($team->trashed())
+                                    <span class="badge badge-danger ml-1">Deleted</span>
+                                @endif
+                            </td>
                             <td>{{ Str::limit($team->description ?? 'N/A', 50) }}</td>
                             <td>
                                 <span class="badge badge-primary">{{ $team->users->count() }}</span>
@@ -58,19 +72,28 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ route('admin.teams.show', $team) }}" class="btn btn-info btn-sm" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.teams.edit', $team) }}" class="btn btn-warning btn-sm" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.teams.destroy', $team) }}" method="POST" style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure you want to delete this team?">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($team->trashed() && auth()->user()->isAdmin())
+                                        <form action="{{ route('admin.recycle-bin.restore', ['type' => 'teams', 'id' => $team->id]) }}" method="POST" style="display:inline;" data-confirm-message="Restore this team?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm" title="Restore">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @elseif(!$team->trashed())
+                                        <a href="{{ route('admin.teams.show', $team) }}" class="btn btn-info btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.teams.edit', $team) }}" class="btn btn-warning btn-sm" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.teams.destroy', $team) }}" method="POST" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure you want to delete this team?">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

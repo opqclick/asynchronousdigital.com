@@ -77,9 +77,14 @@
                 </thead>
                 <tbody>
                     @foreach($salaries as $salary)
-                        <tr>
+                        <tr class="{{ $salary->trashed() ? 'table-secondary' : '' }}">
                             <td>{{ $salary->id }}</td>
-                            <td>{{ $salary->user->name }}</td>
+                            <td>
+                                {{ $salary->user?->name ?? 'Deleted User' }}
+                                @if($salary->trashed())
+                                    <span class="badge badge-danger ml-1">Deleted</span>
+                                @endif
+                            </td>
                             <td>{{ $salary->month->format('M Y') }}</td>
                             <td>{{ $salary->project ? $salary->project->name : 'General' }}</td>
                             <td>${{ number_format($salary->base_amount, 2) }}</td>
@@ -111,16 +116,25 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ route('admin.salaries.show', $salary) }}" class="btn btn-info btn-sm" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <form action="{{ route('admin.salaries.destroy', $salary) }}" method="POST" style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure?">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($salary->trashed() && auth()->user()->isAdmin())
+                                        <form action="{{ route('admin.recycle-bin.restore', ['type' => 'salaries', 'id' => $salary->id]) }}" method="POST" style="display:inline;" data-confirm-message="Restore this salary record?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm" title="Restore">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @elseif(!$salary->trashed())
+                                        <a href="{{ route('admin.salaries.show', $salary) }}" class="btn btn-info btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <form action="{{ route('admin.salaries.destroy', $salary) }}" method="POST" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure?">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
