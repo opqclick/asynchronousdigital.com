@@ -31,6 +31,27 @@ class Role extends Model
         ],
     ];
 
+    public const EXTRA_PERMISSIONS = [
+        'clients.manage',
+        'teams.manage',
+        'invoices.manage',
+        'payments.manage',
+        'salaries.manage',
+        'users.manage',
+        'settings.manage',
+        'permissions.manage',
+        'user-activities.view',
+        'user-activities.edit',
+        'user-activities.delete',
+        'user-activities.restore',
+        'services.manage',
+        'team-content.manage',
+        'testimonials.manage',
+        'contact-messages.manage',
+        'recycle-bin.view',
+        'recycle-bin.restore',
+    ];
+
     protected $fillable = [
         'name',
         'display_name',
@@ -43,6 +64,14 @@ class Role extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'user_roles')->withTimestamps();
+    }
+
+    /**
+     * Get permissions assigned to this role.
+     */
+    public function permissionItems(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'permission_role')->withTimestamps();
     }
 
     /**
@@ -62,6 +91,10 @@ class Role extends Model
             }
         }
 
+        foreach (self::EXTRA_PERMISSIONS as $permission) {
+            $permissions[$permission] = true;
+        }
+
         return array_keys($permissions);
     }
 
@@ -70,6 +103,12 @@ class Role extends Model
      */
     public function permissions(): array
     {
+        $dbPermissions = $this->permissionItems()->pluck('permissions.name')->all();
+
+        if (!empty($dbPermissions)) {
+            return $dbPermissions;
+        }
+
         return self::PERMISSIONS[$this->name] ?? [];
     }
 

@@ -27,10 +27,6 @@
                     <a href="{{ route('dashboard') }}" class="nav-link text-purple-400 hover:text-purple-300 px-3 py-2">
                         Dashboard
                     </a>
-                @else
-                    <a href="{{ route('login') }}" class="nav-link text-purple-400 hover:text-purple-300 px-3 py-2">
-                        Login
-                    </a>
                 @endauth
             </div>
 
@@ -63,10 +59,6 @@
                 @auth
                     <a href="{{ route('dashboard') }}" class="block text-purple-400 hover:text-purple-300 hover:bg-slate-800 px-3 py-2 rounded">
                         Dashboard
-                    </a>
-                @else
-                    <a href="{{ route('login') }}" class="block text-purple-400 hover:text-purple-300 hover:bg-slate-800 px-3 py-2 rounded">
-                        Login
                     </a>
                 @endauth
             </div>

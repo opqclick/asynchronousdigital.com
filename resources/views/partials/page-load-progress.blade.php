@@ -31,9 +31,7 @@
     }
 </style>
 <div id="global-page-progress" aria-hidden="true"></div>
-@if(app()->environment('local'))
-    <div id="server-timing-debug-badge" aria-live="polite">Server: -- ms</div>
-@endif
+<div id="server-timing-debug-badge" aria-live="polite">Server: -- ms</div>
 <script>
     (function () {
         const progressBar = document.getElementById('global-page-progress');
@@ -43,6 +41,7 @@
         let progress = 12;
         let timer = null;
         let activeRequests = 0;
+        let safetyTimeout = null;
 
         const updateTimingBadge = (durationMs) => {
             if (!timingBadge || durationMs === null || Number.isNaN(durationMs)) return;
@@ -93,6 +92,11 @@
             progressBar.style.opacity = '1';
             progressBar.style.width = progress + '%';
 
+            clearTimeout(safetyTimeout);
+            safetyTimeout = setTimeout(() => {
+                done();
+            }, 15000);
+
             clearInterval(timer);
             timer = setInterval(() => {
                 if (progress < 90) {
@@ -103,6 +107,7 @@
 
         const done = () => {
             clearInterval(timer);
+            clearTimeout(safetyTimeout);
             progressBar.style.width = '100%';
             setTimeout(() => {
                 progressBar.style.opacity = '0';
@@ -121,6 +126,12 @@
             readNavigationServerTiming();
         });
         window.addEventListener('pageshow', done);
+        window.addEventListener('app:request-cancelled', done);
+
+        window.appPageProgress = {
+            start,
+            done,
+        };
 
         document.addEventListener('submit', () => {
             start();

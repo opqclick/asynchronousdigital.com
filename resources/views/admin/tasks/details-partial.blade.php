@@ -1,3 +1,5 @@
+<div data-task-title="{{ $task->title }}"></div>
+
 <div class="row">
     <div class="col-md-6">
         <h6><strong>Project:</strong></h6>
@@ -66,10 +68,21 @@
             <h6><strong>Attachments:</strong></h6>
             <ul class="list-unstyled">
                 @foreach($task->attachments as $attachment)
+                    @php
+                        $isStructured = is_array($attachment);
+                        $attachmentPath = $isStructured ? ($attachment['path'] ?? null) : $attachment;
+                        $attachmentName = $isStructured
+                            ? ($attachment['name'] ?? basename((string) $attachmentPath))
+                            : basename((string) $attachment);
+                    @endphp
                     <li>
-                        <a href="{{ Storage::url($attachment) }}" target="_blank">
-                            <i class="fas fa-file"></i> {{ basename($attachment) }}
-                        </a>
+                        @if($attachmentPath)
+                            <a href="{{ Storage::disk('do_spaces')->url($attachmentPath) }}" target="_blank">
+                                <i class="fas fa-file"></i> {{ $attachmentName }}
+                            </a>
+                        @else
+                            <span class="text-muted"><i class="fas fa-file"></i> Attachment unavailable</span>
+                        @endif
                     </li>
                 @endforeach
             </ul>

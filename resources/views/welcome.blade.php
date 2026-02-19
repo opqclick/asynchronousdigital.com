@@ -47,7 +47,7 @@
                     <a href="#services" class="nav-link text-slate-300 hover:text-white px-3 py-2">Services</a>
                     <a href="#portfolio" class="nav-link text-slate-300 hover:text-white px-3 py-2">Portfolio</a>
                     <a href="#contact" class="nav-link text-slate-300 hover:text-white px-3 py-2">Contact</a>
-                    @auth<a href="{{ route('dashboard') }}" class="nav-link text-purple-400 px-3 py-2">Dashboard</a>@else<a href="{{ route('login') }}" class="nav-link text-purple-400 px-3 py-2">Login</a>@endauth
+                    @auth<a href="{{ route('dashboard') }}" class="nav-link text-purple-400 px-3 py-2">Dashboard</a>@endauth
                 </div>
                 <button id="mobile-menu-button" class="md:hidden text-slate-300"><i class="fas fa-bars text-xl"></i></button>
             </div>
@@ -58,7 +58,7 @@
                     <a href="#services" class="block text-slate-300 hover:bg-slate-800 px-3 py-2 rounded">Services</a>
                     <a href="#portfolio" class="block text-slate-300 hover:bg-slate-800 px-3 py-2 rounded">Portfolio</a>
                     <a href="#contact" class="block text-slate-300 hover:bg-slate-800 px-3 py-2 rounded">Contact</a>
-                    @auth<a href="{{ route('dashboard') }}" class="block text-purple-400 hover:bg-slate-800 px-3 py-2 rounded">Dashboard</a>@else<a href="{{ route('login') }}" class="block text-purple-400 hover:bg-slate-800 px-3 py-2 rounded">Login</a>@endauth
+                    @auth<a href="{{ route('dashboard') }}" class="block text-purple-400 hover:bg-slate-800 px-3 py-2 rounded">Dashboard</a>@endauth
                 </div>
             </div>
         </div>
@@ -107,9 +107,18 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
                 @foreach($teamMembers as $member)
                 <div class="bg-slate-800/50 rounded-xl border border-slate-700 p-6 text-center hover:border-purple-500 transition">
-                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4"><span class="text-2xl font-bold">{{ substr($member->name, 0, 1) }}</span></div>
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                        @if($member->image_url)
+                            <img src="{{ $member->image_url }}" alt="{{ $member->name }}" class="w-full h-full object-cover">
+                        @else
+                            <span class="text-2xl font-bold">{{ substr($member->name, 0, 1) }}</span>
+                        @endif
+                    </div>
                     <h4 class="text-lg font-bold mb-1">{{ $member->name }}</h4>
-                    <p class="text-purple-400 text-sm">{{ ucfirst($member->role->name ?? 'Team Member') }}</p>
+                    <p class="text-purple-400 text-sm">{{ $member->role_title ?? 'Team Member' }}</p>
+                    @if($member->bio)
+                        <p class="text-slate-400 text-sm mt-2">{{ Str::limit($member->bio, 90) }}</p>
+                    @endif
                 </div>
                 @endforeach
             </div>

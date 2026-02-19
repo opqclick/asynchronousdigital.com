@@ -4,9 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 class UserActivity extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'user_id',
         'action',
@@ -24,17 +28,17 @@ class UserActivity extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public static function log(string $action, string $description, ?string $model = null, ?int $modelId = null, ?array $changes = null): void
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return;
         }
 
         self::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'action' => $action,
             'model' => $model,
             'model_id' => $modelId,

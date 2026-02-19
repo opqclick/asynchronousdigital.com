@@ -26,6 +26,31 @@
                 <div class="card-header">
                     <h3 class="card-title">Activity Information</h3>
                     <div class="card-tools">
+                        @if(!$activity->trashed())
+                            @can('user-activities.edit')
+                                <a href="{{ route('admin.user-activities.edit', $activity) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            @endcan
+                            @can('user-activities.delete')
+                                <form action="{{ route('admin.user-activities.destroy', $activity) }}" method="POST" class="d-inline" data-confirm-message="Delete this activity log?">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            @endcan
+                        @else
+                            @can('user-activities.restore')
+                                <form action="{{ route('admin.user-activities.restore', $activity->id) }}" method="POST" class="d-inline" data-confirm-message="Restore this activity log?">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="fas fa-undo"></i> Restore
+                                    </button>
+                                </form>
+                            @endcan
+                        @endif
                         <a href="{{ route('admin.user-activities.index') }}" class="btn btn-sm btn-secondary">
                             <i class="fas fa-arrow-left"></i> Back to List
                         </a>
@@ -40,9 +65,9 @@
                     <div class="row mb-3">
                         <div class="col-4"><strong>User:</strong></div>
                         <div class="col-8">
-                            {{ $activity->user->name }}<br>
-                            <small class="text-muted">{{ $activity->user->email }}</small><br>
-                            <span class="badge badge-secondary">{{ ucfirst($activity->user->role->name) }}</span>
+                            {{ $activity->user?->name ?? 'Deleted User' }}<br>
+                            <small class="text-muted">{{ $activity->user?->email ?? 'N/A' }}</small><br>
+                            <span class="badge badge-secondary">{{ ucfirst($activity->user?->role?->name ?? 'Unknown') }}</span>
                         </div>
                     </div>
 
@@ -162,11 +187,14 @@
                 <div class="card-body p-0">
                     <ul class="list-group list-group-flush">
                         @php
-                            $recentActivities = \App\Models\UserActivity::where('user_id', $activity->user_id)
-                                ->where('id', '!=', $activity->id)
-                                ->orderBy('created_at', 'desc')
-                                ->limit(10)
-                                ->get();
+                            $recentActivities = collect();
+                            if ($activity->user_id) {
+                                $recentActivities = \App\Models\UserActivity::where('user_id', $activity->user_id)
+                                    ->where('id', '!=', $activity->id)
+                                    ->orderBy('created_at', 'desc')
+                                    ->limit(10)
+                                    ->get();
+                            }
                         @endphp
                         @forelse($recentActivities as $recent)
                             <li class="list-group-item">

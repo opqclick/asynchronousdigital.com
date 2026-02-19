@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Payment;
 use App\Models\Role;
 use App\Models\User;
 use App\Mail\UserInvitation;
@@ -21,7 +22,12 @@ class ClientController extends Controller
      */
     public function index()
     {
-        $clients = Client::with(['user', 'projects'])->get();
+        $clients = Client::withTrashed()
+            ->with([
+                'user' => fn ($query) => $query->withTrashed(),
+                'projects' => fn ($query) => $query->withTrashed(),
+            ])
+            ->get();
         return view('admin.clients.index', compact('clients'));
     }
 
@@ -169,15 +175,62 @@ class ClientController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Client $client)
+    public function destroy(Request $request, Client $client)
     {
-        // Delete associated user
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
         $user = $client->user;
+
+        if ($forceDelete) {
+            $dependencies = $this->collectClientDependencies($client);
+            $activeDependencies = array_filter($dependencies, fn (int $count) => $count > 0);
+
+            if (!empty($activeDependencies)) {
+                $dependencySummary = collect($activeDependencies)
+                    ->map(fn (int $count, string $key) => ucfirst(str_replace('_', ' ', $key)) . ': ' . $count)
+                    ->implode(', ');
+
+                return redirect()->route('admin.clients.index')
+                    ->with('error', 'Permanent delete blocked. This client has dependent data. ' . $dependencySummary . '. Please use soft delete.');
+            }
+
+            try {
+                $client->forceDelete();
+
+                if ($user && !$user->trashed()) {
+                    $user->delete();
+                }
+
+                return redirect()->route('admin.clients.index')
+                    ->with('success', 'Client permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.clients.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
+
         $client->delete();
-        $user->delete();
+        if ($user && !$user->trashed()) {
+            $user->delete();
+        }
 
         return redirect()->route('admin.clients.index')
             ->with('success', 'Client deleted successfully.');
+    }
+
+    private function collectClientDependencies(Client $client): array
+    {
+        return [
+            'projects' => $client->projects()->withTrashed()->count(),
+            'invoices' => $client->invoices()->withTrashed()->count(),
+            'payments' => Payment::withTrashed()
+                ->whereHas('invoice', function ($query) use ($client) {
+                    $query->withTrashed()->where('client_id', $client->id);
+                })->count(),
+        ];
     }
 
     /**

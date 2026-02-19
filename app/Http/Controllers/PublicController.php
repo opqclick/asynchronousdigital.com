@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Service;
+use App\Models\TeamContent;
 use App\Models\Testimonial;
-use App\Models\User;
-use Illuminate\Http\Request;
 
 class PublicController extends Controller
 {
@@ -21,10 +20,8 @@ class PublicController extends Controller
             ->take(9)
             ->get();
 
-        // Team members for about section
-        $teamMembers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['admin', 'team_member']);
-        })->get();
+        // Team content for about section
+        $teamMembers = TeamContent::published()->get();
 
         // Statistics for about section
         $stats = [
@@ -51,9 +48,7 @@ class PublicController extends Controller
 
     public function about()
     {
-        $teamMembers = User::whereHas('roles', function ($query) {
-            $query->whereIn('name', ['admin', 'team_member']);
-        })->get();
+        $teamMembers = TeamContent::published()->get();
 
         $stats = [
             'projects_completed' => Project::where('status', 'completed')->count(),

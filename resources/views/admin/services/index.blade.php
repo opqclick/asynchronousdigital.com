@@ -52,10 +52,15 @@
                 </thead>
                 <tbody>
                     @foreach($services as $service)
-                        <tr>
+                        <tr class="{{ $service->trashed() ? 'table-secondary' : '' }}">
                             <td>{{ $service->order }}</td>
                             <td><i class="{{ $service->icon }} fa-2x"></i></td>
-                            <td>{{ $service->title }}</td>
+                            <td>
+                                {{ $service->title }}
+                                @if($service->trashed())
+                                    <span class="badge badge-danger ml-1">Deleted</span>
+                                @endif
+                            </td>
                             <td>
                                 <span class="badge badge-{{ $service->pricing_model == 'fixed' ? 'success' : ($service->pricing_model == 'hourly' ? 'info' : 'warning') }}">
                                     {{ ucfirst($service->pricing_model) }}
@@ -69,21 +74,30 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="{{ route('admin.services.show', $service) }}" class="btn btn-info btn-sm" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.services.edit', $service) }}" class="btn btn-warning btn-sm" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.services.destroy', $service) }}" method="POST" 
-                                          style="display:inline;" 
-                                          onsubmit="return confirm('Are you sure you want to delete this service?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($service->trashed() && auth()->user()->isAdmin())
+                                        <form action="{{ route('admin.recycle-bin.restore', ['type' => 'services', 'id' => $service->id]) }}" method="POST" style="display:inline;" data-confirm-message="Restore this service?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm" title="Restore">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @elseif(!$service->trashed())
+                                        <a href="{{ route('admin.services.show', $service) }}" class="btn btn-info btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.services.edit', $service) }}" class="btn btn-warning btn-sm" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.services.destroy', $service) }}" method="POST" 
+                                              style="display:inline;" 
+                                              data-confirm-message="Are you sure you want to delete this service?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

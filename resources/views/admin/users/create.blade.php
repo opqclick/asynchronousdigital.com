@@ -79,7 +79,7 @@
                         <div class="form-group">
                             <label for="role_ids">Roles <span class="text-danger">*</span></label>
                             <select class="form-control @error('role_ids') is-invalid @enderror @error('role_ids.*') is-invalid @enderror"
-                                    id="role_ids" name="role_ids[]" multiple required size="4">
+                                    id="role_ids" name="role_ids[]" multiple required>
                                 @foreach($roles as $role)
                                     <option value="{{ $role->id }}" {{ in_array($role->id, old('role_ids', [])) ? 'selected' : '' }}>
                                         {{ ucfirst(str_replace('_', ' ', $role->name)) }}
@@ -296,18 +296,21 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="teams">Assign to Teams</label>
-                    <select class="form-control select2 @error('teams') is-invalid @enderror" 
-                            id="teams" name="teams[]" multiple>
+                    <label for="teams">Assign to Teams <span class="text-danger">*</span></label>
+                    <select class="form-control select2 @error('teams') is-invalid @enderror @error('teams.*') is-invalid @enderror"
+                            id="teams" name="teams[]" multiple required>
                         @foreach($teams as $team)
                             <option value="{{ $team->id }}" {{ in_array($team->id, old('teams', [])) ? 'selected' : '' }}>
                                 {{ $team->name }}
                             </option>
                         @endforeach
                     </select>
-                    <small class="form-text text-muted">Select teams this user will be a member of</small>
+                    <small class="form-text text-muted">Select at least one team for this user.</small>
                     @error('teams')
-                        <span class="invalid-feedback">{{ $message }}</span>
+                        <span class="invalid-feedback d-block">{{ $message }}</span>
+                    @enderror
+                    @error('teams.*')
+                        <span class="invalid-feedback d-block">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -346,16 +349,29 @@
 @section('css')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-multiselect@1.1.2/dist/css/bootstrap-multiselect.css" />
 @stop
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bs-custom-file-input/dist/bs-custom-file-input.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-multiselect@1.1.2/dist/js/bootstrap-multiselect.min.js"></script>
     <script>
         $(document).ready(function() {
             $('.select2').select2({
                 theme: 'bootstrap4',
                 placeholder: 'Select teams'
+            });
+
+            $('#role_ids').multiselect({
+                nonSelectedText: 'Select roles',
+                nSelectedText: 'roles selected',
+                allSelectedText: 'All roles selected',
+                buttonWidth: '100%',
+                includeSelectAllOption: false,
+                enableFiltering: true,
+                enableCaseInsensitiveFiltering: true,
+                maxHeight: 300
             });
             
             // Initialize custom file input

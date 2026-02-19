@@ -53,7 +53,7 @@
                     </thead>
                     <tbody>
                         @foreach($messages as $message)
-                            <tr class="{{ !$message->read_at ? 'font-weight-bold' : '' }}">
+                            <tr class="{{ !$message->read_at ? 'font-weight-bold' : '' }} {{ $message->trashed() ? 'table-secondary' : '' }}">
                                 <td>
                                     @if($message->status == 'new')
                                         <span class="badge badge-danger">New</span>
@@ -70,6 +70,9 @@
                                         <i class="fas fa-circle text-danger" style="font-size: 8px;"></i>
                                     @endif
                                     {{ $message->name }}
+                                    @if($message->trashed() && auth()->user()->isAdmin())
+                                        <span class="badge badge-danger ml-1">Deleted</span>
+                                    @endif
                                 </td>
                                 <td>{{ $message->email }}</td>
                                 <td>{{ $message->company ?? 'N/A' }}</td>
@@ -77,17 +80,26 @@
                                 <td>{{ $message->service_interest ?? 'N/A' }}</td>
                                 <td>{{ $message->created_at->diffForHumans() }}</td>
                                 <td>
-                                    <a href="{{ route('admin.contact-messages.show', $message) }}" class="btn btn-xs btn-info">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
-                                    <form action="{{ route('admin.contact-messages.destroy', $message) }}" method="POST" style="display:inline;" 
-                                          onsubmit="return confirm('Are you sure?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-xs btn-danger">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($message->trashed())
+                                        <form action="{{ route('admin.recycle-bin.restore', ['type' => 'contact-messages', 'id' => $message->id]) }}" method="POST" style="display:inline;" data-confirm-message="Restore this message?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-xs btn-success">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @elseif(!$message->trashed())
+                                        <a href="{{ route('admin.contact-messages.show', $message) }}" class="btn btn-xs btn-info">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <form action="{{ route('admin.contact-messages.destroy', $message) }}" method="POST" style="display:inline;" 
+                                              data-confirm-message="Are you sure?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-xs btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

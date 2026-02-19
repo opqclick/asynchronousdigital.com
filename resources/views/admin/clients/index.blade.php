@@ -62,14 +62,19 @@
                 </thead>
                 <tbody>
                     @foreach($clients as $client)
-                        <tr>
+                        <tr class="{{ $client->trashed() ? 'table-secondary' : '' }}">
                             <td>{{ $client->id }}</td>
-                            <td>{{ $client->user->name }}</td>
+                            <td>
+                                {{ $client->user?->name ?? 'Deleted User' }}
+                                @if($client->trashed())
+                                    <span class="badge badge-danger ml-1">Deleted</span>
+                                @endif
+                            </td>
                             <td>{{ $client->company_name ?? 'N/A' }}</td>
-                            <td>{{ $client->user->email }}</td>
+                            <td>{{ $client->user?->email ?? 'N/A' }}</td>
                             <td>{{ $client->phone ?? 'N/A' }}</td>
                             <td>
-                                @if($client->status === 'active')
+                                @if($client->is_active)
                                     <span class="badge badge-success">Active</span>
                                 @else
                                     <span class="badge badge-secondary">Inactive</span>
@@ -80,27 +85,36 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{{ route('admin.clients.show', $client) }}" class="btn btn-info btn-sm" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.clients.edit', $client) }}" class="btn btn-warning btn-sm" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.clients.send-invitation', $client) }}" method="POST" 
-                                          style="display:inline;" 
-                                          onsubmit="return confirm('Send invitation email to {{ $client->user->email }}?');">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success btn-sm" title="Send Invitation">
-                                            <i class="fas fa-envelope"></i>
-                                        </button>
-                                    </form>
-                                    <form action="{{ route('admin.clients.destroy', $client) }}" method="POST" style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this client?')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if($client->trashed() && auth()->user()->isAdmin())
+                                        <form action="{{ route('admin.recycle-bin.restore', ['type' => 'clients', 'id' => $client->id]) }}" method="POST" style="display:inline;" data-confirm-message="Restore this client and related deleted records?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm" title="Restore">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        </form>
+                                    @elseif(!$client->trashed())
+                                        <a href="{{ route('admin.clients.show', $client) }}" class="btn btn-info btn-sm" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.clients.edit', $client) }}" class="btn btn-warning btn-sm" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.clients.send-invitation', $client) }}" method="POST" 
+                                              style="display:inline;" 
+                                              data-confirm-message="Send invitation email to {{ $client->user?->email }}?">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success btn-sm" title="Send Invitation">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                        </form>
+                                        <form action="{{ route('admin.clients.destroy', $client) }}" method="POST" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-confirm-message="Are you sure you want to delete this client?">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

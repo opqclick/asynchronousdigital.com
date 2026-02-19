@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\Role;
 use App\Models\Team;
+use App\Models\Task;
 use App\Models\User;
+use App\Models\UserActivity;
 use App\Mail\UserInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -23,7 +27,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with(['role', 'roles', 'teams'])->latest()->get();
+        $users = User::withTrashed()->with(['role', 'roles', 'teams'])->latest()->get();
         return view('admin.users.index', compact('users'));
     }
 
@@ -64,8 +68,8 @@ class UserController extends Controller
             'monthly_salary' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
             'send_invitation_email' => ['boolean'],
-            'teams' => ['nullable', 'array'],
-            'teams.*' => ['exists:teams,id'],
+            'teams' => ['required', 'array', 'min:1'],
+            'teams.*' => ['integer', 'exists:teams,id'],
         ]);
 
         $roleIds = array_values(array_unique(array_map('intval', $validated['role_ids'])));
@@ -123,12 +127,10 @@ class UserController extends Controller
 
         $user->syncRolesWithRules($roleIds, $activeRoleId);
 
-        // Attach teams if any
-        if (!empty($validated['teams'])) {
-            $user->teams()->attach($validated['teams'], [
-                'joined_at' => now(),
-            ]);
-        }
+        // Attach required teams
+        $user->teams()->attach($validated['teams'], [
+            'joined_at' => now(),
+        ]);
 
         // Send invitation email if checkbox is checked
         if ($request->has('send_invitation_email')) {
@@ -196,8 +198,8 @@ class UserController extends Controller
             'payment_model' => ['nullable', 'in:hourly,fixed,monthly'],
             'monthly_salary' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
-            'teams' => ['nullable', 'array'],
-            'teams.*' => ['exists:teams,id'],
+            'teams' => ['required', 'array', 'min:1'],
+            'teams.*' => ['integer', 'exists:teams,id'],
         ]);
 
         $roleIds = array_values(array_unique(array_map('intval', $validated['role_ids'])));
@@ -265,15 +267,11 @@ class UserController extends Controller
         }
 
         // Sync teams
-        if (isset($validated['teams'])) {
-            $teamsWithTimestamp = [];
-            foreach ($validated['teams'] as $teamId) {
-                $teamsWithTimestamp[$teamId] = ['joined_at' => now()];
-            }
-            $user->teams()->sync($teamsWithTimestamp);
-        } else {
-            $user->teams()->detach();
+        $teamsWithTimestamp = [];
+        foreach ($validated['teams'] as $teamId) {
+            $teamsWithTimestamp[$teamId] = ['joined_at' => now()];
         }
+        $user->teams()->sync($teamsWithTimestamp);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');
@@ -282,11 +280,60 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
+        if ((int) Auth::id() === (int) $user->id) {
+            return redirect()->route('admin.users.index')
+                ->with('error', 'You cannot delete your own account while logged in.');
+        }
+
+        $deleteMode = (string) $request->input('delete_mode', 'soft');
+        if (!in_array($deleteMode, ['soft', 'force'], true)) {
+            $deleteMode = 'soft';
+        }
+
+        $forceDelete = $deleteMode === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return redirect()->route('admin.users.index')
+                ->with('error', 'Only admins can permanently delete records.');
+        }
+
+        if ($forceDelete) {
+            $dependencies = $this->collectUserDependencies($user);
+            $activeDependencies = array_filter($dependencies, fn (int $count) => $count > 0);
+
+            if (!empty($activeDependencies)) {
+                $dependencySummary = collect($activeDependencies)
+                    ->map(fn (int $count, string $key) => ucfirst(str_replace('_', ' ', $key)) . ': ' . $count)
+                    ->implode(', ');
+
+                return redirect()->route('admin.users.index')
+                    ->with('error', 'Permanent delete blocked. This user has dependent data. ' . $dependencySummary . '. Please keep soft delete.');
+            }
+
+            $user->forceDelete();
+
+            return redirect()->route('admin.users.index')
+                ->with('success', 'User permanently deleted successfully.');
+        }
+
         $user->delete();
+
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
+    }
+
+    private function collectUserDependencies(User $user): array
+    {
+        return [
+            'managed_projects' => \App\Models\Project::withTrashed()->where('project_manager_id', $user->id)->count(),
+            'created_tasks' => Task::withTrashed()->where('created_by', $user->id)->count(),
+            'assigned_tasks' => DB::table('task_user')->where('user_id', $user->id)->count(),
+            'salaries' => \App\Models\Salary::withTrashed()->where('user_id', $user->id)->count(),
+            'team_memberships' => DB::table('team_user')->where('user_id', $user->id)->count(),
+            'client_profiles' => Client::withTrashed()->where('user_id', $user->id)->count(),
+            'activity_logs' => UserActivity::withTrashed()->where('user_id', $user->id)->count(),
+        ];
     }
 
     /**

@@ -116,7 +116,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="form-group">
                             <label for="users">Assign to Users</label>
                             <select class="form-control select2 @error('users') is-invalid @enderror" id="users" name="users[]" multiple>
@@ -127,21 +127,6 @@
                                 @endforeach
                             </select>
                             @error('users')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="teams">Assign to Teams</label>
-                            <select class="form-control select2 @error('teams') is-invalid @enderror" id="teams" name="teams[]" multiple>
-                                @foreach($teams as $team)
-                                    <option value="{{ $team->id }}" {{ in_array($team->id, old('teams', [])) ? 'selected' : '' }}>
-                                        {{ $team->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('teams')
                                 <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
@@ -185,10 +170,32 @@
     <script src="https://cdn.jsdelivr.net/npm/bs-custom-file-input/dist/bs-custom-file-input.min.js"></script>
     <script>
         $(document).ready(function() {
+            const assignableUserIdsByProject = @json($assignableUserIdsByProject);
+
             $('.select2').select2({
                 theme: 'bootstrap4',
                 placeholder: 'Select...'
             });
+
+            const filterAssignableUsers = function () {
+                const projectId = String($('#project_id').val() || '');
+                const allowedUserIds = new Set((assignableUserIdsByProject[projectId] || []).map(String));
+
+                $('#users option').each(function () {
+                    const optionValue = String($(this).val());
+                    const isAllowed = projectId === '' || allowedUserIds.has(optionValue);
+
+                    $(this).prop('disabled', !isAllowed);
+                    if (!isAllowed && $(this).prop('selected')) {
+                        $(this).prop('selected', false);
+                    }
+                });
+
+                $('#users').trigger('change.select2');
+            };
+
+            $('#project_id').on('change', filterAssignableUsers);
+            filterAssignableUsers();
             
             // Initialize custom file input
             bsCustomFileInput.init();

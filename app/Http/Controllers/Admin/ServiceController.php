@@ -13,7 +13,7 @@ class ServiceController extends Controller
      */
     public function index()
     {
-        $services = Service::orderBy('order')->get();
+        $services = Service::withTrashed()->orderBy('order')->get();
         return view('admin.services.index', compact('services'));
     }
 
@@ -100,8 +100,25 @@ class ServiceController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Service $service)
+    public function destroy(Request $request, Service $service)
     {
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
+        if ($forceDelete) {
+            try {
+                $service->forceDelete();
+
+                return redirect()->route('admin.services.index')
+                    ->with('success', 'Service permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.services.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
+
         $service->delete();
         return redirect()->route('admin.services.index')
             ->with('success', 'Service deleted successfully.');

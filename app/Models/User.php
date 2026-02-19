@@ -115,6 +115,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Get per-user permission overrides.
+     */
+    public function permissionOverrides(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'permission_user')
+            ->withPivot('allowed')
+            ->withTimestamps();
+    }
+
+    /**
      * Get teams the user belongs to
      */
     public function teams(): BelongsToMany
@@ -227,6 +237,14 @@ class User extends Authenticatable
      */
     public function hasPermission(string $permission): bool
     {
+        $override = $this->permissionOverrides()
+            ->where('permissions.name', $permission)
+            ->first();
+
+        if ($override) {
+            return (bool) $override->pivot->allowed;
+        }
+
         return $this->roles()
             ->get()
             ->contains(fn (Role $role) => $role->hasPermission($permission));

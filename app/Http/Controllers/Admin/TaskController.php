@@ -3,13 +3,21 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\TaskAssigned;
 use App\Models\Project;
+use App\Models\Role;
+use App\Models\SystemSetting;
 use App\Models\Task;
 use App\Models\TaskStatusHistory;
-use App\Models\Team;
 use App\Models\User;
+use App\Notifications\TaskActivityNotification;
+use App\Notifications\TaskAssignedNotification;
+use App\Notifications\TaskStatusChangedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 class TaskController extends Controller
 {
@@ -19,17 +27,42 @@ class TaskController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $tasksQuery = Task::with(['project', 'users']);
+        $tasksQuery = Task::withTrashed()->with([
+            'project' => fn ($query) => $query->withTrashed(),
+            'users' => fn ($query) => $query->withTrashed(),
+        ]);
+        $projectsQuery = Project::query();
 
         if ($user->isProjectManager() && !$user->isAdmin()) {
             $tasksQuery->whereHas('project', function ($query) {
                 $query->where('project_manager_id', Auth::id());
             });
+
+            $projectsQuery->where('project_manager_id', Auth::id());
+        }
+
+        $users = $this->getAssignableUsers();
+        $selectedAssigneeId = request('assignee_id', 'all');
+        $allowedStringFilters = ['all', 'me'];
+        if (!in_array($selectedAssigneeId, $allowedStringFilters, true)) {
+            $selectedAssigneeId = (int) $selectedAssigneeId;
+        }
+
+        if ($selectedAssigneeId === 'me') {
+            $tasksQuery->whereHas('users', function ($query) {
+                $query->where('users.id', Auth::id());
+            });
+        } elseif (is_int($selectedAssigneeId) && $selectedAssigneeId > 0) {
+            $tasksQuery->whereHas('users', function ($query) use ($selectedAssigneeId) {
+                $query->where('users.id', $selectedAssigneeId);
+            });
         }
 
         $tasks = $tasksQuery->get();
+        $projects = $projectsQuery->get();
+        $assignableUserIdsByProject = $this->buildAssignableUserMapByProject($projects, $users);
 
-        return view('admin.tasks.index', compact('tasks'));
+        return view('admin.tasks.index', compact('tasks', 'projects', 'users', 'assignableUserIdsByProject', 'selectedAssigneeId'));
     }
 
     /**
@@ -37,21 +70,7 @@ class TaskController extends Controller
      */
     public function create()
     {
-        $user = Auth::user();
-        $projectsQuery = Project::query();
-
-        if ($user->isProjectManager() && !$user->isAdmin()) {
-            $projectsQuery->where('project_manager_id', Auth::id());
-        }
-
-        $projects = $projectsQuery->get();
-
-        $users = User::whereHas('roles', function($q) {
-            $q->whereIn('name', ['admin', 'team_member']);
-        })->get();
-        $teams = Team::all();
-        
-        return view('admin.tasks.create', compact('projects', 'users', 'teams'));
+        return redirect()->route('admin.tasks.index', ['open' => 'create-task']);
     }
 
     /**
@@ -70,8 +89,6 @@ class TaskController extends Controller
             'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:10240',
             'users' => 'nullable|array',
             'users.*' => 'exists:users,id',
-            'teams' => 'nullable|array',
-            'teams.*' => 'exists:teams,id',
         ]);
 
         // Handle file uploads to S3
@@ -94,14 +111,39 @@ class TaskController extends Controller
         $project = Project::findOrFail($validated['project_id']);
         $this->authorizeProjectAccess($project);
 
+        $this->validateProjectAssignees($project, $validated['users'] ?? []);
+
         $task = Task::create($validated);
 
-        // Attach users and teams
+        // Attach users
         if (!empty($validated['users'])) {
             $task->users()->attach($validated['users']);
         }
-        if (!empty($validated['teams'])) {
-            $task->teams()->attach($validated['teams']);
+
+        $task->loadMissing('project');
+        $this->notifyAdminsForTaskActivity(
+            $task,
+            'task_created',
+            sprintf('Task "%s" was created in project "%s" by %s.', $task->title, optional($task->project)->name ?? 'N/A', Auth::user()->name)
+        );
+
+        $this->notifyTaskAssignees($task, $validated['users'] ?? []);
+
+        if ($request->expectsJson()) {
+            $task->loadMissing(['project', 'users']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task created successfully.',
+                'task' => [
+                    'id' => $task->id,
+                    'title' => $task->title,
+                    'project' => optional($task->project)->name,
+                    'status' => $task->status,
+                    'priority' => $task->priority,
+                    'due_date' => optional($task->due_date)?->toDateString(),
+                ],
+            ]);
         }
 
         return redirect()->route('admin.tasks.index')
@@ -115,7 +157,15 @@ class TaskController extends Controller
     {
         $this->authorizeTaskAccess($task);
 
-        $task->load(['project', 'users', 'teams']);
+        $task->load([
+            'project',
+            'users',
+            'teams',
+            'creator',
+            'comments.user',
+            'comments.replies.user',
+            'statusHistories.user',
+        ]);
         return view('admin.tasks.show', compact('task'));
     }
 
@@ -134,14 +184,11 @@ class TaskController extends Controller
         }
 
         $projects = $projectsQuery->get();
-
-        $users = User::whereHas('roles', function($q) {
-            $q->whereIn('name', ['admin', 'team_member']);
-        })->get();
-        $teams = Team::all();
+        $users = $this->getAssignableUsers();
+        $assignableUserIdsByProject = $this->buildAssignableUserMapByProject($projects, $users);
         $task->load(['users', 'teams']);
-        
-        return view('admin.tasks.edit', compact('task', 'projects', 'users', 'teams'));
+
+        return view('admin.tasks.edit', compact('task', 'projects', 'users', 'assignableUserIdsByProject'));
     }
 
     /**
@@ -162,12 +209,15 @@ class TaskController extends Controller
             'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip|max:10240',
             'users' => 'nullable|array',
             'users.*' => 'exists:users,id',
-            'teams' => 'nullable|array',
-            'teams.*' => 'exists:teams,id',
         ]);
 
         $project = Project::findOrFail($validated['project_id']);
         $this->authorizeProjectAccess($project);
+        $this->validateProjectAssignees($project, $validated['users'] ?? []);
+
+        if ((string) $task->status !== (string) $validated['status']) {
+            $this->authorizeTaskStatusChange($task);
+        }
 
         // Handle new file uploads to S3
         if ($request->hasFile('attachments')) {
@@ -186,26 +236,53 @@ class TaskController extends Controller
 
         $task->update($validated);
 
-        if ($task->wasChanged('status')) {
+        $statusChanged = $task->wasChanged('status');
+        $fromStatus = (string) $task->getOriginal('status');
+        $toStatus = (string) $task->status;
+
+        if ($statusChanged) {
             $this->logStatusChange(
                 $task,
-                $task->getOriginal('status'),
-                $task->status
+                $fromStatus,
+                $toStatus
+            );
+
+            $this->notifyAdminsForTaskActivity(
+                $task,
+                'task_status_changed',
+                sprintf('Task "%s" status changed from %s to %s by %s.', $task->title, str_replace('_', ' ', $fromStatus), str_replace('_', ' ', $toStatus), Auth::user()->name),
+                [
+                    'from_status' => $fromStatus,
+                    'to_status' => $toStatus,
+                ]
             );
         }
 
-        // Sync users and teams
+        $previousAssigneeIds = $task->users()->pluck('users.id')->map(fn ($id) => (int) $id)->all();
+
+        // Sync users
         if (isset($validated['users'])) {
             $task->users()->sync($validated['users']);
         } else {
             $task->users()->detach();
         }
-        
-        if (isset($validated['teams'])) {
-            $task->teams()->sync($validated['teams']);
-        } else {
-            $task->teams()->detach();
+
+        $task->teams()->detach();
+
+        if ($statusChanged) {
+            $this->notifyTaskAssigneesStatusChanged($task, $fromStatus, $toStatus);
         }
+
+        if (!$statusChanged) {
+            $task->loadMissing('project');
+            $this->notifyAdminsForTaskActivity(
+                $task,
+                'task_updated',
+                sprintf('Task "%s" was updated by %s.', $task->title, Auth::user()->name)
+            );
+        }
+
+        $this->notifyTaskAssignees($task, $validated['users'] ?? [], $previousAssigneeIds);
 
         return redirect()->route('admin.tasks.index')
             ->with('success', 'Task updated successfully.');
@@ -214,9 +291,33 @@ class TaskController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Task $task)
+    public function destroy(Request $request, Task $task)
     {
         $this->authorizeTaskAccess($task);
+
+        $task->loadMissing('project');
+        $this->notifyAdminsForTaskActivity(
+            $task,
+            'task_deleted',
+            sprintf('Task "%s" was deleted by %s.', $task->title, Auth::user()->name)
+        );
+
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
+        if ($forceDelete) {
+            try {
+                $task->forceDelete();
+
+                return redirect()->route('admin.tasks.index')
+                    ->with('success', 'Task permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.tasks.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
 
         $task->delete();
         return redirect()->route('admin.tasks.index')
@@ -229,6 +330,7 @@ class TaskController extends Controller
     public function updateStatus(Request $request, Task $task)
     {
         $this->authorizeTaskAccess($task);
+        $this->authorizeTaskStatusChange($task);
 
         $request->validate([
             'status' => 'required|in:to_do,in_progress,review,done'
@@ -239,10 +341,37 @@ class TaskController extends Controller
 
         $this->logStatusChange($task, $oldStatus, $request->status);
 
+        $task->loadMissing('project');
+        $this->notifyAdminsForTaskActivity(
+            $task,
+            'task_status_changed',
+            sprintf('Task "%s" status changed from %s to %s by %s.', $task->title, str_replace('_', ' ', $oldStatus), str_replace('_', ' ', $request->status), Auth::user()->name),
+            [
+                'from_status' => $oldStatus,
+                'to_status' => $request->status,
+            ]
+        );
+
+        $this->notifyTaskAssigneesStatusChanged($task, $oldStatus, (string) $request->status);
+
         return response()->json([
             'success' => true,
             'message' => 'Task status updated successfully'
         ]);
+    }
+
+    private function authorizeTaskStatusChange(Task $task): void
+    {
+        $user = Auth::user();
+        if ($user->isAdmin() || $user->isProjectManager()) {
+            return;
+        }
+
+        $isAssigned = $task->users()
+            ->where('users.id', $user->id)
+            ->exists();
+
+        abort_unless($isAssigned, 403, 'You can only change status for tasks assigned to you.');
     }
 
     /**
@@ -274,6 +403,16 @@ class TaskController extends Controller
             'parent_id' => $request->parent_id,
             'comment' => $request->comment,
         ]);
+
+        $task->loadMissing('project');
+        $this->notifyAdminsForTaskActivity(
+            $task,
+            'task_commented',
+            sprintf('%s commented on task "%s".', Auth::user()->name, $task->title),
+            [
+                'comment_id' => $comment->id,
+            ]
+        );
 
         $comment->load('user', 'replies');
 
@@ -308,6 +447,148 @@ class TaskController extends Controller
     {
         if (Auth::user()->isProjectManager() && !Auth::user()->isAdmin() && $project->project_manager_id !== Auth::id()) {
             abort(403, 'You can only manage tasks in your assigned projects.');
+        }
+    }
+
+    private function notifyTaskAssignees(Task $task, array $assigneeIds, array $previousAssigneeIds = []): void
+    {
+        $currentAssigneeIds = collect($assigneeIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $newAssigneeIds = array_values(array_diff($currentAssigneeIds, $previousAssigneeIds));
+        if (empty($newAssigneeIds)) {
+            return;
+        }
+
+        $task->loadMissing(['project', 'creator']);
+        $assignedBy = Auth::user();
+        $inAppEnabled = SystemSetting::getBool('notification_in_app_enabled', true);
+        $emailEnabled = SystemSetting::getBool('notification_email_enabled', true);
+
+        $assignees = User::whereIn('id', $newAssigneeIds)->get();
+        foreach ($assignees as $assignee) {
+            if ($inAppEnabled) {
+                $assignee->notify(new TaskAssignedNotification($task, $assignedBy));
+            }
+
+            if ($emailEnabled && !empty($assignee->email)) {
+                Mail::to($assignee->email)->queue(new TaskAssigned($task, $assignee, $assignedBy));
+            }
+        }
+    }
+
+    private function notifyAdminsForTaskActivity(Task $task, string $activity, string $message, array $meta = []): void
+    {
+        if (!SystemSetting::getBool('notification_in_app_enabled', true)) {
+            return;
+        }
+
+        $actor = Auth::user();
+        if (!$actor) {
+            return;
+        }
+
+        $adminUsers = User::whereHas('roles', function ($query) {
+            $query->where('name', Role::ADMIN);
+        })
+            ->where('id', '!=', $actor->id)
+            ->get();
+
+        foreach ($adminUsers as $adminUser) {
+            $adminUser->notify(new TaskActivityNotification($task, $actor, $activity, $message, $meta));
+        }
+    }
+
+    private function notifyTaskAssigneesStatusChanged(Task $task, string $fromStatus, string $toStatus): void
+    {
+        if ($fromStatus === $toStatus) {
+            return;
+        }
+
+        if (!SystemSetting::getBool('notification_in_app_enabled', true)) {
+            return;
+        }
+
+        $actor = Auth::user();
+        if (!$actor) {
+            return;
+        }
+
+        $task->loadMissing(['project', 'users']);
+        foreach ($task->users as $assignee) {
+            if ((int) $assignee->id === (int) $actor->id) {
+                continue;
+            }
+
+            $assignee->notify(new TaskStatusChangedNotification($task, $actor, $fromStatus, $toStatus));
+        }
+    }
+
+    private function getAssignableUsers(): Collection
+    {
+        return User::with('role')
+            ->whereHas('roles', function ($query) {
+                $query->whereIn('name', [Role::ADMIN, Role::TEAM_MEMBER, Role::PROJECT_MANAGER]);
+            })
+            ->whereDoesntHave('roles', function ($query) {
+                $query->where('name', Role::CLIENT);
+            })
+            ->get();
+    }
+
+    private function buildAssignableUserMapByProject(Collection $projects, Collection $users): array
+    {
+        $map = [];
+
+        foreach ($projects as $project) {
+            $map[(string) $project->id] = $this->getAssignableUserIdsForProject($project, $users);
+        }
+
+        return $map;
+    }
+
+    private function getAssignableUserIdsForProject(Project $project, Collection $users): array
+    {
+        if (Auth::user()->isAdmin()) {
+            return $users->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        $allowedRoleUserIds = $users
+            ->filter(fn (User $user) => $user->hasAnyAssignedRole([Role::ADMIN, Role::TEAM_MEMBER]))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if ($project->project_manager_id) {
+            $allowedRoleUserIds[] = (int) $project->project_manager_id;
+        }
+
+        return array_values(array_unique($allowedRoleUserIds));
+    }
+
+    private function validateProjectAssignees(Project $project, array $assigneeIds): void
+    {
+        if (empty($assigneeIds)) {
+            return;
+        }
+
+        $users = $this->getAssignableUsers();
+        $allowedUserIds = $this->getAssignableUserIdsForProject($project, $users);
+        $selectedUserIds = collect($assigneeIds)->map(fn ($id) => (int) $id)->unique()->values()->all();
+        $invalidSelections = array_values(array_diff($selectedUserIds, $allowedUserIds));
+
+        if (!empty($invalidSelections)) {
+            throw ValidationException::withMessages([
+                'users' => 'Selected users are not assignable for the selected project.',
+            ]);
         }
     }
 }

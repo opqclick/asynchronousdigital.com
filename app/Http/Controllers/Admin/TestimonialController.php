@@ -15,7 +15,10 @@ class TestimonialController extends Controller
      */
     public function index()
     {
-        $testimonials = Testimonial::with(['client', 'project'])->orderBy('order')->get();
+        $testimonials = Testimonial::withTrashed()->with([
+            'client' => fn ($query) => $query->withTrashed(),
+            'project' => fn ($query) => $query->withTrashed(),
+        ])->orderBy('order')->get();
         return view('admin.testimonials.index', compact('testimonials'));
     }
 
@@ -109,8 +112,25 @@ class TestimonialController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Testimonial $testimonial)
+    public function destroy(Request $request, Testimonial $testimonial)
     {
+        $forceDelete = $request->input('delete_mode') === 'force';
+        if ($forceDelete && !$request->user()->isAdmin()) {
+            return back()->with('error', 'Only admins can permanently delete records.');
+        }
+
+        if ($forceDelete) {
+            try {
+                $testimonial->forceDelete();
+
+                return redirect()->route('admin.testimonials.index')
+                    ->with('success', 'Testimonial permanently deleted successfully.');
+            } catch (\Illuminate\Database\QueryException $exception) {
+                return redirect()->route('admin.testimonials.index')
+                    ->with('error', 'Permanent delete blocked due to dependent data. Please use soft delete.');
+            }
+        }
+
         $testimonial->delete();
         return redirect()->route('admin.testimonials.index')
             ->with('success', 'Testimonial deleted successfully.');
