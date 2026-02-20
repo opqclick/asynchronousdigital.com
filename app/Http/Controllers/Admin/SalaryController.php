@@ -16,16 +16,16 @@ class SalaryController extends Controller
     public function index(Request $request)
     {
         $filterMonth = $request->input('month', now()->format('Y-m'));
-        
+
         $salaries = Salary::withTrashed()->with([
-                'user' => fn ($query) => $query->withTrashed(),
-                'project' => fn ($query) => $query->withTrashed(),
-            ])
+            'user' => fn($query) => $query->withTrashed(),
+            'project' => fn($query) => $query->withTrashed(),
+        ])
             ->whereYear('month', '=', substr($filterMonth, 0, 4))
             ->whereMonth('month', '=', substr($filterMonth, 5, 2))
             ->orderBy('month', 'desc')
             ->get();
-            
+
         return view('admin.salaries.index', compact('salaries', 'filterMonth'));
     }
 
@@ -34,11 +34,11 @@ class SalaryController extends Controller
      */
     public function create()
     {
-        $users = User::whereHas('roles', function($q) {
+        $users = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['admin', 'team_member']);
         })->get();
         $projects = Project::all();
-        
+
         return view('admin.salaries.create', compact('users', 'projects'));
     }
 
@@ -61,8 +61,11 @@ class SalaryController extends Controller
 
         // Convert month to first day of month
         $validated['month'] = $validated['month'] . '-01';
-        $validated['bonus_amount'] = $validated['bonus_amount'] ?? 0;
-        $validated['deduction_amount'] = $validated['deduction_amount'] ?? 0;
+
+        // Remap field names to match model columns
+        $validated['bonus'] = $validated['bonus_amount'] ?? 0;
+        $validated['deduction'] = $validated['deduction_amount'] ?? 0;
+        unset($validated['bonus_amount'], $validated['deduction_amount']);
 
         Salary::create($validated);
 
@@ -107,8 +110,11 @@ class SalaryController extends Controller
 
         // Convert month to first day of month
         $validated['month'] = $validated['month'] . '-01';
-        $validated['bonus_amount'] = $validated['bonus_amount'] ?? 0;
-        $validated['deduction_amount'] = $validated['deduction_amount'] ?? 0;
+
+        // Remap field names to match model columns
+        $validated['bonus'] = $validated['bonus_amount'] ?? 0;
+        $validated['deduction'] = $validated['deduction_amount'] ?? 0;
+        unset($validated['bonus_amount'], $validated['deduction_amount']);
 
         $salary->update($validated);
 
