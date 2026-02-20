@@ -437,12 +437,6 @@ return [
 
         ['header' => 'Tools', 'can' => 'admin'],
         [
-            'text' => 'Test Email Service',
-            'icon' => 'fas fa-fw fa-envelope',
-            'can' => 'admin',
-            'url' => '/test-email',
-        ],
-        [
             'text' => 'Observability',
             'icon' => 'fas fa-fw fa-eye',
             'can' => 'admin',
