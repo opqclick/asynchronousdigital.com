@@ -28,6 +28,7 @@ use App\Http\Controllers\ContactController;
 use App\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\EmailTestController;
 
 // Public routes - Single page website
 Route::get('/', [PublicController::class, 'home'])->name('home');
@@ -187,5 +188,8 @@ Route::middleware(['auth', 'role:team_member'])->prefix('team')->name('team-memb
 Route::middleware(['auth', 'role:client'])->prefix('client')->name('client.')->group(function () {
     Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
 });
+
+// Email testing route
+Route::get('/test-email', [EmailTestController::class, 'send'])->middleware('auth');
 
 require __DIR__.'/auth.php';

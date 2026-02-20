@@ -15,6 +15,8 @@
 @section('body')
     @include('partials.page-load-progress')
 
+
+
     <div class="wrapper">
 
         {{-- Preloader Animation (fullscreen mode) --}}
@@ -55,6 +57,22 @@
 @stop
 
 @section('adminlte_js')
+    @parent
+    <script>
+        // Prevent browser back to dashboard after logout (AdminLTE layout)
+        if (window.performance && window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
+            fetch('/api/user', { credentials: 'same-origin' })
+                .then(r => {
+                    if (r.status === 401) {
+                        window.location.href = '/login';
+                    }
+                })
+                .catch(() => {
+                    window.location.href = '/login';
+                });
+        }
+    </script>
+
     @stack('js')
     @yield('js')
 
@@ -318,7 +336,7 @@
                 };
 
                 try {
-                    window.Swal.fire({
+                    window.SWal.fire({
                         title: 'Choose delete type',
                         text: message || 'You can soft delete (recoverable) or permanently delete (irreversible).',
                         icon: 'warning',
@@ -528,7 +546,7 @@
     @auth
         <script>
             (function () {
-                if (!window.fetch || !(window.Swal && typeof window.Swal.fire === 'function')) {
+                if (!window.fetch || !(window.SWal && typeof window.SWal.fire === 'function')) {
                     return;
                 }
 
@@ -542,7 +560,7 @@
                 };
 
                 const showToast = function (item) {
-                    window.Swal.fire({
+                    window.SWal.fire({
                         toast: true,
                         position: 'top-end',
                         icon: 'info',
