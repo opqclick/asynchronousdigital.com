@@ -124,10 +124,11 @@
                                     </form>
                                     @if(auth()->user()->isAdmin() && auth()->id() !== $user->id && !$user->hasAssignedRole('admin') && !session()->has('impersonator_id'))
                                         <form action="{{ route('admin.users.impersonate', $user) }}" method="POST"
-                                            style="display:inline;" data-confirm-message="Login as {{ $user->name }}?">
+                                            style="display:inline;">
                                             @csrf
-                                            <button type="submit" class="btn btn-secondary btn-sm" title="Login As">
-                                                <i class="fas fa-user-secret"></i>
+                                            <button type="submit" class="btn btn-secondary btn-sm"
+                                                title="Login As {{ $user->name }}">
+                                                <i class="fas fa-user-secret mr-1"></i> Login As
                                             </button>
                                         </form>
                                         {{-- Custom Email button --}}
