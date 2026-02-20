@@ -74,7 +74,7 @@ class UserController extends Controller
 
         $roleIds = array_values(array_unique(array_map('intval', $validated['role_ids'])));
         $selectedRoles = Role::whereIn('id', $roleIds)->get(['id', 'name']);
-        $hasClientRole = $selectedRoles->contains(fn (Role $role) => $role->name === Role::CLIENT);
+        $hasClientRole = $selectedRoles->contains(fn(Role $role) => $role->name === Role::CLIENT);
 
         if ($hasClientRole && count($roleIds) > 1) {
             return back()->withErrors([
@@ -144,8 +144,8 @@ class UserController extends Controller
             }
         }
 
-        $successMessage = $request->has('send_invitation_email') 
-            ? 'User created successfully and invitation email sent.' 
+        $successMessage = $request->has('send_invitation_email')
+            ? 'User created successfully and invitation email sent.'
             : 'User created successfully.';
 
         return redirect()->route('admin.users.index')
@@ -206,7 +206,7 @@ class UserController extends Controller
 
         $roleIds = array_values(array_unique(array_map('intval', $validated['role_ids'])));
         $selectedRoles = Role::whereIn('id', $roleIds)->get(['id', 'name']);
-        $hasClientRole = $selectedRoles->contains(fn (Role $role) => $role->name === Role::CLIENT);
+        $hasClientRole = $selectedRoles->contains(fn(Role $role) => $role->name === Role::CLIENT);
 
         if ($hasClientRole && count($roleIds) > 1) {
             return back()->withErrors([
@@ -302,11 +302,11 @@ class UserController extends Controller
 
         if ($forceDelete) {
             $dependencies = $this->collectUserDependencies($user);
-            $activeDependencies = array_filter($dependencies, fn (int $count) => $count > 0);
+            $activeDependencies = array_filter($dependencies, fn(int $count) => $count > 0);
 
             if (!empty($activeDependencies)) {
                 $dependencySummary = collect($activeDependencies)
-                    ->map(fn (int $count, string $key) => ucfirst(str_replace('_', ' ', $key)) . ': ' . $count)
+                    ->map(fn(int $count, string $key) => ucfirst(str_replace('_', ' ', $key)) . ': ' . $count)
                     ->implode(', ');
 
                 return redirect()->route('admin.users.index')
@@ -339,13 +339,42 @@ class UserController extends Controller
     }
 
     /**
+     * Send a custom email to user.
+     */
+    public function sendCustomEmail(Request $request, User $user): \Illuminate\Http\JsonResponse
+    {
+        $validated = $request->validate([
+            'subject' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:10000'],
+        ]);
+
+        try {
+            Mail::raw($validated['body'], function ($message) use ($user, $validated) {
+                $message->to($user->email, $user->name)
+                    ->subject($validated['subject']);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => "Email sent successfully to {$user->email}.",
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("Failed to send custom email to user #{$user->id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send email: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
      * Send invitation email to user.
      */
     public function sendInvitation(User $user)
     {
         // Generate a temporary password or use a reset token
         $temporaryPassword = Str::random(12);
-        
+
         // Update user's password
         $user->update([
             'password' => Hash::make($temporaryPassword),
