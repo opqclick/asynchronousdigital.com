@@ -135,6 +135,9 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
     Route::post('/users/{user}/impersonate', [UserController::class, 'impersonate'])
         ->middleware(['role:admin', 'permission:users.manage'])
         ->name('users.impersonate');
+    Route::post('/users/{user}/send-email', [UserController::class, 'sendCustomEmail'])
+        ->middleware(['role:admin', 'permission:users.manage'])
+        ->name('users.send-email');
     Route::post('/clients/{client}/send-invitation', [ClientController::class, 'sendInvitation'])
         ->middleware(['role:admin', 'permission:clients.manage'])
         ->name('clients.send-invitation');
