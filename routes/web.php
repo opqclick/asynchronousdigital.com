@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\UserActivityController;
 use App\Http\Controllers\Admin\RecycleBinController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TeamMember\DashboardController as TeamMemberDashboardController;
+use App\Http\Controllers\TeamMember\ProjectController as TeamMemberProjectController;
 use App\Http\Controllers\TeamMember\SalaryController as TeamMemberSalaryController;
 use App\Http\Controllers\TeamMember\TaskController as TeamMemberTaskController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
@@ -194,6 +195,11 @@ Route::middleware(['auth', 'role:team_member'])->prefix('team')->name('team-memb
         Route::get('/salaries/{salary}', [TeamMemberSalaryController::class, 'show'])->name('salaries.show');
         Route::get('/salaries/{salary}/share', [TeamMemberSalaryController::class, 'share'])->name('salaries.share');
         Route::post('/salaries/{salary}/confirm-received', [TeamMemberSalaryController::class, 'confirmReceived'])->name('salaries.confirm-received');
+    });
+
+    Route::middleware('permission:projects.view_own')->group(function () {
+        Route::get('/projects', [TeamMemberProjectController::class, 'index'])->name('projects.index');
+        Route::get('/projects/{project}', [TeamMemberProjectController::class, 'show'])->name('projects.show');
     });
 });
 

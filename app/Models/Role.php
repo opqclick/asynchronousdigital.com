@@ -23,6 +23,7 @@ class Role extends Model
             'dashboard.view',
             'tasks.manage_own',
             'salaries.view_own',
+            'projects.view_own',
         ],
         self::CLIENT => [
             'dashboard.view_own',

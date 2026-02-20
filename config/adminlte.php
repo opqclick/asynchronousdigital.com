@@ -495,6 +495,12 @@ return [
             'can' => 'team_member_only',
             'route' => 'team-member.salaries.index',
         ],
+        [
+            'text' => 'My Projects',
+            'icon' => 'fas fa-fw fa-project-diagram',
+            'can' => 'team_member_only',
+            'route' => 'team-member.projects.index',
+        ],
 
         // Profile for all users
         ['header' => 'Account'],
