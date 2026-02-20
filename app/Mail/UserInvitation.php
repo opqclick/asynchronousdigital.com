@@ -3,16 +3,14 @@
 namespace App\Mail;
 
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class UserInvitation extends Mailable implements ShouldQueue
+class UserInvitation extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public $user;
     public $password;
@@ -33,7 +31,7 @@ class UserInvitation extends Mailable implements ShouldQueue
     {
         $environment = strtoupper(config('app.env'));
         $prefix = $environment === 'PRODUCTION' ? '' : "[$environment] ";
-        
+
         return new Envelope(
             subject: $prefix . 'Welcome to Asynchronous Digital - Your Account Has Been Created',
         );
