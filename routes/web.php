@@ -150,11 +150,12 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
     });
 
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('/recycle-bin', [RecycleBinController::class, 'index'])->name('recycle-bin.index');
-    });
-
-    Route::middleware(['role:admin'])->group(function () {
-        Route::post('/recycle-bin/{type}/{id}/restore', [RecycleBinController::class, 'restore'])->name('recycle-bin.restore');
+        Route::get('/recycle-bin', [RecycleBinController::class, 'index'])
+            ->middleware('permission:recycle-bin.view')
+            ->name('recycle-bin.index');
+        Route::post('/recycle-bin/{type}/{id}/restore', [RecycleBinController::class, 'restore'])
+            ->middleware('permission:recycle-bin.restore')
+            ->name('recycle-bin.restore');
     });
 
     // Public website management
@@ -173,21 +174,31 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
 
 // Team Member routes
 Route::middleware(['auth', 'role:team_member'])->prefix('team')->name('team-member.')->group(function () {
-    Route::get('/dashboard', [TeamMemberDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/tasks/create', [TeamMemberTaskController::class, 'create'])->name('tasks.create');
-    Route::post('/tasks', [TeamMemberTaskController::class, 'store'])->name('tasks.store');
-    Route::post('/tasks/{task}/update-status', [TeamMemberTaskController::class, 'updateStatus'])->name('tasks.update-status');
-    Route::get('/tasks/{task}/details', [TeamMemberTaskController::class, 'details'])->name('tasks.details');
-    Route::post('/tasks/{task}/comments', [TeamMemberTaskController::class, 'storeComment'])->name('tasks.comments.store');
-    Route::get('/salaries', [TeamMemberSalaryController::class, 'index'])->name('salaries.index');
-    Route::get('/salaries/{salary}', [TeamMemberSalaryController::class, 'show'])->name('salaries.show');
-    Route::get('/salaries/{salary}/share', [TeamMemberSalaryController::class, 'share'])->name('salaries.share');
-    Route::post('/salaries/{salary}/confirm-received', [TeamMemberSalaryController::class, 'confirmReceived'])->name('salaries.confirm-received');
+    Route::get('/dashboard', [TeamMemberDashboardController::class, 'index'])
+        ->middleware('permission:dashboard.view')
+        ->name('dashboard');
+
+    Route::middleware('permission:tasks.manage_own')->group(function () {
+        Route::get('/tasks/create', [TeamMemberTaskController::class, 'create'])->name('tasks.create');
+        Route::post('/tasks', [TeamMemberTaskController::class, 'store'])->name('tasks.store');
+        Route::post('/tasks/{task}/update-status', [TeamMemberTaskController::class, 'updateStatus'])->name('tasks.update-status');
+        Route::get('/tasks/{task}/details', [TeamMemberTaskController::class, 'details'])->name('tasks.details');
+        Route::post('/tasks/{task}/comments', [TeamMemberTaskController::class, 'storeComment'])->name('tasks.comments.store');
+    });
+
+    Route::middleware('permission:salaries.view_own')->group(function () {
+        Route::get('/salaries', [TeamMemberSalaryController::class, 'index'])->name('salaries.index');
+        Route::get('/salaries/{salary}', [TeamMemberSalaryController::class, 'show'])->name('salaries.show');
+        Route::get('/salaries/{salary}/share', [TeamMemberSalaryController::class, 'share'])->name('salaries.share');
+        Route::post('/salaries/{salary}/confirm-received', [TeamMemberSalaryController::class, 'confirmReceived'])->name('salaries.confirm-received');
+    });
 });
 
 // Client routes
 Route::middleware(['auth', 'role:client'])->prefix('client')->name('client.')->group(function () {
-    Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [ClientDashboardController::class, 'index'])
+        ->middleware('permission:dashboard.view_own')
+        ->name('dashboard');
 });
 
 // Email testing route
