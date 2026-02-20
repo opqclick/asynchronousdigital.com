@@ -13,15 +13,19 @@ class SalaryController extends Controller
      */
     public function index(Request $request)
     {
-        $filterMonth = $request->input('month', now()->format('Y-m'));
-        
-        $salaries = Salary::with(['project'])
+        $filterMonth = $request->input('month'); // null = show all
+
+        $query = Salary::with(['project'])
             ->where('user_id', auth()->id())
-            ->whereYear('month', '=', substr($filterMonth, 0, 4))
-            ->whereMonth('month', '=', substr($filterMonth, 5, 2))
-            ->orderBy('month', 'desc')
-            ->get();
-            
+            ->orderBy('month', 'desc');
+
+        if ($filterMonth) {
+            $query->whereYear('month', '=', substr($filterMonth, 0, 4))
+                ->whereMonth('month', '=', substr($filterMonth, 5, 2));
+        }
+
+        $salaries = $query->get();
+
         return view('team-member.salaries.index', compact('salaries', 'filterMonth'));
     }
 
@@ -51,7 +55,7 @@ class SalaryController extends Controller
         // Generate shareable URL
         $shareUrl = route('team-member.salaries.show', $salary);
         $user = auth()->user();
-        
+
         return view('team-member.salaries.share', compact('salary', 'shareUrl', 'user'));
     }
 
