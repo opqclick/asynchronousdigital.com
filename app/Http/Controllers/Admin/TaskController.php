@@ -12,6 +12,7 @@ use App\Models\TaskStatusHistory;
 use App\Models\User;
 use App\Notifications\TaskActivityNotification;
 use App\Notifications\TaskAssignedNotification;
+use App\Notifications\TaskCommentedNotification;
 use App\Notifications\TaskStatusChangedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,8 +29,8 @@ class TaskController extends Controller
     {
         $user = Auth::user();
         $tasksQuery = Task::withTrashed()->with([
-            'project' => fn ($query) => $query->withTrashed(),
-            'users' => fn ($query) => $query->withTrashed(),
+            'project' => fn($query) => $query->withTrashed(),
+            'users' => fn($query) => $query->withTrashed(),
         ]);
         $projectsQuery = Project::query();
 
@@ -258,7 +259,7 @@ class TaskController extends Controller
             );
         }
 
-        $previousAssigneeIds = $task->users()->pluck('users.id')->map(fn ($id) => (int) $id)->all();
+        $previousAssigneeIds = $task->users()->pluck('users.id')->map(fn($id) => (int) $id)->all();
 
         // Sync users
         if (isset($validated['users'])) {
@@ -382,7 +383,7 @@ class TaskController extends Controller
         $this->authorizeTaskAccess($task);
 
         $task->load(['project', 'users', 'comments', 'statusHistories']);
-        
+
         return view('admin.tasks.details-partial', compact('task'));
     }
 
@@ -413,6 +414,17 @@ class TaskController extends Controller
                 'comment_id' => $comment->id,
             ]
         );
+
+        // Notify task assignees (excluding the commenter)
+        if (SystemSetting::getBool('notification_in_app_enabled', true)) {
+            $task->loadMissing('users');
+            $actor = Auth::user();
+            foreach ($task->users as $assignee) {
+                if ((int) $assignee->id !== (int) $actor->id) {
+                    $assignee->notify(new TaskCommentedNotification($task, $comment, $actor));
+                }
+            }
+        }
 
         $comment->load('user', 'replies');
 
@@ -453,7 +465,7 @@ class TaskController extends Controller
     private function notifyTaskAssignees(Task $task, array $assigneeIds, array $previousAssigneeIds = []): void
     {
         $currentAssigneeIds = collect($assigneeIds)
-            ->map(fn ($id) => (int) $id)
+            ->map(fn($id) => (int) $id)
             ->filter()
             ->unique()
             ->values()
@@ -555,16 +567,16 @@ class TaskController extends Controller
     {
         if (Auth::user()->isAdmin()) {
             return $users->pluck('id')
-                ->map(fn ($id) => (int) $id)
+                ->map(fn($id) => (int) $id)
                 ->unique()
                 ->values()
                 ->all();
         }
 
         $allowedRoleUserIds = $users
-            ->filter(fn (User $user) => $user->hasAnyAssignedRole([Role::ADMIN, Role::TEAM_MEMBER]))
+            ->filter(fn(User $user) => $user->hasAnyAssignedRole([Role::ADMIN, Role::TEAM_MEMBER]))
             ->pluck('id')
-            ->map(fn ($id) => (int) $id)
+            ->map(fn($id) => (int) $id)
             ->all();
 
         if ($project->project_manager_id) {
@@ -582,7 +594,7 @@ class TaskController extends Controller
 
         $users = $this->getAssignableUsers();
         $allowedUserIds = $this->getAssignableUserIdsForProject($project, $users);
-        $selectedUserIds = collect($assigneeIds)->map(fn ($id) => (int) $id)->unique()->values()->all();
+        $selectedUserIds = collect($assigneeIds)->map(fn($id) => (int) $id)->unique()->values()->all();
         $invalidSelections = array_values(array_diff($selectedUserIds, $allowedUserIds));
 
         if (!empty($invalidSelections)) {

@@ -10,6 +10,7 @@ use App\Models\Task;
 use App\Models\TaskStatusHistory;
 use App\Models\User;
 use App\Notifications\TaskActivityNotification;
+use App\Notifications\TaskCommentedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -166,6 +167,17 @@ class TaskController extends Controller
             ]
         );
 
+        // Notify other task assignees (excluding commenter)
+        if (SystemSetting::getBool('notification_in_app_enabled', true)) {
+            $task->loadMissing('users');
+            $actor = Auth::user();
+            foreach ($task->users as $assignee) {
+                if ((int) $assignee->id !== (int) $actor->id) {
+                    $assignee->notify(new TaskCommentedNotification($task, $comment, $actor));
+                }
+            }
+        }
+
         $comment->load('user', 'replies');
 
         return response()->json([
@@ -246,14 +258,14 @@ class TaskController extends Controller
 
         $recipientIds = User::whereHas('roles', function ($query) {
             $query->where('name', Role::ADMIN);
-        })->pluck('id')->map(fn ($id) => (int) $id)->all();
+        })->pluck('id')->map(fn($id) => (int) $id)->all();
 
         $projectManagerId = (int) ($task->project?->project_manager_id ?? 0);
         if ($projectManagerId > 0) {
             $recipientIds[] = $projectManagerId;
         }
 
-        $recipientIds = array_values(array_unique(array_filter($recipientIds, fn ($id) => $id !== (int) $actor->id)));
+        $recipientIds = array_values(array_unique(array_filter($recipientIds, fn($id) => $id !== (int) $actor->id)));
         if (empty($recipientIds)) {
             return;
         }
