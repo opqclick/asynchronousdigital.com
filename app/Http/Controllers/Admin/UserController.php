@@ -415,10 +415,33 @@ class UserController extends Controller
             return back()->with('error', 'Already impersonating a user. Please return to admin first.');
         }
 
-        Auth::login($user);
+        // Put impersonator_id BEFORE login (survives session migration).
         $request->session()->put('impersonator_id', $admin->id);
 
-        return redirect()->route('dashboard')
+        Auth::login($user);
+
+        // Re-put after login as extra safety in case the session driver
+        // didn't preserve data through the session ID regeneration.
+        $request->session()->put('impersonator_id', $admin->id);
+        $request->session()->save();
+
+        \Illuminate\Support\Facades\Log::info('Impersonation started', [
+            'admin_id' => $admin->id,
+            'target_user_id' => $user->id,
+            'impersonator_id' => $request->session()->get('impersonator_id'),
+        ]);
+
+        // Resolve target dashboard directly — avoid the generic /dashboard
+        // route which has extra middleware that can bounce some users.
+        $user->ensureActiveRoleContext();
+        $targetRoute = match (true) {
+            $user->isAdmin() || $user->isProjectManager() => 'admin.dashboard',
+            $user->isTeamMember() => 'team-member.dashboard',
+            $user->isClient() => 'client.dashboard',
+            default => 'admin.dashboard',
+        };
+
+        return redirect()->route($targetRoute)
             ->with('success', 'You are now logged in as ' . $user->name . '.');
     }
 
