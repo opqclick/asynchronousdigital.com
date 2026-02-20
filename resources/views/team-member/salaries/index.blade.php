@@ -26,30 +26,36 @@
         <div class="card-body">
             <!-- Filter Form -->
             <form method="GET" action="{{ route('team-member.salaries.index') }}" class="mb-3">
-                <div class="row">
+                <div class="row align-items-end">
                     <div class="col-md-3">
-                        <div class="form-group">
+                        <div class="form-group mb-0">
                             <label for="month">Filter by Month</label>
-                            <input type="month" 
-                                   id="month" 
-                                   name="month" 
-                                   class="form-control" 
-                                   value="{{ $filterMonth ?? now()->format('Y-m') }}"
+                            <input type="month"
+                                   id="month"
+                                   name="month"
+                                   class="form-control"
+                                   value="{{ $filterMonth ?? '' }}"
                                    onchange="this.form.submit()">
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
+                    <div class="col-md-auto mt-2 mt-md-0">
+                        <div class="form-group mb-0">
                             <label>&nbsp;</label>
                             <div>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-filter"></i> Filter
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-filter mr-1"></i> Filter
                                 </button>
-                                <a href="{{ route('team-member.salaries.index') }}" class="btn btn-secondary">
-                                    <i class="fas fa-redo"></i> Reset
+                                <a href="{{ route('team-member.salaries.index') }}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-list mr-1"></i> Show All
                                 </a>
                             </div>
                         </div>
+                    </div>
+                    <div class="col-md-auto mt-2 mt-md-0 ml-auto">
+                        <small class="text-muted">
+                            Showing <strong>{{ $salaries->count() }}</strong> record(s)
+                            @if($filterMonth) for <strong>{{ \Carbon\Carbon::parse($filterMonth)->format('F Y') }}</strong>@endif
+                        </small>
                     </div>
                 </div>
             </form>
@@ -112,7 +118,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center">No salary records found for the selected month.</td>
+                            <td colspan="10" class="text-center">No salary records found.</td>
                         </tr>
                     @endforelse
                 </tbody>
