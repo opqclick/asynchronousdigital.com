@@ -28,6 +28,7 @@ use App\Http\Controllers\ContactController;
 use App\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\EmailTestController;
 
 // Public routes - Single page website
 Route::get('/', [PublicController::class, 'home'])->name('home');
@@ -37,7 +38,7 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::get('/dashboard', function () {
     $user = Auth::user();
     $user->ensureActiveRoleContext();
-    
+
     if ($user->isAdmin()) {
         return redirect()->route('admin.dashboard');
     } elseif ($user->isProjectManager()) {
@@ -47,7 +48,7 @@ Route::get('/dashboard', function () {
     } elseif ($user->isClient()) {
         return redirect()->route('client.dashboard');
     }
-    
+
     if ($user->hasAssignedRole(Role::ADMIN) || $user->hasAssignedRole(Role::PROJECT_MANAGER)) {
         return redirect()->route('admin.dashboard');
     }
@@ -83,7 +84,7 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->middleware('permission:dashboard.view')
         ->name('dashboard');
-    
+
     // Resource routes
     Route::middleware('role:admin')->group(function () {
         Route::resource('clients', ClientController::class)->middleware('permission:clients.manage');
@@ -91,7 +92,7 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
 
     Route::resource('projects', ProjectController::class)->middleware('permission:projects.manage');
     Route::resource('tasks', TaskController::class)->middleware('permission:tasks.manage');
-    
+
     // Task AJAX routes
     Route::post('/tasks/{task}/update-status', [TaskController::class, 'updateStatus'])
         ->middleware('permission:tasks.manage')
@@ -102,7 +103,7 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
     Route::post('/tasks/{task}/comments', [TaskController::class, 'storeComment'])
         ->middleware('permission:tasks.manage')
         ->name('tasks.comments.store');
-    
+
     Route::middleware('role:admin')->group(function () {
         Route::resource('teams', TeamController::class)->middleware('permission:teams.manage');
         Route::resource('invoices', InvoiceController::class)->middleware('permission:invoices.manage');
@@ -114,6 +115,7 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
         Route::resource('users', UserController::class)->middleware('permission:users.manage');
         Route::get('/settings', [SystemSettingController::class, 'edit'])->middleware('permission:settings.manage')->name('settings.edit');
         Route::put('/settings', [SystemSettingController::class, 'update'])->middleware('permission:settings.manage')->name('settings.update');
+        Route::post('/settings/test-email', [SystemSettingController::class, 'testEmail'])->middleware('permission:settings.manage')->name('settings.test-email');
 
         Route::prefix('permissions')->name('permissions.')->middleware('permission:permissions.manage')->group(function () {
             Route::get('/roles', [PermissionController::class, 'roleIndex'])->name('roles.index');
@@ -125,7 +127,7 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
             Route::put('/users/{user}', [PermissionController::class, 'userUpdate'])->name('users.update');
         });
     });
-    
+
     // Send invitation emails
     Route::post('/users/{user}/send-invitation', [UserController::class, 'sendInvitation'])
         ->middleware(['role:admin', 'permission:users.manage'])
@@ -136,7 +138,7 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
     Route::post('/clients/{client}/send-invitation', [ClientController::class, 'sendInvitation'])
         ->middleware(['role:admin', 'permission:clients.manage'])
         ->name('clients.send-invitation');
-    
+
     // User activity logs
     Route::middleware('role:admin')->group(function () {
         Route::get('/user-activities', [UserActivityController::class, 'index'])->middleware('permission:user-activities.view')->name('user-activities.index');
@@ -154,7 +156,7 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
     Route::middleware(['role:admin'])->group(function () {
         Route::post('/recycle-bin/{type}/{id}/restore', [RecycleBinController::class, 'restore'])->name('recycle-bin.restore');
     });
-    
+
     // Public website management
     Route::middleware('role:admin')->group(function () {
         Route::resource('services', AdminServiceController::class)->middleware('permission:services.manage');
@@ -188,4 +190,7 @@ Route::middleware(['auth', 'role:client'])->prefix('client')->name('client.')->g
     Route::get('/dashboard', [ClientDashboardController::class, 'index'])->name('dashboard');
 });
 
-require __DIR__.'/auth.php';
+// Email testing route
+Route::get('/test-email', [EmailTestController::class, 'send'])->middleware('auth');
+
+require __DIR__ . '/auth.php';

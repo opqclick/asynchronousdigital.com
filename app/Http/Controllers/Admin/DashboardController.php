@@ -16,6 +16,13 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
+        $user->load('role');
+        $user->role_name = $user->role ? $user->role->name : null;
+        $user->role_display_name = $user->role ? $user->role->display_name : null;
+
+        //dd($user->toArray());
+
         $isProjectManager = Auth::user()->isProjectManager() && !Auth::user()->isAdmin();
 
         $taskQuery = Task::query();

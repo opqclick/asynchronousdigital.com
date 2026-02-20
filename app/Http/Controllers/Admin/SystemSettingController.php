@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\SystemSetting;
 use App\Support\EnvEditor;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -98,7 +100,7 @@ class SystemSettingController extends Controller
 
         if (in_array($section, ['all', 'env'], true)) {
             $submittedEnv = collect($request->input('env', []))
-                ->filter(fn ($value, $key) => is_string($key) && preg_match('/^[A-Z0-9_]+$/', $key))
+                ->filter(fn($value, $key) => is_string($key) && preg_match('/^[A-Z0-9_]+$/', $key))
                 ->map(function ($value, $key) use ($currentEnv) {
                     $incoming = $value === null ? '' : (string) $value;
 
@@ -127,13 +129,15 @@ class SystemSettingController extends Controller
                 $currentEnv
             );
 
-            if ($targetFilesystemDisk === 'do_spaces' && !$this->isProviderConfigured($filesystemContext, [
-                'DO_SPACES_KEY',
-                'DO_SPACES_SECRET',
-                'DO_SPACES_REGION',
-                'DO_SPACES_BUCKET',
-                'DO_SPACES_ENDPOINT',
-            ])) {
+            if (
+                $targetFilesystemDisk === 'do_spaces' && !$this->isProviderConfigured($filesystemContext, [
+                    'DO_SPACES_KEY',
+                    'DO_SPACES_SECRET',
+                    'DO_SPACES_REGION',
+                    'DO_SPACES_BUCKET',
+                    'DO_SPACES_ENDPOINT',
+                ])
+            ) {
                 return redirect()
                     ->route('admin.settings.edit')
                     ->withInput()
@@ -141,12 +145,14 @@ class SystemSettingController extends Controller
                     ->with('active_tab', (string) $request->input('active_tab', 'pane-notifications'));
             }
 
-            if ($targetFilesystemDisk === 's3' && !$this->isProviderConfigured($filesystemContext, [
-                'AWS_ACCESS_KEY_ID',
-                'AWS_SECRET_ACCESS_KEY',
-                'AWS_DEFAULT_REGION',
-                'AWS_BUCKET',
-            ])) {
+            if (
+                $targetFilesystemDisk === 's3' && !$this->isProviderConfigured($filesystemContext, [
+                    'AWS_ACCESS_KEY_ID',
+                    'AWS_SECRET_ACCESS_KEY',
+                    'AWS_DEFAULT_REGION',
+                    'AWS_BUCKET',
+                ])
+            ) {
                 return redirect()
                     ->route('admin.settings.edit')
                     ->withInput()
@@ -179,13 +185,15 @@ class SystemSettingController extends Controller
                 'MAIL_FROM_ADDRESS' => trim((string) ($validated['mail_from_address'] ?? ($currentEnv['MAIL_FROM_ADDRESS'] ?? ''))),
             ];
 
-            if ($targetMailer === 'smtp' && !$this->isProviderConfigured($smtpContext, [
-                'MAIL_HOST',
-                'MAIL_PORT',
-                'MAIL_USERNAME',
-                'MAIL_PASSWORD',
-                'MAIL_FROM_ADDRESS',
-            ])) {
+            if (
+                $targetMailer === 'smtp' && !$this->isProviderConfigured($smtpContext, [
+                    'MAIL_HOST',
+                    'MAIL_PORT',
+                    'MAIL_USERNAME',
+                    'MAIL_PASSWORD',
+                    'MAIL_FROM_ADDRESS',
+                ])
+            ) {
                 return redirect()
                     ->route('admin.settings.edit')
                     ->withInput()
@@ -279,6 +287,64 @@ class SystemSettingController extends Controller
             'success' => $successMessage,
             'active_tab' => $activeTab,
         ]);
+    }
+
+    public function testEmail(Request $request): JsonResponse
+    {
+        $request->validate([
+            'to' => ['required', 'email', 'max:255'],
+        ]);
+
+        $to = (string) $request->input('to');
+
+        // Read current saved SMTP settings
+        $host = (string) SystemSetting::getValue('mail_host', config('mail.mailers.smtp.host', ''));
+        $port = (int) SystemSetting::getValue('mail_port', (string) config('mail.mailers.smtp.port', 587));
+        $username = (string) SystemSetting::getValue('mail_username', config('mail.mailers.smtp.username', ''));
+        $password = (string) SystemSetting::getValue('mail_password', config('mail.mailers.smtp.password', ''));
+        $encryption = (string) SystemSetting::getValue('mail_encryption', config('mail.mailers.smtp.encryption', 'tls'));
+        $fromAddr = (string) SystemSetting::getValue('mail_from_address', config('mail.from.address', ''));
+        $fromName = (string) SystemSetting::getValue('mail_from_name', config('mail.from.name', config('app.name')));
+        $mailer = (string) SystemSetting::getValue('mail_mailer', config('mail.default', 'smtp'));
+
+        if (empty($host) && $mailer === 'smtp') {
+            return response()->json(['success' => false, 'message' => 'SMTP host is not configured. Please save your SMTP settings first.'], 422);
+        }
+
+        // Patch the runtime mail config so the mailer uses the saved settings
+        config([
+            'mail.default' => $mailer,
+            'mail.mailers.smtp.host' => $host,
+            'mail.mailers.smtp.port' => $port,
+            'mail.mailers.smtp.username' => $username,
+            'mail.mailers.smtp.password' => $password,
+            'mail.mailers.smtp.encryption' => $encryption ?: null,
+            'mail.from.address' => $fromAddr,
+            'mail.from.name' => $fromName,
+        ]);
+
+        try {
+            Mail::raw(
+                "This is a test email from " . config('app.name') . ".\n\n" .
+                "If you received this, your mail configuration is working correctly.\n\n" .
+                "Sent at: " . now()->format('Y-m-d H:i:s T'),
+                function ($message) use ($to, $fromAddr, $fromName) {
+                    $message->to($to)
+                        ->from($fromAddr, $fromName)
+                        ->subject('Test Email — ' . config('app.name'));
+                }
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Test email sent successfully to {$to}.",
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send test email: ' . $e->getMessage(),
+            ], 422);
+        }
     }
 
     private function isSecretEnvKey(string $key): bool

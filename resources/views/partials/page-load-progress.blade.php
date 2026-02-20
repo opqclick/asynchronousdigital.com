@@ -32,6 +32,7 @@
 </style>
 <div id="global-page-progress" aria-hidden="true"></div>
 <div id="server-timing-debug-badge" aria-live="polite">Server: -- ms</div>
+
 <script>
     (function () {
         const progressBar = document.getElementById('global-page-progress');

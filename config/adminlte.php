@@ -63,7 +63,7 @@ return [
     |
     */
 
-    'logo' => 'Asynchronous Digital',
+    'logo' => '',
     'logo_img' => 'logo.png',
     'logo_img_class' => 'ad-brand-logo',
     'logo_img_style' => 'max-height: 40px; width: auto; object-fit: contain;',
@@ -265,7 +265,7 @@ return [
     'password_reset_url' => 'password/reset',
     'password_email_url' => 'password/email',
     'profile_url' => false,
-    'disable_darkmode_routes' => false,
+    'disable_darkmode_routes' => false, // keep routes enabled for dark mode switching
 
     /*
     |--------------------------------------------------------------------------
@@ -323,7 +323,7 @@ return [
             'can' => 'admin_or_project_manager',
             'route' => 'admin.dashboard',
         ],
-        
+
         ['header' => 'CRM', 'can' => 'admin'],
         [
             'text' => 'Clients',
@@ -337,7 +337,7 @@ return [
             'can' => 'projects.manage',
             'route' => 'admin.projects.index',
         ],
-        
+
         ['header' => 'Task Management', 'can' => 'admin'],
         [
             'text' => 'Tasks',
@@ -351,7 +351,7 @@ return [
             'can' => 'teams.manage',
             'route' => 'admin.teams.index',
         ],
-        
+
         ['header' => 'Members', 'can' => 'admin'],
         [
             'text' => 'Users',
@@ -371,7 +371,7 @@ return [
             'can' => 'permissions.manage',
             'route' => 'admin.permissions.users.index',
         ],
-        
+
         ['header' => 'Billing', 'can' => 'admin'],
         [
             'text' => 'Invoices',
@@ -385,7 +385,7 @@ return [
             'can' => 'payments.manage',
             'route' => 'admin.payments.index',
         ],
-        
+
         ['header' => 'HR & Payroll', 'can' => 'admin'],
         [
             'text' => 'Salaries',
@@ -393,7 +393,7 @@ return [
             'can' => 'salaries.manage',
             'route' => 'admin.salaries.index',
         ],
-        
+
         ['header' => 'Public Website', 'can' => 'admin'],
         [
             'text' => 'Services',
@@ -434,7 +434,7 @@ return [
             'can' => 'project_manager_only',
             'route' => 'admin.tasks.index',
         ],
-        
+
         ['header' => 'Tools', 'can' => 'admin'],
         [
             'text' => 'Observability',
@@ -495,7 +495,7 @@ return [
             'can' => 'team_member_only',
             'route' => 'team-member.salaries.index',
         ],
-        
+
         // Profile for all users
         ['header' => 'Account'],
         [

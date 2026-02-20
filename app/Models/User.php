@@ -257,7 +257,7 @@ class User extends Authenticatable
 
         return $this->roles()
             ->get()
-            ->contains(fn (Role $role) => $role->hasPermission($permission));
+            ->contains(fn(Role $role) => $role->hasPermission($permission));
     }
 
     /**
@@ -285,7 +285,7 @@ class User extends Authenticatable
             throw new \InvalidArgumentException('One or more selected roles are invalid.');
         }
 
-        $hasClient = $assignedRoles->contains(fn (Role $role) => $role->name === Role::CLIENT);
+        $hasClient = $assignedRoles->contains(fn(Role $role) => $role->name === Role::CLIENT);
         if ($hasClient && count($roleIds) > 1) {
             throw new \InvalidArgumentException('Client role must remain exclusive.');
         }
@@ -335,6 +335,19 @@ class User extends Authenticatable
                 'active_role_id' => $fallbackRoleId,
             ])->save();
         }
+    }
+
+    /**
+     * Get the display name with role for AdminLTE top nav
+     */
+    public function adminlte_user_name(): string
+    {
+        if ($this->role?->name) {
+            $roleName = ucwords(str_replace('_', ' ', $this->role->name));
+            return "{$this->name} ({$roleName})";
+        }
+
+        return $this->name;
     }
 
     /**

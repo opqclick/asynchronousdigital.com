@@ -301,6 +301,29 @@
                         </div>
                     </div>
 
+                    {{-- Test Email --}}
+                    <div class="card card-outline card-success mt-3 mb-0">
+                        <div class="card-header py-2">
+                            <strong><i class="fas fa-paper-plane mr-1"></i> Send Test Email</strong>
+                            <small class="text-muted ml-2">Verify your current saved mailer settings</small>
+                        </div>
+                        <div class="card-body py-3">
+                            <label for="test_email_to" class="mb-1">Recipient Email Address</label>
+                            <div class="input-group" style="max-width: 450px;">
+                                <input type="email" id="test_email_to" class="form-control form-control-sm"
+                                       value="{{ auth()->user()->email }}"
+                                       placeholder="someone@example.com">
+                                <div class="input-group-append">
+                                    <button type="button" id="send-test-email-btn" class="btn btn-sm btn-success">
+                                        <i class="fas fa-paper-plane mr-1"></i> Send Test Email
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">Uses the <strong>currently saved</strong> SMTP settings — save first if you've made changes.</small>
+                            <div id="test-email-result" class="mt-2" style="display:none;"></div>
+                        </div>
+                    </div>
+
                     <button type="submit" name="save_section" value="smtp" class="btn btn-outline-primary mt-3">
                         <i class="fas fa-save mr-1"></i> Save This Section
                     </button>
@@ -533,6 +556,56 @@
 @stop
 
 @section('js')
+    <script>
+    // Test Email AJAX
+    (function () {
+        const btn = document.getElementById('send-test-email-btn');
+        const resultBox = document.getElementById('test-email-result');
+        if (!btn || !resultBox) return;
+
+        btn.addEventListener('click', function () {
+            const to = (document.getElementById('test_email_to').value || '').trim();
+            if (!to) {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = '<div class="alert alert-warning mb-0 py-2">Please enter a recipient email address.</div>';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sending…';
+            resultBox.style.display = 'none';
+            resultBox.innerHTML = '';
+
+            fetch('{{ route('admin.settings.test-email') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({ to: to }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                resultBox.style.display = 'block';
+                if (data.success) {
+                    resultBox.innerHTML = '<div class="alert alert-success mb-0 py-2"><i class="fas fa-check-circle mr-1"></i>' + data.message + '</div>';
+                } else {
+                    resultBox.innerHTML = '<div class="alert alert-danger mb-0 py-2"><i class="fas fa-times-circle mr-1"></i>' + data.message + '</div>';
+                }
+            })
+            .catch(() => {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = '<div class="alert alert-danger mb-0 py-2">An unexpected error occurred. Please try again.</div>';
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Send Test Email';
+            });
+        });
+    })();
+    </script>
+
     <script>
         (function () {
             const form = document.getElementById('system-settings-form');
