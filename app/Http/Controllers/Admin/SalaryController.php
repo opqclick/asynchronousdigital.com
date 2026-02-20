@@ -62,6 +62,18 @@ class SalaryController extends Controller
         // Convert month to first day of month
         $validated['month'] = $validated['month'] . '-01';
 
+        // Prevent duplicate salary record for same user and month
+        $exists = Salary::where('user_id', $validated['user_id'])
+            ->whereYear('month', substr($request->input('month'), 0, 4))
+            ->whereMonth('month', substr($request->input('month'), 5, 2))
+            ->exists();
+
+        if ($exists) {
+            return back()->withInput()->withErrors([
+                'month' => 'A salary record for this employee already exists for the selected month.',
+            ]);
+        }
+
         // Remap field names to match model columns
         $validated['bonus'] = $validated['bonus_amount'] ?? 0;
         $validated['deduction'] = $validated['deduction_amount'] ?? 0;
