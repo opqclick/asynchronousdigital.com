@@ -415,8 +415,11 @@ class UserController extends Controller
             return back()->with('error', 'Already impersonating a user. Please return to admin first.');
         }
 
-        Auth::login($user);
+        // Store impersonator ID BEFORE Auth::login(), because login() regenerates
+        // the session internally, which would drop any data set after it.
         $request->session()->put('impersonator_id', $admin->id);
+
+        Auth::login($user);
 
         return redirect()->route('dashboard')
             ->with('success', 'You are now logged in as ' . $user->name . '.');
