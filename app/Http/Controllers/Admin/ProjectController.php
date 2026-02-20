@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\ProjectAssignedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,11 +25,11 @@ class ProjectController extends Controller
     {
         $user = Auth::user();
         $projectsQuery = Project::withTrashed()->with([
-            'client' => fn ($query) => $query->withTrashed()->with([
-                'user' => fn ($userQuery) => $userQuery->withTrashed(),
+            'client' => fn($query) => $query->withTrashed()->with([
+                'user' => fn($userQuery) => $userQuery->withTrashed(),
             ]),
-            'projectManager' => fn ($query) => $query->withTrashed(),
-            'tasks' => fn ($query) => $query->withTrashed(),
+            'projectManager' => fn($query) => $query->withTrashed(),
+            'tasks' => fn($query) => $query->withTrashed(),
         ])->withCount(['teams', 'users']);
 
         if ($user->isProjectManager() && !$user->isAdmin()) {
@@ -97,8 +98,8 @@ class ProjectController extends Controller
             'users.*' => 'exists:users,id',
         ]);
 
-        $selectedTeamIds = collect($validated['teams'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
-        $selectedUserIds = collect($validated['users'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
+        $selectedTeamIds = collect($validated['teams'] ?? [])->map(fn($id) => (int) $id)->unique()->values()->all();
+        $selectedUserIds = collect($validated['users'] ?? [])->map(fn($id) => (int) $id)->unique()->values()->all();
         $this->ensureAssignableTeamMembers($selectedUserIds);
 
         if (!empty($validated['project_manager_id'])) {
@@ -152,6 +153,12 @@ class ProjectController extends Controller
 
         if (!empty($selectedUserIds)) {
             $project->users()->attach($selectedUserIds);
+
+            // Notify newly assigned team members
+            $assignedBy = Auth::user();
+            User::whereIn('id', $selectedUserIds)->each(function ($member) use ($project, $assignedBy) {
+                $member->notify(new ProjectAssignedNotification($project, $assignedBy));
+            });
         }
 
         return redirect()->route('admin.projects.index')
@@ -229,8 +236,8 @@ class ProjectController extends Controller
             'users.*' => 'exists:users,id',
         ]);
 
-        $selectedTeamIds = collect($validated['teams'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
-        $selectedUserIds = collect($validated['users'] ?? [])->map(fn ($id) => (int) $id)->unique()->values()->all();
+        $selectedTeamIds = collect($validated['teams'] ?? [])->map(fn($id) => (int) $id)->unique()->values()->all();
+        $selectedUserIds = collect($validated['users'] ?? [])->map(fn($id) => (int) $id)->unique()->values()->all();
         $this->ensureAssignableTeamMembers($selectedUserIds);
 
         if (!empty($validated['project_manager_id'])) {
@@ -277,7 +284,17 @@ class ProjectController extends Controller
         $project->update($validated);
 
         $project->teams()->sync($selectedTeamIds);
+
+        // Detect newly added users and notify them
+        $previousUserIds = $project->users()->pluck('users.id')->map(fn($id) => (int) $id)->all();
         $project->users()->sync($selectedUserIds);
+        $newUserIds = array_diff($selectedUserIds, $previousUserIds);
+        if (!empty($newUserIds)) {
+            $assignedBy = Auth::user();
+            User::whereIn('id', $newUserIds)->each(function ($member) use ($project, $assignedBy) {
+                $member->notify(new ProjectAssignedNotification($project, $assignedBy));
+            });
+        }
 
         return redirect()->route('admin.projects.index')
             ->with('success', 'Project updated successfully.');
@@ -298,11 +315,11 @@ class ProjectController extends Controller
 
         if ($forceDelete) {
             $dependencies = $this->collectProjectDependencies($project);
-            $activeDependencies = array_filter($dependencies, fn (int $count) => $count > 0);
+            $activeDependencies = array_filter($dependencies, fn(int $count) => $count > 0);
 
             if (!empty($activeDependencies)) {
                 $dependencySummary = collect($activeDependencies)
-                    ->map(fn (int $count, string $key) => ucfirst(str_replace('_', ' ', $key)) . ': ' . $count)
+                    ->map(fn(int $count, string $key) => ucfirst(str_replace('_', ' ', $key)) . ': ' . $count)
                     ->implode(', ');
 
                 return redirect()->route('admin.projects.index')
@@ -365,7 +382,7 @@ class ProjectController extends Controller
                 $query->where('name', Role::TEAM_MEMBER);
             })
             ->pluck('id')
-            ->map(fn ($id) => (int) $id)
+            ->map(fn($id) => (int) $id)
             ->all();
 
         if (count($validTeamMemberIds) !== count($userIds)) {
