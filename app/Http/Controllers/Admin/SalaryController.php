@@ -15,16 +15,19 @@ class SalaryController extends Controller
      */
     public function index(Request $request)
     {
-        $filterMonth = $request->input('month', now()->format('Y-m'));
+        $filterMonth = $request->input('month'); // null = show all
 
-        $salaries = Salary::withTrashed()->with([
+        $query = Salary::withTrashed()->with([
             'user' => fn($query) => $query->withTrashed(),
             'project' => fn($query) => $query->withTrashed(),
-        ])
-            ->whereYear('month', '=', substr($filterMonth, 0, 4))
-            ->whereMonth('month', '=', substr($filterMonth, 5, 2))
-            ->orderBy('month', 'desc')
-            ->get();
+        ])->orderBy('month', 'desc');
+
+        if ($filterMonth) {
+            $query->whereYear('month', '=', substr($filterMonth, 0, 4))
+                ->whereMonth('month', '=', substr($filterMonth, 5, 2));
+        }
+
+        $salaries = $query->get();
 
         return view('admin.salaries.index', compact('salaries', 'filterMonth'));
     }
