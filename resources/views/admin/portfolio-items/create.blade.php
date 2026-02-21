@@ -11,7 +11,7 @@
     <div class="card-header">
         <h3 class="card-title">Portfolio Item Details</h3>
     </div>
-    <form action="{{ route('admin.portfolio-items.store') }}" method="POST">
+    <form action="{{ route('admin.portfolio-items.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <div class="card-body">
             @if($errors->any())
@@ -45,7 +45,12 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="image_url">Image URL</label>
+                        <label for="image_file">Upload Image</label>
+                        <input type="file" name="image_file" id="image_file" class="form-control-file" accept="image/*">
+                        <small class="form-text text-muted">Max size: 2MB. Or enter a direct URL below.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="image_url">Or Image URL</label>
                         <input type="url" name="image_url" id="image_url" class="form-control"
                             value="{{ old('image_url') }}" placeholder="https://...">
                     </div>

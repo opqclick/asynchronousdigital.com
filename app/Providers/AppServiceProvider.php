@@ -40,6 +40,13 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // Grant all permissions to admin users globally
+        Gate::before(function ($user, $ability) {
+            if ($user->isAdmin()) {
+                return true;
+            }
+        });
+
         // Define Gates for role-based menu access
         Gate::define('admin', function ($user) {
             return $user->isAdmin();

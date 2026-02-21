@@ -44,7 +44,10 @@ class PublicController extends Controller
             ->sort()
             ->values();
 
-        return view('welcome', compact('services', 'featuredTestimonials', 'projects', 'teamMembers', 'stats', 'technologies'));
+        // Get curated portfolio items
+        $portfolioItems = PortfolioItem::published()->get();
+
+        return view('welcome', compact('services', 'featuredTestimonials', 'projects', 'teamMembers', 'stats', 'technologies', 'portfolioItems'));
     }
 
     public function about()

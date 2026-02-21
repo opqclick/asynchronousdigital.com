@@ -11,7 +11,8 @@
     <div class="card-header">
         <h3 class="card-title">Update Portfolio Item</h3>
     </div>
-    <form action="{{ route('admin.portfolio-items.update', $portfolioItem) }}" method="POST">
+    <form action="{{ route('admin.portfolio-items.update', $portfolioItem) }}" method="POST"
+        enctype="multipart/form-data">
         @csrf
         @method('PUT')
         <div class="card-body">
@@ -45,8 +46,19 @@
 
             <div class="row">
                 <div class="col-md-6">
+                    @if($portfolioItem->image_url)
+                        <div class="mb-2">
+                            <img src="{{ $portfolioItem->image_url }}" alt="Current Image" class="img-thumbnail"
+                                style="max-height: 100px;">
+                        </div>
+                    @endif
                     <div class="form-group">
-                        <label for="image_url">Image URL</label>
+                        <label for="image_file">Upload New Image</label>
+                        <input type="file" name="image_file" id="image_file" class="form-control-file" accept="image/*">
+                        <small class="form-text text-muted">Leave empty to keep current image. Max size: 2MB.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="image_url">Or direct Image URL</label>
                         <input type="url" name="image_url" id="image_url" class="form-control"
                             value="{{ old('image_url', $portfolioItem->image_url) }}" placeholder="https://...">
                     </div>
