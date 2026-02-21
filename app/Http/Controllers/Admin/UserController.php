@@ -268,9 +268,9 @@ class UserController extends Controller
             ]);
         }
 
-        // Sync teams
+        // Sync teams (optional — empty array detaches all)
         $teamsWithTimestamp = [];
-        foreach ($validated['teams'] as $teamId) {
+        foreach ($validated['teams'] ?? [] as $teamId) {
             $teamsWithTimestamp[$teamId] = ['joined_at' => now()];
         }
         $user->teams()->sync($teamsWithTimestamp);
