@@ -200,7 +200,7 @@ class UserController extends Controller
             'payment_model' => ['nullable', 'in:hourly,fixed,monthly'],
             'monthly_salary' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
-            'teams' => ['required', 'array', 'min:1'],
+            'teams' => ['nullable', 'array'],
             'teams.*' => ['integer', 'exists:teams,id'],
         ]);
 
