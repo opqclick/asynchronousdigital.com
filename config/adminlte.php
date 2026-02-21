@@ -414,6 +414,12 @@ return [
             'route' => 'admin.testimonials.index',
         ],
         [
+            'text' => 'Portfolio',
+            'icon' => 'fas fa-fw fa-briefcase',
+            'can' => 'portfolio-items.manage',
+            'route' => 'admin.portfolio-items.index',
+        ],
+        [
             'text' => 'Contact Messages',
             'icon' => 'fas fa-fw fa-envelope',
             'can' => 'contact-messages.manage',

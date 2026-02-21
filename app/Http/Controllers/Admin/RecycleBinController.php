@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\Project;
 use App\Models\Salary;
 use App\Models\Service;
+use App\Models\PortfolioItem;
 use App\Models\Task;
 use App\Models\Team;
 use App\Models\TeamContent;
@@ -36,6 +37,7 @@ class RecycleBinController extends Controller
             'services' => ['class' => Service::class, 'label' => 'Service', 'permission' => 'services.manage', 'title' => 'title'],
             'testimonials' => ['class' => Testimonial::class, 'label' => 'Testimonial', 'permission' => 'testimonials.manage', 'title' => 'client_name'],
             'team-contents' => ['class' => TeamContent::class, 'label' => 'Team Content', 'permission' => 'team-content.manage', 'title' => 'name'],
+            'portfolio-items' => ['class' => PortfolioItem::class, 'label' => 'Portfolio Item', 'permission' => 'portfolio-items.manage', 'title' => 'title'],
             'contact-messages' => ['class' => ContactMessage::class, 'label' => 'Contact Message', 'permission' => 'contact-messages.manage', 'title' => 'subject'],
             'user-activities' => ['class' => UserActivity::class, 'label' => 'User Activity', 'permission' => 'user-activities.restore', 'title' => 'description'],
         ];

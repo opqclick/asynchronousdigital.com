@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\Admin\TeamController;
+use App\Http\Controllers\Admin\PortfolioItemController;
 use App\Http\Controllers\Admin\TeamContentController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\PaymentController;
@@ -167,6 +168,7 @@ Route::middleware(['auth', 'role:admin,project_manager'])->prefix('admin')->name
         Route::resource('services', AdminServiceController::class)->middleware('permission:services.manage');
         Route::resource('team-contents', TeamContentController::class)->middleware('permission:team-content.manage');
         Route::resource('testimonials', TestimonialController::class)->middleware('permission:testimonials.manage');
+        Route::resource('portfolio-items', PortfolioItemController::class)->middleware('permission:portfolio-items.manage');
     });
 
     Route::middleware('role:admin')->group(function () {

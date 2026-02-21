@@ -48,6 +48,7 @@ class Role extends Model
         'services.manage',
         'team-content.manage',
         'testimonials.manage',
+        'portfolio-items.manage',
         'contact-messages.manage',
         'recycle-bin.view',
         'recycle-bin.restore',
