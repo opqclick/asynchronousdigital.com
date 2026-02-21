@@ -12,6 +12,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -126,10 +127,14 @@
     </nav>
 
     <!-- Hero -->
-    <section id="home" class="pt-24 pb-20 px-4 min-h-screen flex items-center">
-        <div class="max-w-7xl mx-auto text-center">
+    <section id="home" class="relative pt-24 pb-20 px-4 min-h-screen flex items-center overflow-hidden">
+        <!-- Particles Container -->
+        <div id="particles-js" class="absolute inset-0 z-0 pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto text-center relative z-10 w-full">
             <h1 class="text-5xl sm:text-6xl md:text-7xl font-bold mb-6"><span class="text-white">Asynchronous</span>
-                <span class="text-purple-500">Digital</span></h1>
+                <span class="text-purple-500">Digital</span>
+            </h1>
             <p class="text-xl sm:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto">A dedicated cloud team specializing in
                 modern software development. We bring your digital visions to life with precision and efficiency.</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
@@ -353,7 +358,8 @@
                             <div class="flex items-center mb-4 text-sm text-slate-400"><i
                         class="fas fa-building mr-2"></i>{{ $project->client->company_name }}</div>@endif
                         <p class="text-slate-400 text-sm mb-4">
-                            {{ Str::limit($project->description, 100) ?: 'No description available.' }}</p>
+                            {{ Str::limit($project->description, 100) ?: 'No description available.' }}
+                        </p>
                         @if($project->tech_stack)
                             <div class="flex flex-wrap gap-2">
                                 @foreach(array_slice(explode(',', $project->tech_stack), 0, 3) as $tech)
@@ -426,11 +432,13 @@
                                 <div><label class="block text-sm font-medium text-slate-300 mb-2">Name *</label><input
                                         type="text" name="name" value="{{ old('name') }}" required
                                         class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">@error('name')
-                                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror</div>
+                                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror
+                                </div>
                                 <div><label class="block text-sm font-medium text-slate-300 mb-2">Email *</label><input
                                         type="email" name="email" value="{{ old('email') }}" required
                                         class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">@error('email')
-                                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror</div>
+                                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror
+                                </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div><label class="block text-sm font-medium text-slate-300 mb-2">Phone</label><input
@@ -445,7 +453,8 @@
                             <div class="mb-6"><label class="block text-sm font-medium text-slate-300 mb-2">Subject
                                     *</label><input type="text" name="subject" value="{{ old('subject') }}" required
                                     class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">@error('subject')
-                                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror</div>
+                                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror
+                            </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div><label class="block text-sm font-medium text-slate-300 mb-2">Service
                                         Interest</label><select name="service_interest"
@@ -467,7 +476,8 @@
                             <div class="mb-6"><label class="block text-sm font-medium text-slate-300 mb-2">Message
                                     *</label><textarea name="message" rows="5" required
                                     class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500">{{ old('message') }}</textarea>@error('message')
-                                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror</div>
+                                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>@enderror
+                            </div>
                             <button type="submit"
                                 class="w-full px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition"><i
                                     class="fas fa-paper-plane mr-2"></i>Send Message</button>
@@ -481,7 +491,8 @@
                             <div class="flex items-start">
                                 <div
                                     class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-envelope text-purple-500 text-xl"></i></div>
+                                    <i class="fas fa-envelope text-purple-500 text-xl"></i>
+                                </div>
                                 <div>
                                     <h4 class="font-semibold mb-1">Email</h4><a href="mailto:asynchronousd@gmail.com"
                                         class="text-slate-400 hover:text-purple-500">asynchronousd@gmail.com</a>
@@ -490,7 +501,8 @@
                             <div class="flex items-start">
                                 <div
                                     class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-clock text-purple-500 text-xl"></i></div>
+                                    <i class="fas fa-clock text-purple-500 text-xl"></i>
+                                </div>
                                 <div>
                                     <h4 class="font-semibold mb-1">Working Hours</h4>
                                     <p class="text-slate-400">24/7 Support Available</p>
@@ -499,7 +511,8 @@
                             <div class="flex items-start">
                                 <div
                                     class="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-map-marker-alt text-purple-500 text-xl"></i></div>
+                                    <i class="fas fa-map-marker-alt text-purple-500 text-xl"></i>
+                                </div>
                                 <div>
                                     <h4 class="font-semibold mb-1">Location</h4>
                                     <p class="text-slate-400">Remote / Cloud-based</p>
@@ -566,6 +579,96 @@
         document.querySelectorAll('#mobile-menu a').forEach(l => l.addEventListener('click', () => document.getElementById('mobile-menu')?.classList.remove('active')));
         const sections = document.querySelectorAll('section[id]'), navLinks = document.querySelectorAll('.nav-link');
         window.addEventListener('scroll', () => { let current = ''; sections.forEach(s => { if (scrollY >= s.offsetTop - 200) current = s.id; }); navLinks.forEach(l => { l.classList.remove('active'); if (l.getAttribute('href') === `#${current}`) l.classList.add('active'); }); });
+
+        // Particles.js Initialization for Antigravity effect
+        particlesJS('particles-js', {
+            "particles": {
+                "number": {
+                    "value": 80,
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": ["#a855f7", "#ec4899", "#8b5cf6"]
+                },
+                "shape": {
+                    "type": "circle",
+                    "stroke": {
+                        "width": 0,
+                        "color": "#000000"
+                    }
+                },
+                "opacity": {
+                    "value": 0.5,
+                    "random": true,
+                    "anim": {
+                        "enable": true,
+                        "speed": 1,
+                        "opacity_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "size": {
+                    "value": 3,
+                    "random": true,
+                    "anim": {
+                        "enable": false,
+                        "speed": 40,
+                        "size_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#8b5cf6",
+                    "opacity": 0.4,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 1.5,
+                    "direction": "none",
+                    "random": true,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": false,
+                        "rotateX": 600,
+                        "rotateY": 1200
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "grab"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": {
+                        "distance": 200,
+                        "line_linked": {
+                            "opacity": 0.6
+                        }
+                    },
+                    "push": {
+                        "particles_nb": 4
+                    }
+                }
+            },
+            "retina_detect": true
+        });
     </script>
 </body>
 
