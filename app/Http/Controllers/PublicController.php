@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\Service;
 use App\Models\TeamContent;
 use App\Models\Testimonial;
+use App\Models\PortfolioItem;
 
 class PublicController extends Controller
 {
@@ -90,6 +91,9 @@ class PublicController extends Controller
 
         $projects = $query->latest()->paginate(12);
 
+        // Get curated portfolio items
+        $portfolioItems = PortfolioItem::published()->get();
+
         // Get unique technologies from all projects
         $technologies = Project::pluck('tech_stack')
             ->flatMap(function ($tech) {
@@ -102,7 +106,7 @@ class PublicController extends Controller
             ->sort()
             ->values();
 
-        return view('public.portfolio', compact('projects', 'technologies'));
+        return view('public.portfolio', compact('projects', 'technologies', 'portfolioItems'));
     }
 
     public function contact()
