@@ -1,4 +1,4 @@
-@extends('adminlte::auth.password')
+@extends('adminlte::auth.auth-page', ['authType' => 'login'])
 
 @section('auth_header', config('app.name'))
 
